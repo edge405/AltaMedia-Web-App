@@ -1,0 +1,823 @@
+{
+  "info": {
+    "name": "AltaMedia Client Dashboard API",
+    "description": "Complete API collection for AltaMedia Client Dashboard with authentication and package management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/health",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"fullname\": \"John Doe\",\n  \"phone_number\": \"+1234567890\",\n  \"address\": \"123 Main St, City, State 12345\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('token', response.data.token);",
+                  "    console.log('Registration successful, token saved:', response.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('token', response.data.token);",
+                  "    console.log('Token saved:', response.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "auth",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Edit Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"John Smith\",\n  \"phone_number\": \"+1987654321\",\n  \"address\": \"456 Oak Ave, City, State 54321\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "auth",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Edit Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"oldpassword123\",\n  \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "auth",
+                "password"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Packages",
+      "item": [
+        {
+          "name": "Get All Packages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/packages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "packages"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Package by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/packages/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "packages",
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Package (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Premium Package\",\n  \"description\": \"Advanced features for growing businesses\",\n  \"price\": 199.99,\n  \"duration_days\": 30,\n  \"features\": [\n    {\n      \"name\": \"Advanced Analytics\",\n      \"description\": \"Comprehensive analytics dashboard\"\n    },\n    {\n      \"name\": \"Priority Support\",\n      \"description\": \"24/7 priority customer support\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/packages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "packages"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Package (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Premium Package\",\n  \"description\": \"Updated description\",\n  \"price\": 249.99,\n  \"duration_days\": 30,\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/packages/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "packages",
+                "2"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Package (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/packages/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "packages",
+                "2"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Addons",
+      "item": [
+        {
+          "name": "Get All Addons",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/addons",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "addons"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Addon by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/addons/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "addons",
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Addons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/addons/user",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "addons",
+                "user"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Addon (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Custom Domain\",\n  \"description\": \"Use your own domain name\",\n  \"price_type\": \"one-time\",\n  \"base_price\": 49.99\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/addons",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "addons"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Addon (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Custom Domain\",\n  \"description\": \"Updated description\",\n  \"price_type\": \"one-time\",\n  \"base_price\": 59.99,\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/addons/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "addons",
+                "2"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Addon (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/addons/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "addons",
+                "2"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Purchases",
+      "item": [
+        {
+          "name": "Get User Purchases",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/purchases",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "purchases"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Purchase by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/purchases/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "purchases",
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Purchase",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"package_id\": 1,\n  \"addons\": [1, 2]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/purchases",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "purchases"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel Purchase",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/purchases/1/cancel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "purchases",
+                "1",
+                "cancel"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Purchases (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/purchases/admin/all",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "purchases",
+                "admin",
+                "all"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Brand Kit Forms",
+      "item": [
+        {
+          "name": "Create or Update Brand Kit Form",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"business_type\": \"SaaS\",\n  \"business_email\": \"contact@example.com\",\n  \"business_name\": \"Test Corp\",\n  \"phone_number\": \"+1234567890\",\n  \"preferred_contact_method\": \"email\",\n  \"industry\": [\"Technology\", \"SaaS\"],\n  \"year_started\": 2020,\n  \"main_location\": \"San Francisco, CA\",\n  \"mission_statement\": \"To revolutionize the industry\",\n  \"vision_statement\": \"Leading the future of technology\",\n  \"core_values\": [\"Innovation\", \"Quality\", \"Customer Focus\"],\n  \"business_stage\": \"growth\",\n  \"brand_description\": \"A modern tech company focused on innovation\",\n  \"target_audience\": \"Tech-savvy professionals\",\n  \"spending_type\": \"premium\",\n  \"desired_feeling\": \"Professional and trustworthy\",\n  \"audience_interests\": [\"Technology\", \"Innovation\"],\n  \"professions\": [\"Developers\", \"Managers\"],\n  \"preferred_platforms\": [\"LinkedIn\", \"Twitter\"],\n  \"age_groups\": [\"25-34\", \"35-44\"],\n  \"current_audience_interests\": [\"Tech news\", \"Productivity\"],\n  \"spending_habits\": [\"Premium products\", \"Quality over price\"],\n  \"audience_behaviors\": [\"Research-driven\", \"Early adopters\"],\n  \"interaction_modes\": [\"Digital\", \"Social media\"],\n  \"customer_pain_points\": \"Complex onboarding process\",\n  \"purchase_motivators\": \"Time savings and efficiency\",\n  \"emotional_goal\": \"Confidence and trust\",\n  \"brand_owner\": \"John Doe\",\n  \"why_started\": \"To solve a market gap\",\n  \"reasons_exist1\": \"Innovation in the industry\",\n  \"reasons_exist2\": \"Customer satisfaction\",\n  \"reasons_exist3\": \"Market leadership\",\n  \"brand_soul\": \"Innovation meets reliability\",\n  \"brand_personality\": [\"Professional\", \"Innovative\", \"Friendly\"],\n  \"brand_voice\": [\"Clear\", \"Confident\", \"Approachable\"],\n  \"admire_brand1\": \"Apple\",\n  \"admire_brand2\": \"Tesla\",\n  \"admire_brand3\": \"Stripe\",\n  \"styles_to_avoid\": \"Overly casual or unprofessional\",\n  \"existing_logo\": \"Basic text logo\",\n  \"logo_action\": [\"Redesign\", \"Modernize\"],\n  \"brand_colors\": [\"Blue\", \"White\", \"Gray\"],\n  \"colors_to_avoid\": [\"Bright pink\", \"Neon green\"],\n  \"font_preferences\": [\"Sans-serif\", \"Clean\"],\n  \"design_style\": [\"Minimalist\", \"Modern\"],\n  \"logo_style\": [\"Wordmark\", \"Simple\"],\n  \"imagery_style\": [\"Professional\", \"Clean\"],\n  \"design_inspiration\": \"Apple's minimalist approach\",\n  \"usage_channels\": [\"Website\", \"Social media\", \"Print\"],\n  \"brand_elements_needed\": [\"Logo\", \"Business cards\", \"Website\"],\n  \"file_formats_needed\": [\"SVG\", \"PNG\", \"PDF\"],\n  \"goal_this_year\": \"Increase market share by 50%\",\n  \"other_short_term_goals\": \"Launch new product line\",\n  \"three_to_five_year_vision\": \"Become industry leader\",\n  \"additional_mid_term_goals\": \"Expand to international markets\",\n  \"long_term_vision\": \"Global technology leader\",\n  \"key_metrics\": [\"Revenue growth\", \"Customer satisfaction\"],\n  \"company_culture\": [\"Innovation\", \"Collaboration\", \"Excellence\"],\n  \"culture_description\": \"Fast-paced, innovative environment\",\n  \"internal_rituals\": \"Weekly team meetings\",\n  \"additional_notes\": \"Focus on premium positioning\",\n  \"timeline\": \"3 months for complete brand kit\",\n  \"decision_makers\": \"CEO and Marketing Director\",\n  \"reference_materials\": \"Competitor analysis and market research\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/brandkit",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "brandkit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Brand Kit Form",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/brandkit",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "brandkit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Brand Kit Form",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_step\": 2,\n  \"progress_percentage\": 16.67,\n  \"is_completed\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/brandkit",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "brandkit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Brand Kit Form",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/brandkit",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "brandkit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Brand Kit Forms (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/brandkit/admin/all",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "brandkit",
+                "admin",
+                "all"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Brand Kit Form by ID (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/brandkit/admin/1",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "brandkit",
+                "admin",
+                "1"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
