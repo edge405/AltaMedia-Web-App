@@ -10,12 +10,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Save, 
-  Building, 
-  Phone, 
-  Mail, 
-  MapPin, 
+import { useAuth } from "../contexts/AuthContext.jsx";
+import {
+  Save,
+  Building,
+  Phone,
+  Mail,
+  MapPin,
   Crown,
   Settings,
   Briefcase,
@@ -49,15 +50,16 @@ import {
 
 export default function Profile({ isDarkMode = false }) {
   const navigate = useNavigate();
+  const { user: authUser, updateProfile, changePassword } = useAuth();
   const [client, setClient] = useState(null);
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
+    fullname: "",
+    phone_number: "",
+    address: "",
     company_name: "",
-    contact_person: "",
-    phone: "",
     industry: "",
     current_plan: "starter",
-    address: "",
     website: "",
     description: ""
   });
@@ -79,39 +81,20 @@ export default function Profile({ isDarkMode = false }) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Mock data since Base44 API is removed
-      const mockClient = {
-        id: "1",
-        company_name: "Demo Company",
-        contact_person: "John Doe",
-        phone: "+1-555-0123",
-        industry: "Technology",
-        current_plan: "professional",
-        address: "123 Business St, Tech City, TC 12345",
-        website: "https://democompany.com",
-        description: "Leading technology solutions provider"
-      };
-      
-      const mockUser = {
-        id: "1",
-        name: "John Doe",
-        email: "john@demo.com",
-        avatar: null
-      };
-      
-      setClient(mockClient);
-      setUser(mockUser);
-      
-      setFormData({
-        company_name: mockClient.company_name || "",
-        contact_person: mockClient.contact_person || "",
-        phone: mockClient.phone || "",
-        industry: mockClient.industry || "",
-        current_plan: mockClient.current_plan || "starter",
-        address: mockClient.address || "",
-        website: mockClient.website || "",
-        description: mockClient.description || ""
-      });
+      // Use authenticated user data
+      if (authUser) {
+        setUser(authUser);
+        setFormData({
+          fullname: authUser.fullname || "",
+          phone_number: authUser.phone_number || "",
+          address: authUser.address || "",
+          company_name: "Demo Company", // Mock company data
+          industry: "Technology",
+          current_plan: "professional",
+          website: "https://democompany.com",
+          description: "Leading technology solutions provider"
+        });
+      }
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Failed to load profile data. Please try again.");
@@ -129,13 +112,17 @@ export default function Profile({ isDarkMode = false }) {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Mock save operation since Base44 API is removed
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await loadData();
-      // Profile updated successfully
+      const result = await updateProfile({
+        fullname: formData.fullname,
+        phone_number: formData.phone_number,
+        address: formData.address
+      });
+
+      if (result.success) {
+        toast.success("Profile updated successfully");
+      }
     } catch (error) {
-      console.error("Error saving client data:", error);
+      console.error("Error saving profile data:", error);
       toast.error("Failed to save profile data. Please try again.");
     }
     setIsSaving(false);
@@ -156,18 +143,29 @@ export default function Profile({ isDarkMode = false }) {
 
   const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("New passwords do not match");
       return;
     }
 
-    if (passwordData.newPassword.length < 8) {
+    if (passwordData.newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters long");
       return;
     }
-    
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: ""
-    });
+
+    try {
+      const result = await changePassword(passwordData.currentPassword, passwordData.newPassword);
+
+      if (result.success) {
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: ""
+        });
+        document.getElementById('password-modal').close();
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+    }
   };
 
   const handleToggleTwoFactor = () => {
@@ -187,20 +185,20 @@ export default function Profile({ isDarkMode = false }) {
   };
 
   const planDetails = {
-    starter: { 
-      name: "Starter Plan", 
+    starter: {
+      name: "Starter Plan",
       color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
       features: ["Basic features", "Email support", "5GB storage"],
       price: "₱2,999"
     },
-    professional: { 
-      name: "Professional Plan", 
+    professional: {
+      name: "Professional Plan",
       color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
       features: ["Advanced features", "Priority support", "50GB storage", "Analytics"],
       price: "₱10,999"
     },
-    enterprise: { 
-      name: "Enterprise Plan", 
+    enterprise: {
+      name: "Enterprise Plan",
       color: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
       features: ["All features", "24/7 support", "Unlimited storage", "Custom integrations"],
       price: "₱29,999"
@@ -208,7 +206,7 @@ export default function Profile({ isDarkMode = false }) {
   };
 
   const industries = [
-    "Technology", "Healthcare", "Finance", "Education", "Retail", 
+    "Technology", "Healthcare", "Finance", "Education", "Retail",
     "Manufacturing", "Real Estate", "Food & Beverage", "Entertainment",
     "Non-profit", "Consulting", "Other"
   ];
@@ -244,29 +242,29 @@ export default function Profile({ isDarkMode = false }) {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-2 animate-slide-up-delay">
         <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-          <TabsTrigger 
-            value="profile" 
+          <TabsTrigger
+            value="profile"
             className="flex items-center space-x-1 lg:space-x-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all duration-200 text-xs lg:text-sm"
           >
             <User className="w-3 h-3 lg:w-4 lg:h-4" />
             <span className="hidden sm:inline">Profile</span>
           </TabsTrigger>
-          <TabsTrigger 
-            value="company" 
+          <TabsTrigger
+            value="company"
             className="flex items-center space-x-1 lg:space-x-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all duration-200 text-xs lg:text-sm"
           >
             <Building className="w-3 h-3 lg:w-4 lg:h-4" />
             <span className="hidden sm:inline">Company</span>
           </TabsTrigger>
-          <TabsTrigger 
-            value="billing" 
+          <TabsTrigger
+            value="billing"
             className="flex items-center space-x-1 lg:space-x-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all duration-200 text-xs lg:text-sm"
           >
             <CreditCard className="w-3 h-3 lg:w-4 lg:h-4" />
             <span className="hidden sm:inline">Billing</span>
           </TabsTrigger>
-          <TabsTrigger 
-            value="security" 
+          <TabsTrigger
+            value="security"
             className="flex items-center space-x-1 lg:space-x-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all duration-200 text-xs lg:text-sm"
           >
             <Shield className="w-3 h-3 lg:w-4 lg:h-4" />
@@ -285,7 +283,7 @@ export default function Profile({ isDarkMode = false }) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                  <div className="flex flex-col items-center space-y-3">
+                <div className="flex flex-col items-center space-y-3">
                   <div className="relative group">
                     <Avatar className="w-24 h-24 group-hover:scale-105 transition-transform duration-200">
                       <AvatarImage src="" />
@@ -302,10 +300,10 @@ export default function Profile({ isDarkMode = false }) {
                       <Camera className="w-3 h-3" />
                     </Button>
                   </div>
-                  
+
                   <div className="text-center">
                     <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-lg">
-                      {formData.company_name || "Your Company"}
+                      {formData.fullname || "Your Name"}
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
                     <Badge className={`mt-3 ${planDetails[formData.current_plan].color} border-0 hover:scale-105 transition-transform duration-200`}>
@@ -322,22 +320,22 @@ export default function Profile({ isDarkMode = false }) {
                   </div>
                   <div className="flex items-center space-x-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors duration-200">
                     <Phone className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-600 dark:text-gray-300">{formData.phone || "Phone not set"}</span>
+                    <span className="text-gray-600 dark:text-gray-300">{formData.phone_number || "Phone not set"}</span>
                   </div>
                   <div className="flex items-center space-x-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors duration-200">
                     <Mail className="w-4 h-4 text-gray-400" />
                     <span className="text-gray-600 dark:text-gray-300">{user?.email}</span>
                   </div>
                   <div className="flex items-center space-x-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors duration-200">
-                    <Globe className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-600 dark:text-gray-300">{formData.website || "Website not set"}</span>
+                    <MapPin className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-600 dark:text-gray-300">{formData.address || "Address not set"}</span>
                   </div>
                 </div>
 
                 <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
-                  <Button 
-                    variant="outline" 
-                    className="w-full hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/20 dark:hover:text-red-400 dark:hover:border-red-800 transition-all duration-200" 
+                  <Button
+                    variant="outline"
+                    className="w-full hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/20 dark:hover:text-red-400 dark:hover:border-red-800 transition-all duration-200"
                     onClick={handleDeleteAccount}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
@@ -359,11 +357,11 @@ export default function Profile({ isDarkMode = false }) {
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="contact_person" className="text-gray-700 dark:text-gray-300">Full Name</Label>
+                      <Label htmlFor="fullname" className="text-gray-700 dark:text-gray-300">Full Name</Label>
                       <Input
-                        id="contact_person"
-                        value={formData.contact_person}
-                        onChange={(e) => handleInputChange("contact_person", e.target.value)}
+                        id="fullname"
+                        value={formData.fullname}
+                        onChange={(e) => handleInputChange("fullname", e.target.value)}
                         placeholder="Your full name"
                         className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-500"
                       />
@@ -380,11 +378,11 @@ export default function Profile({ isDarkMode = false }) {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-gray-700 dark:text-gray-300">Phone Number</Label>
+                      <Label htmlFor="phone_number" className="text-gray-700 dark:text-gray-300">Phone Number</Label>
                       <Input
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                        id="phone_number"
+                        value={formData.phone_number}
+                        onChange={(e) => handleInputChange("phone_number", e.target.value)}
                         placeholder="+1 (555) 123-4567"
                         className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-500"
                       />
@@ -447,8 +445,8 @@ export default function Profile({ isDarkMode = false }) {
                 <span>Company Information</span>
               </CardTitle>
             </CardHeader>
-                            <CardContent className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="company_name" className="text-gray-700 dark:text-gray-300">Company Name</Label>
                   <Input
@@ -554,8 +552,8 @@ export default function Profile({ isDarkMode = false }) {
                     ))}
                   </ul>
                 </div>
-                <Button 
-                  onClick={handleUpgradePlan} 
+                <Button
+                  onClick={handleUpgradePlan}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white transform hover:scale-105 transition-all duration-200"
                 >
                   <TrendingUp className="w-4 h-4 mr-2" />
@@ -595,9 +593,9 @@ export default function Profile({ isDarkMode = false }) {
                     </div>
                   </div>
                 </div>
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200" 
+                <Button
+                  variant="outline"
+                  className="w-full mt-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
                   onClick={handleDownloadInvoices}
                 >
                   <Download className="w-4 h-4 mr-2" />
@@ -623,7 +621,7 @@ export default function Profile({ isDarkMode = false }) {
                     <h3 className="font-medium text-gray-800 dark:text-gray-100">Two-Factor Authentication</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Add an extra layer of security to your account</p>
                   </div>
-                  <Button 
+                  <Button
                     variant={twoFactorEnabled ? "default" : "outline"}
                     onClick={handleToggleTwoFactor}
                     className={twoFactorEnabled ? "bg-green-600 hover:bg-green-700" : ""}

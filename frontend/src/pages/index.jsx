@@ -1,5 +1,6 @@
 import Layout from "./Layout.jsx";
 import Login from "./Login.jsx";
+import Register from "./Register.jsx";
 import Dashboard from "./Dashboard";
 import Profile from "./Profile";
 import Forms from "./Forms.jsx";
@@ -42,6 +43,7 @@ function PagesContent() {
         <Routes>
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/test" element={<AdminTest />} />
             

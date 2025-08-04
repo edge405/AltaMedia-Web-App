@@ -18,10 +18,12 @@ import { toast } from "sonner";
 import AltamediaLogo from "../components/AltamediaLogo.jsx";
 import Messages from "../components/Messages.jsx";
 import InboxComponent from "../components/Inbox.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 export default function Layout({ children, currentPageName, isDarkMode: parentIsDarkMode }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
@@ -90,7 +92,7 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
     toast.success(`Notification: ${notification.title}`);
   };
 
-  const handleProfileAction = (action) => {
+  const handleProfileAction = async (action) => {
     switch (action) {
       case 'profile':
         navigate("/profile");
@@ -100,10 +102,7 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
         toast.info("Settings page - Coming soon");
         break;
       case 'logout':
-        // Clear authentication
-        localStorage.removeItem("isLoggedIn");
-        localStorage.removeItem("userEmail");
-        toast.success("Logged out successfully");
+        await logout();
         navigate("/login");
         break;
       default:
@@ -214,8 +213,12 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className={`w-56 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                   <div className={`p-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                    <p className={`font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>John Doe</p>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>john@company.com</p>
+                    <p className={`font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                      {user?.fullname || 'User'}
+                    </p>
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {user?.email || 'user@example.com'}
+                    </p>
                   </div>
                   <DropdownMenuItem 
                     onClick={() => handleProfileAction('profile')}

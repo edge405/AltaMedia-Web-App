@@ -1,24 +1,29 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Mail, Lock, Moon, Sun } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Moon, Sun, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import AltamediaLogo from "../components/AltamediaLogo.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login, register } = useAuth();
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
   });
   const [showPassword, setShowPassword] = useState(false);
-  const demoButtonRef = useRef(null);
+  const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
-    password: ""
+    password: "",
+    fullname: "",
+    phone_number: "",
+    address: ""
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -33,37 +38,54 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate login process
-    setTimeout(() => {
-      if (formData.email && formData.password) {
-        toast.success("Login successful! Welcome to Altamedia");
-        // Store login state in localStorage
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("userEmail", formData.email);
-        navigate("/dashboard");
+    try {
+      if (showRegisterForm) {
+        // Registration
+        const result = await register({
+          email: formData.email,
+          password: formData.password,
+          fullname: formData.fullname,
+          phone_number: formData.phone_number,
+          address: formData.address
+        });
+
+        if (result.success) {
+          toast.success("Account created successfully! Please log in with your new credentials.");
+          setShowRegisterForm(false);
+          setFormData({
+            email: formData.email,
+            password: "",
+            fullname: "",
+            phone_number: "",
+            address: ""
+          });
+        }
       } else {
-        toast.error("Please fill in all fields");
+        // Login
+        const result = await login(formData.email, formData.password);
+
+        if (result.success) {
+          navigate("/dashboard");
+        }
       }
+    } catch (error) {
+      console.error('Authentication error:', error);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
-  const handleDemoLogin = () => {
+
+
+  const toggleFormMode = () => {
+    setShowRegisterForm(!showRegisterForm);
     setFormData({
-      email: "demo@altamedia.com",
-      password: "demo123"
+      email: "",
+      password: "",
+      fullname: "",
+      phone_number: "",
+      address: ""
     });
-    toast.info("Demo credentials filled");
-    
-    // Add animation to the demo button
-    if (demoButtonRef.current) {
-      demoButtonRef.current.classList.add('animate-pulse-slow');
-      setTimeout(() => {
-        if (demoButtonRef.current) {
-          demoButtonRef.current.classList.remove('animate-pulse-slow');
-        }
-      }, 2000);
-    }
   };
 
   const toggleDarkMode = () => {
@@ -229,14 +251,34 @@ export default function Login() {
             <AltamediaLogo size="large" className={`${isDarkMode ? 'text-white' : 'text-gray-800'}`} />
           </div>
           <CardTitle className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-            Welcome to Altamedia
+            {showRegisterForm ? 'Create Account' : 'Welcome to Altamedia'}
           </CardTitle>
           <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-2`}>
-            Sign in to your account to continue
+            {showRegisterForm ? 'Create your account to get started' : 'Sign in to your account to continue'}
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {showRegisterForm && (
+              <div className="space-y-2">
+                <Label htmlFor="fullname" className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                  Full Name
+                </Label>
+                <div className="relative">
+                  <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    id="fullname"
+                    type="text"
+                    placeholder="Enter your full name"
+                    className="input-field"
+                    value={formData.fullname}
+                    onChange={(e) => handleInputChange('fullname', e.target.value)}
+                    required={showRegisterForm}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email" className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                 Email Address
@@ -254,6 +296,46 @@ export default function Login() {
                 />
               </div>
             </div>
+
+            {showRegisterForm && (
+              <div className="space-y-2">
+                <Label htmlFor="phone_number" className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                  Phone Number
+                </Label>
+                <div className="relative">
+                  <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    id="phone_number"
+                    type="tel"
+                    placeholder="Enter your phone number"
+                    className="input-field"
+                    value={formData.phone_number}
+                    onChange={(e) => handleInputChange('phone_number', e.target.value)}
+                    required={showRegisterForm}
+                  />
+                </div>
+              </div>
+            )}
+
+            {showRegisterForm && (
+              <div className="space-y-2">
+                <Label htmlFor="address" className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                  Address
+                </Label>
+                <div className="relative">
+                  <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    id="address"
+                    type="text"
+                    placeholder="Enter your address"
+                    className="input-field"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    required={showRegisterForm}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="password" className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
@@ -289,36 +371,31 @@ export default function Login() {
                 {isLoading ? (
                   <div className="flex items-center justify-center">
                     <div className="spinner mr-2"></div>
-                    Signing in...
+                    {showRegisterForm ? 'Creating account...' : 'Signing in...'}
                   </div>
                 ) : (
-                  "Sign In"
+                  showRegisterForm ? "Create Account" : "Sign In"
                 )}
               </button>
 
               <button
-                ref={demoButtonRef}
                 type="button"
-                onClick={handleDemoLogin}
+                onClick={toggleFormMode}
                 className="demo-button"
               >
-                Use Demo Credentials
+                {showRegisterForm ? "Already have an account? Sign In" : "Don't have an account? Register"}
               </button>
             </div>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              Demo credentials: demo@altamedia.com / demo123
-            </p>
-          </div>
+
         </CardContent>
       </Card>
-      
+
       {/* Admin Login Link */}
       <div className="absolute bottom-4 right-4">
-        <a 
-          href="/admin/login" 
+        <a
+          href="/admin/login"
           className={`text-xs ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} transition-colors duration-200`}
         >
           Admin Login
