@@ -38,7 +38,7 @@ function _getCurrentPage(url) {
 function PagesContent() {
     const location = useLocation();
     const currentPage = _getCurrentPage(location.pathname);
-    
+
     return (
         <Routes>
             {/* Public routes */}
@@ -46,14 +46,14 @@ function PagesContent() {
             <Route path="/register" element={<Register />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/test" element={<AdminTest />} />
-            
+
             {/* Admin routes */}
             <Route path="/admin/dashboard" element={
-                <AdminProtectedRoute>
-                    <AdminDashboard />
-                </AdminProtectedRoute>
+                // <AdminProtectedRoute>
+                <AdminDashboard />
+                // </AdminProtectedRoute>
             } />
-            
+
             {/* Protected routes with layout */}
             <Route path="/" element={
                 <Layout currentPageName={currentPage}>
@@ -62,7 +62,7 @@ function PagesContent() {
                     </ProtectedRoute>
                 </Layout>
             } />
-            
+
             <Route path="/dashboard" element={
                 <Layout currentPageName={currentPage}>
                     <ProtectedRoute>
@@ -70,7 +70,7 @@ function PagesContent() {
                     </ProtectedRoute>
                 </Layout>
             } />
-            
+
             <Route path="/profile" element={
                 <Layout currentPageName={currentPage}>
                     <ProtectedRoute>
@@ -78,7 +78,7 @@ function PagesContent() {
                     </ProtectedRoute>
                 </Layout>
             } />
-            
+
             <Route path="/forms" element={
                 <Layout currentPageName={currentPage}>
                     <ProtectedRoute>
@@ -86,7 +86,7 @@ function PagesContent() {
                     </ProtectedRoute>
                 </Layout>
             } />
-            
+
             <Route path="/know-your-form" element={
                 <Layout currentPageName={currentPage}>
                     <ProtectedRoute>

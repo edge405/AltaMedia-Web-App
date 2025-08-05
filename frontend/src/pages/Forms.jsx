@@ -23,13 +23,13 @@ const Forms = () => {
   const [formData, setFormData] = useState({
     // Page 1: Business Type & Email Collection
     whatBuilding: "",
-    
+
     // Page 2: Welcome & Identity Verification
     businessEmail: "",
     hasProventousId: "",
     proventousId: "",
     fullBusinessName: "",
-    
+
     // Page 3: About Your Business
     contactNumber: "",
     preferredCommunication: "",
@@ -42,14 +42,14 @@ const Forms = () => {
     targetAttraction: "",
     teamDescription: "",
     inspirationForStarting: "",
-    
+
     // Page 4: Audience Clarity - Target Market
     desiredFeeling: "",
     targetInterests: [],
     targetProfessions: [],
     targetReachLocations: [],
     targetAgeGroups: [],
-    
+
     // Page 4: Audience Clarity - Current Market
     currentCustomerInterests: [],
     currentSpendingHabits: [],
@@ -58,11 +58,11 @@ const Forms = () => {
     customerChallenges: "",
     customerMotivation: "",
     currentBrandFeeling: "",
-    
+
     // Page 5: Team Culture
     cultureWords: [],
     teamTraditions: "",
-    
+
     // Page 6: Brand Identity
     reason1: "",
     reason2: "",
@@ -74,7 +74,7 @@ const Forms = () => {
     brand2: "",
     brand3: "",
     brandAvoidAssociations: "",
-    
+
     // Page 7: Visual Preferences
     hasLogo: "",
     logoAction: [],
@@ -85,12 +85,12 @@ const Forms = () => {
     logoType: [],
     visualImageryStyle: [],
     designInspirationLinks: null,
-    
+
     // Page 8: Collateral Needs
     brandKitUsage: [],
     brandElementsNeeded: [],
     fileFormatPreferences: [],
-    
+
     // Page 9: Business Goals & Vision
     primaryGoalThisYear: "",
     shortTermGoals: "",
@@ -98,7 +98,7 @@ const Forms = () => {
     midTermGoals: "",
     longTermVision: "",
     successMetrics: [],
-    
+
     // Page 10: Mission, Vision & Values (AI Suggestions)
     businessMission: "",
     longTermVision: "",
@@ -106,17 +106,17 @@ const Forms = () => {
     businessJourneyStage: "",
     spendingType: "",
     otherAudiences: "",
-    
+
     // Page 11: Wrap-Up
     specialRequirements: "",
     brandKitTimeline: "",
     reviewApprovalPerson: "",
-    
+
     // Page 12: Uploads & Reference
     referenceMaterials: []
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const totalSteps = 12;
   const steps = [
     "Business Type & Email Collection",
@@ -209,7 +209,7 @@ const Forms = () => {
         </h2>
         <p className="text-gray-600 text-lg">Let's start by understanding your project type</p>
       </div>
-      
+
       <div className="space-y-2">
         <Label className="text-base font-semibold text-gray-800 dark:text-gray-100">
           What are you building? *
@@ -242,14 +242,14 @@ const Forms = () => {
         </h2>
         <p className="text-gray-600 text-lg">We'll need some basic information to get started</p>
       </div>
-      
+
       <div className="space-y-6">
         <div className="space-y-2">
           <Label className="text-base font-semibold text-gray-800 dark:text-gray-100">
             Business Email *
           </Label>
-          <Input 
-            type="email" 
+          <Input
+            type="email"
             placeholder="Enter your business email"
             value={formData.businessEmail || ''}
             onChange={(e) => handleFieldChange('businessEmail', e.target.value)}
@@ -277,7 +277,7 @@ const Forms = () => {
             <Label className="text-base font-semibold text-gray-800 dark:text-gray-100">
               Proventous ID Number
             </Label>
-            <Input 
+            <Input
               placeholder="Enter your Proventous ID"
               value={formData.proventousId || ''}
               onChange={(e) => handleFieldChange('proventousId', e.target.value)}
@@ -290,7 +290,7 @@ const Forms = () => {
           <Label className="text-base font-semibold text-gray-800 dark:text-gray-100">
             What's the full name of your business or organization? *
           </Label>
-          <Input 
+          <Input
             placeholder="Enter your complete business name"
             value={formData.fullBusinessName || ''}
             onChange={(e) => handleFieldChange('fullBusinessName', e.target.value)}
@@ -308,9 +308,9 @@ const Forms = () => {
         <h2 className="text-xl font-semibold mb-2">Tell us about your business</h2>
         <p className="text-muted-foreground">Help us understand your business better</p>
       </div>
-      
+
       <FormField label="What's your contact number (with country code if outside PH)?" type="Short Text">
-        <Input 
+        <Input
           placeholder="+63 912 345 6789"
           value={formData.phoneNumber || ''}
           onChange={(e) => handleFieldChange('phoneNumber', e.target.value)}
@@ -332,7 +332,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="What industry or niche does your business belong to?" type="Tags" required>
-        <TagInput 
+        <TagInput
           value={formData.industry || []}
           onChange={(value) => handleFieldChange('industry', value)}
           placeholder="Add your industry or niche"
@@ -345,7 +345,7 @@ const Forms = () => {
             <SelectValue placeholder="Select year" />
           </SelectTrigger>
           <SelectContent>
-            {Array.from({length: 25}, (_, i) => 2025 - i).map(year => (
+            {Array.from({ length: 25 }, (_, i) => 2025 - i).map(year => (
               <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
             ))}
           </SelectContent>
@@ -353,7 +353,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Where is your business primarily located?" type="Short Text" required>
-        <Input 
+        <Input
           placeholder="City, Province, Country"
           value={formData.mainLocation || ''}
           onChange={(e) => handleFieldChange('mainLocation', e.target.value)}
@@ -361,13 +361,13 @@ const Forms = () => {
       </FormField>
 
       <FormField label="What's your mission as a business?" type="Long Text" aiSuggestions>
-        <Textarea 
+        <Textarea
           placeholder="Describe your business mission"
           value={formData.missionStatement || ''}
           onChange={(e) => handleFieldChange('missionStatement', e.target.value)}
           rows={4}
         />
-        <AISuggestion 
+        <AISuggestion
           fieldName="missionStatement"
           currentValue={formData.missionStatement}
           onApplySuggestion={(suggestion) => handleFieldChange('missionStatement', suggestion)}
@@ -375,13 +375,13 @@ const Forms = () => {
       </FormField>
 
       <FormField label="What's your long-term vision?" type="Long Text" aiSuggestions>
-        <Textarea 
+        <Textarea
           placeholder="Describe your long-term vision"
           value={formData.visionStatement || ''}
           onChange={(e) => handleFieldChange('visionStatement', e.target.value)}
           rows={4}
         />
-        <AISuggestion 
+        <AISuggestion
           fieldName="visionStatement"
           currentValue={formData.visionStatement}
           onApplySuggestion={(suggestion) => handleFieldChange('visionStatement', suggestion)}
@@ -389,12 +389,12 @@ const Forms = () => {
       </FormField>
 
       <FormField label="What values drive the way you do business?" type="Tags" aiSuggestions>
-        <TagInput 
+        <TagInput
           value={formData.coreValues || []}
           onChange={(value) => handleFieldChange('coreValues', value)}
           placeholder="Add your core values"
         />
-        <AISuggestion 
+        <AISuggestion
           fieldName="coreValues"
           currentValue={formData.coreValues?.join(', ')}
           onApplySuggestion={(suggestion) => handleFieldChange('coreValues', suggestion.split(', '))}
@@ -416,12 +416,12 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Describe what your business does in one powerful sentence" type="Short Text" aiSuggestions>
-        <Input 
+        <Input
           placeholder="A concise description of your business"
           value={formData.brandDescription || ''}
           onChange={(e) => handleFieldChange('brandDescription', e.target.value)}
         />
-        <AISuggestion 
+        <AISuggestion
           fieldName="brandDescription"
           currentValue={formData.brandDescription}
           onApplySuggestion={(suggestion) => handleFieldChange('brandDescription', suggestion)}
@@ -432,7 +432,7 @@ const Forms = () => {
         <div className="space-y-2">
           {['Male', 'Female', 'Everyone (both)'].map((option) => (
             <div key={option} className="flex items-center space-x-2">
-              <Checkbox 
+              <Checkbox
                 id={option}
                 checked={formData.buyerType?.includes(option) || false}
                 onCheckedChange={(checked) => {
@@ -451,7 +451,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Who do you want to attract?" type="Long Text" required>
-        <Textarea 
+        <Textarea
           placeholder="Describe your target audience"
           value={formData.targetAudience || ''}
           onChange={(e) => handleFieldChange('targetAudience', e.target.value)}
@@ -473,7 +473,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Are there other groups you'd love to attract?" type="Long Text">
-        <Textarea 
+        <Textarea
           placeholder="Describe additional target groups"
           value={formData.secondaryAudience || ''}
           onChange={(e) => handleFieldChange('secondaryAudience', e.target.value)}
@@ -494,7 +494,7 @@ const Forms = () => {
       <div className="space-y-8">
         <div>
           <h3 className="text-lg font-medium mb-4">Section A: Target Market (Who do you want to attract?)</h3>
-          
+
           <FormField label="How do you want them to feel after experiencing your brand?" type="Dropdown" required>
             <Select value={formData.desiredFeeling} onValueChange={(value) => handleFieldChange('desiredFeeling', value)}>
               <SelectTrigger>
@@ -514,12 +514,12 @@ const Forms = () => {
           </FormField>
 
           <FormField label="What are their main interests or lifestyle?" type="Tags" aiSuggestions>
-            <TagInput 
+            <TagInput
               value={formData.audienceInterests || []}
               onChange={(value) => handleFieldChange('audienceInterests', value)}
               placeholder="Add interests or lifestyle traits"
             />
-            <AISuggestion 
+            <AISuggestion
               fieldName="audienceInterests"
               currentValue={formData.audienceInterests?.join(', ')}
               onApplySuggestion={(suggestion) => handleFieldChange('audienceInterests', suggestion.split(', '))}
@@ -527,7 +527,7 @@ const Forms = () => {
           </FormField>
 
           <FormField label="What professions or roles do you want to attract?" type="Tags">
-            <TagInput 
+            <TagInput
               value={formData.professions || []}
               onChange={(value) => handleFieldChange('professions', value)}
               placeholder="Add professions or roles"
@@ -535,7 +535,7 @@ const Forms = () => {
           </FormField>
 
           <FormField label="Where do you want to reach them?" type="Tags">
-            <TagInput 
+            <TagInput
               value={formData.preferredPlatforms || []}
               onChange={(value) => handleFieldChange('preferredPlatforms', value)}
               placeholder="Add platforms or locations"
@@ -545,14 +545,14 @@ const Forms = () => {
           <FormField label="What age groups do you want to target?" type="Checkbox">
             <div className="space-y-2">
               {[
-                'Teens (13–19)', 
-                'Young Adults (20–29)', 
-                'Adults (30–39)', 
-                'Mature Adults (40–59)', 
+                'Teens (13–19)',
+                'Young Adults (20–29)',
+                'Adults (30–39)',
+                'Mature Adults (40–59)',
                 'Seniors (60+)'
               ].map((option) => (
                 <div key={option} className="flex items-center space-x-2">
-                  <Checkbox 
+                  <Checkbox
                     id={option}
                     checked={formData.ageGroups?.includes(option) || false}
                     onCheckedChange={(checked) => {
@@ -573,14 +573,14 @@ const Forms = () => {
 
         <div>
           <h3 className="text-lg font-medium mb-4">Section B: Current Market (Who loves you now?)</h3>
-          
+
           <FormField label="What are your current customers' interests?" type="Tags" aiSuggestions>
-            <TagInput 
+            <TagInput
               value={formData.currentAudienceInterests || []}
               onChange={(value) => handleFieldChange('currentAudienceInterests', value)}
               placeholder="Add current customer interests"
             />
-            <AISuggestion 
+            <AISuggestion
               fieldName="currentAudienceInterests"
               currentValue={formData.currentAudienceInterests?.join(', ')}
               onApplySuggestion={(suggestion) => handleFieldChange('currentAudienceInterests', suggestion.split(', '))}
@@ -588,7 +588,7 @@ const Forms = () => {
           </FormField>
 
           <FormField label="How would you describe your current customers' spending habits?" type="Tags">
-            <TagInput 
+            <TagInput
               value={formData.spendingHabits || []}
               onChange={(value) => handleFieldChange('spendingHabits', value)}
               placeholder="Add spending habit descriptions"
@@ -596,12 +596,12 @@ const Forms = () => {
           </FormField>
 
           <FormField label="How would you describe your current audience's behavior?" type="Tags" aiSuggestions>
-            <TagInput 
+            <TagInput
               value={formData.audienceBehaviors || []}
               onChange={(value) => handleFieldChange('audienceBehaviors', value)}
               placeholder="Add audience behavior traits"
             />
-            <AISuggestion 
+            <AISuggestion
               fieldName="audienceBehaviors"
               currentValue={formData.audienceBehaviors?.join(', ')}
               onApplySuggestion={(suggestion) => handleFieldChange('audienceBehaviors', suggestion.split(', '))}
@@ -612,7 +612,7 @@ const Forms = () => {
             <div className="space-y-2">
               {['Website', 'Social Media', 'Phone', 'Email', 'In-person', 'Mobile App'].map((option) => (
                 <div key={option} className="flex items-center space-x-2">
-                  <Checkbox 
+                  <Checkbox
                     id={option}
                     checked={formData.interactionModes?.includes(option) || false}
                     onCheckedChange={(checked) => {
@@ -631,7 +631,7 @@ const Forms = () => {
           </FormField>
 
           <FormField label="What challenges do your customers face that you help solve?" type="Long Text">
-            <Textarea 
+            <Textarea
               placeholder="Describe customer pain points you address"
               value={formData.customerPainPoints || ''}
               onChange={(e) => handleFieldChange('customerPainPoints', e.target.value)}
@@ -640,13 +640,13 @@ const Forms = () => {
           </FormField>
 
           <FormField label="What motivates customers to choose you over competitors?" type="Long Text" aiSuggestions>
-            <Textarea 
+            <Textarea
               placeholder="Describe your competitive advantages"
               value={formData.purchaseMotivators || ''}
               onChange={(e) => handleFieldChange('purchaseMotivators', e.target.value)}
               rows={4}
             />
-            <AISuggestion 
+            <AISuggestion
               fieldName="purchaseMotivators"
               currentValue={formData.purchaseMotivators}
               onApplySuggestion={(suggestion) => handleFieldChange('purchaseMotivators', suggestion)}
@@ -682,9 +682,9 @@ const Forms = () => {
         <h2 className="text-xl font-semibold mb-2">Your Brand Identity</h2>
         <p className="text-muted-foreground">Let's explore the personality behind your brand</p>
       </div>
-      
+
       <FormField label="Who's behind the brand?" type="Long Text">
-        <Textarea 
+        <Textarea
           placeholder="Tell us about the people behind your brand"
           value={formData.brandOwner || ''}
           onChange={(e) => handleFieldChange('brandOwner', e.target.value)}
@@ -693,13 +693,13 @@ const Forms = () => {
       </FormField>
 
       <FormField label="What inspired you to start this business?" type="Long Text" aiSuggestions>
-        <Textarea 
+        <Textarea
           placeholder="Share your inspiration story"
           value={formData.whyStarted || ''}
           onChange={(e) => handleFieldChange('whyStarted', e.target.value)}
           rows={4}
         />
-        <AISuggestion 
+        <AISuggestion
           fieldName="whyStarted"
           currentValue={formData.whyStarted}
           onApplySuggestion={(suggestion) => handleFieldChange('whyStarted', suggestion)}
@@ -707,7 +707,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Reason 1" type="Short Text">
-        <Input 
+        <Input
           placeholder="First reason for starting"
           value={formData.reasonsExist1 || ''}
           onChange={(e) => handleFieldChange('reasonsExist1', e.target.value)}
@@ -715,7 +715,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Reason 2" type="Short Text">
-        <Input 
+        <Input
           placeholder="Second reason for starting"
           value={formData.reasonsExist2 || ''}
           onChange={(e) => handleFieldChange('reasonsExist2', e.target.value)}
@@ -723,7 +723,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Reason 3" type="Short Text">
-        <Input 
+        <Input
           placeholder="Third reason for starting"
           value={formData.reasonsExist3 || ''}
           onChange={(e) => handleFieldChange('reasonsExist3', e.target.value)}
@@ -731,7 +731,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="If your brand had a soul, how would you describe it?" type="Short Text">
-        <Input 
+        <Input
           placeholder="Describe your brand's soul"
           value={formData.brandSoul || ''}
           onChange={(e) => handleFieldChange('brandSoul', e.target.value)}
@@ -739,12 +739,12 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Which 3 to 5 words describe your brand's personality best?" type="Tags" aiSuggestions>
-        <TagInput 
+        <TagInput
           value={formData.brandPersonality || []}
           onChange={(value) => handleFieldChange('brandPersonality', value)}
           placeholder="Add personality traits"
         />
-        <AISuggestion 
+        <AISuggestion
           fieldName="brandPersonality"
           currentValue={formData.brandPersonality?.join(', ')}
           onApplySuggestion={(suggestion) => handleFieldChange('brandPersonality', suggestion.split(', '))}
@@ -755,7 +755,7 @@ const Forms = () => {
         <div className="space-y-2">
           {['Professional', 'Casual', 'Friendly', 'Authoritative', 'Playful', 'Sophisticated'].map((option) => (
             <div key={option} className="flex items-center space-x-2">
-              <Checkbox 
+              <Checkbox
                 id={option}
                 checked={formData.brandVoice?.includes(option) || false}
                 onCheckedChange={(checked) => {
@@ -774,7 +774,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Brand 1: Name + Why" type="Long Text">
-        <Textarea 
+        <Textarea
           placeholder="Brand name and why you admire it"
           value={formData.admireBrand1 || ''}
           onChange={(e) => handleFieldChange('admireBrand1', e.target.value)}
@@ -783,7 +783,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Brand 2 (optional): Name + Why" type="Long Text">
-        <Textarea 
+        <Textarea
           placeholder="Second brand name and why you admire it"
           value={formData.admireBrand2 || ''}
           onChange={(e) => handleFieldChange('admireBrand2', e.target.value)}
@@ -792,7 +792,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Brand 3 (optional): Name + Why" type="Long Text">
-        <Textarea 
+        <Textarea
           placeholder="Third brand name and why you admire it"
           value={formData.admireBrand3 || ''}
           onChange={(e) => handleFieldChange('admireBrand3', e.target.value)}
@@ -801,7 +801,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="What's something you definitely don't want your brand to be associated with?" type="Long Text">
-        <Textarea 
+        <Textarea
           placeholder="Describe what you want to avoid"
           value={formData.stylesToAvoid || ''}
           onChange={(e) => handleFieldChange('stylesToAvoid', e.target.value)}
@@ -818,7 +818,7 @@ const Forms = () => {
         <h2 className="text-xl font-semibold mb-2">Visual Preferences</h2>
         <p className="text-muted-foreground">Let's explore your visual style preferences</p>
       </div>
-      
+
       <FormField label="Do you already have a logo?" type="Dropdown" required>
         <Select value={formData.existingLogo} onValueChange={(value) => handleFieldChange('existingLogo', value)}>
           <SelectTrigger>
@@ -836,7 +836,7 @@ const Forms = () => {
           <div className="space-y-2">
             {['Keep', 'Improve', 'Redo'].map((option) => (
               <div key={option} className="flex items-center space-x-2">
-                <Checkbox 
+                <Checkbox
                   id={option}
                   checked={formData.logoAction?.includes(option) || false}
                   onCheckedChange={(checked) => {
@@ -856,7 +856,7 @@ const Forms = () => {
       )}
 
       <FormField label="Preferred brand colors" type="Color Picker">
-        <ColorPicker 
+        <ColorPicker
           value={formData.brandColors}
           onChange={(value) => handleFieldChange('brandColors', value)}
           placeholder="Enter your preferred colors"
@@ -864,7 +864,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Colors to avoid" type="Color Picker">
-        <ColorPicker 
+        <ColorPicker
           value={formData.colorsToAvoid}
           onChange={(value) => handleFieldChange('colorsToAvoid', value)}
           placeholder="Enter colors you want to avoid"
@@ -875,7 +875,7 @@ const Forms = () => {
         <div className="space-y-2">
           {['Serif', 'Sans-serif', 'Script', 'Display', 'Monospace'].map((option) => (
             <div key={option} className="flex items-center space-x-2">
-              <Checkbox 
+              <Checkbox
                 id={option}
                 checked={formData.fontPreferences?.includes(option) || false}
                 onCheckedChange={(checked) => {
@@ -897,7 +897,7 @@ const Forms = () => {
         <div className="space-y-2">
           {['Minimalist', 'Modern', 'Vintage', 'Bold', 'Elegant', 'Playful', 'Professional'].map((option) => (
             <div key={option} className="flex items-center space-x-2">
-              <Checkbox 
+              <Checkbox
                 id={option}
                 checked={formData.designStyle?.includes(option) || false}
                 onCheckedChange={(checked) => {
@@ -919,7 +919,7 @@ const Forms = () => {
         <div className="space-y-2">
           {['Wordmark', 'Symbol', 'Combination', 'Emblem', 'Lettermark'].map((option) => (
             <div key={option} className="flex items-center space-x-2">
-              <Checkbox 
+              <Checkbox
                 id={option}
                 checked={formData.logoStyle?.includes(option) || false}
                 onCheckedChange={(checked) => {
@@ -941,7 +941,7 @@ const Forms = () => {
         <div className="space-y-2">
           {['Photography', 'Illustration', 'Abstract', 'Geometric', 'Organic', 'Mixed Media'].map((option) => (
             <div key={option} className="flex items-center space-x-2">
-              <Checkbox 
+              <Checkbox
                 id={option}
                 checked={formData.imageryStyle?.includes(option) || false}
                 onCheckedChange={(checked) => {
@@ -960,7 +960,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Any design inspiration links" type="Upload">
-        <FileUpload 
+        <FileUpload
           value={formData.designInspiration}
           onChange={(value) => handleFieldChange('designInspiration', value)}
           placeholder="Upload inspiration files or paste links"
@@ -976,12 +976,12 @@ const Forms = () => {
         <h2 className="text-xl font-semibold mb-2">Collateral Needs</h2>
         <p className="text-muted-foreground">What brand elements do you need?</p>
       </div>
-      
+
       <FormField label="Where will the brand kit be used?" type="Checkbox" required>
         <div className="space-y-2">
           {['Website', 'Social Media', 'Print Materials', 'Business Cards', 'Email Marketing', 'Packaging', 'Signage', 'Apparel'].map((option) => (
             <div key={option} className="flex items-center space-x-2">
-              <Checkbox 
+              <Checkbox
                 id={option}
                 checked={formData.usageChannels?.includes(option) || false}
                 onCheckedChange={(checked) => {
@@ -1003,7 +1003,7 @@ const Forms = () => {
         <div className="space-y-2">
           {['Logo', 'Color Palette', 'Typography', 'Business Cards', 'Letterhead', 'Social Media Templates', 'Email Signature', 'Brand Guidelines'].map((option) => (
             <div key={option} className="flex items-center space-x-2">
-              <Checkbox 
+              <Checkbox
                 id={option}
                 checked={formData.brandElementsNeeded?.includes(option) || false}
                 onCheckedChange={(checked) => {
@@ -1025,7 +1025,7 @@ const Forms = () => {
         <div className="space-y-2">
           {['PNG', 'JPG', 'PDF', 'AI', 'EPS', 'SVG'].map((option) => (
             <div key={option} className="flex items-center space-x-2">
-              <Checkbox 
+              <Checkbox
                 id={option}
                 checked={formData.fileFormatsNeeded?.includes(option) || false}
                 onCheckedChange={(checked) => {
@@ -1052,9 +1052,9 @@ const Forms = () => {
         <h2 className="text-xl font-semibold mb-2">Business Goals & Vision</h2>
         <p className="text-muted-foreground">Let's understand your business objectives</p>
       </div>
-      
+
       <FormField label="#1 Goal This Year" type="Short Text" required>
-        <Input 
+        <Input
           placeholder="Your primary goal for this year"
           value={formData.goalThisYear || ''}
           onChange={(e) => handleFieldChange('goalThisYear', e.target.value)}
@@ -1062,7 +1062,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Are there any other short-term goals you'd like to achieve in the next year?" type="Long Text">
-        <Textarea 
+        <Textarea
           placeholder="Additional goals for the next 12 months"
           value={formData.otherShortTermGoals || ''}
           onChange={(e) => handleFieldChange('otherShortTermGoals', e.target.value)}
@@ -1071,7 +1071,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="What's the main thing you want your business to achieve in the next 3–5 years?" type="Short Text">
-        <Input 
+        <Input
           placeholder="Your 3-5 year vision"
           value={formData.threeToFiveYearVision || ''}
           onChange={(e) => handleFieldChange('threeToFiveYearVision', e.target.value)}
@@ -1079,7 +1079,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Are there additional mid-term goals you're aiming for?" type="Long Text">
-        <Textarea 
+        <Textarea
           placeholder="Additional mid-term goals"
           value={formData.additionalMidTermGoals || ''}
           onChange={(e) => handleFieldChange('additionalMidTermGoals', e.target.value)}
@@ -1088,7 +1088,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="What's your big-picture vision for your brand in the long run?" type="Long Text">
-        <Textarea 
+        <Textarea
           placeholder="Your long-term brand vision"
           value={formData.longTermVision || ''}
           onChange={(e) => handleFieldChange('longTermVision', e.target.value)}
@@ -1100,7 +1100,7 @@ const Forms = () => {
         <div className="space-y-2">
           {['Revenue Growth', 'Customer Satisfaction', 'Brand Recognition', 'Market Share', 'Social Media Engagement', 'Website Traffic', 'Customer Retention', 'Employee Satisfaction'].map((option) => (
             <div key={option} className="flex items-center space-x-2">
-              <Checkbox 
+              <Checkbox
                 id={option}
                 checked={formData.keyMetrics?.includes(option) || false}
                 onCheckedChange={(checked) => {
@@ -1127,9 +1127,9 @@ const Forms = () => {
         <h2 className="text-xl font-semibold mb-2">Team Culture</h2>
         <p className="text-muted-foreground">Tell us about your company culture</p>
       </div>
-      
+
       <FormField label="If you had to pick just three words to describe your company's culture, what would they be?" type="Tags">
-        <TagInput 
+        <TagInput
           value={formData.companyCulture || []}
           onChange={(value) => handleFieldChange('companyCulture', value)}
           placeholder="Add three culture words"
@@ -1137,7 +1137,7 @@ const Forms = () => {
       </FormField>
 
       <FormField label="How would your team typically describe working at your business?" type="Long Text">
-        <Textarea 
+        <Textarea
           placeholder="Describe the work environment"
           value={formData.cultureDescription || ''}
           onChange={(e) => handleFieldChange('cultureDescription', e.target.value)}
@@ -1146,13 +1146,13 @@ const Forms = () => {
       </FormField>
 
       <FormField label="Are there any special traditions, rituals, or fun things your team regularly does that you'd like to highlight?" type="Long Text" aiSuggestions>
-        <Textarea 
+        <Textarea
           placeholder="Share your team traditions and rituals"
           value={formData.internalRituals || ''}
           onChange={(e) => handleFieldChange('internalRituals', e.target.value)}
           rows={4}
         />
-        <AISuggestion 
+        <AISuggestion
           fieldName="internalRituals"
           currentValue={formData.internalRituals}
           onApplySuggestion={(suggestion) => handleFieldChange('internalRituals', suggestion)}
@@ -1173,7 +1173,7 @@ const Forms = () => {
         </h2>
         <p className="text-gray-600 text-lg">Let AI help you define your business purpose</p>
       </div>
-      
+
       <div className="space-y-6">
         <AISuggestion
           label="What's your mission as a business?"
@@ -1259,13 +1259,13 @@ const Forms = () => {
         </h2>
         <p className="text-gray-600 text-lg">Final details and timeline</p>
       </div>
-      
+
       <div className="space-y-6">
         <div className="space-y-2">
           <Label className="text-base font-semibold text-gray-800 dark:text-gray-100">
             Is there anything special or important about your business or preferences we haven't covered yet?
           </Label>
-          <Textarea 
+          <Textarea
             placeholder="Any additional information or special requirements"
             value={formData.specialRequirements || ''}
             onChange={(e) => handleFieldChange('specialRequirements', e.target.value)}
@@ -1295,7 +1295,7 @@ const Forms = () => {
           <Label className="text-base font-semibold text-gray-800 dark:text-gray-100">
             Who will be reviewing and approving your brand kit?
           </Label>
-          <Input 
+          <Input
             placeholder="Name of the decision maker"
             value={formData.reviewApprovalPerson || ''}
             onChange={(e) => handleFieldChange('reviewApprovalPerson', e.target.value)}
@@ -1318,13 +1318,13 @@ const Forms = () => {
         </h2>
         <p className="text-gray-600 text-lg">Share any reference materials</p>
       </div>
-      
+
       <div className="space-y-6">
         <div className="space-y-2">
           <Label className="text-base font-semibold text-gray-800 dark:text-gray-100">
             Reference Materials
           </Label>
-          <FileUpload 
+          <FileUpload
             value={formData.referenceMaterials}
             onChange={(value) => handleFieldChange('referenceMaterials', value)}
             placeholder="Upload reference files or paste links"
@@ -1349,101 +1349,101 @@ const Forms = () => {
   );
 
   return (
-                    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-                  <div className="container mx-auto px-4 py-4 sm:py-8">
-                    <div className="max-w-5xl mx-auto">
-                      <Card className="shadow-2xl border-0 bg-white dark:bg-gray-800">
-                        <CardHeader className="bg-blue-600 dark:bg-blue-700 text-white rounded-t-lg">
-                          <CardTitle className="text-3xl font-bold text-center">
-                            🎨 Brand Kit Form
-                          </CardTitle>
-                          <p className="text-center text-blue-100 dark:text-blue-200 mt-2">
-                            Let's create something amazing together
-                          </p>
-                        </CardHeader>
-                                    <CardContent className="p-4 sm:p-8">
-              <ProgressBar 
-                currentStep={currentStep} 
-                totalSteps={totalSteps} 
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="container mx-auto px-4 py-4 sm:py-8">
+        <div className="max-w-5xl mx-auto">
+          <Card className="shadow-2xl border-0 bg-white dark:bg-gray-800">
+            <CardHeader className="bg-blue-600 dark:bg-blue-700 text-white rounded-t-lg">
+              <CardTitle className="text-3xl font-bold text-center">
+                🎨 Brand Kit Form
+              </CardTitle>
+              <p className="text-center text-blue-100 dark:text-blue-200 mt-2">
+                Let's create something amazing together
+              </p>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-8">
+              <ProgressBar
+                currentStep={currentStep}
+                totalSteps={totalSteps}
                 steps={steps}
               />
-              
+
               <form onSubmit={(e) => e.preventDefault()} className="animate-fade-in">
                 <div className="min-h-[400px] animate-slide-in-left">
                   {renderStep()}
                 </div>
-                
-                                            <div className="flex flex-col sm:flex-row justify-between gap-4 mt-8 sm:mt-12 pt-6 border-t border-gray-200 dark:border-gray-700">
-                              {/* Back to Dashboard button - always visible */}
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => navigate('/dashboard')}
-                                className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200"
-                                aria-label="Return to dashboard"
-                              >
-                                <ChevronLeft className="w-4 h-4" />
-                                Back to Dashboard
-                              </Button>
-                              
-                              <div className="flex flex-col sm:flex-row gap-3">
-                                {/* Previous button - only show from step 2 onwards */}
-                                {currentStep > 1 && (
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={prevStep}
-                                    className="flex items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200"
-                                    aria-label="Go to previous step"
-                                  >
-                                    <ChevronLeft className="w-4 h-4" />
-                                    Previous
-                                  </Button>
-                                )}
-                                
-                                                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => {
-                                      toast.success("Form data saved!");
-                                    }}
-                                    className="flex items-center gap-2 hover:bg-yellow-50 dark:hover:bg-yellow-900 hover:border-yellow-300 dark:hover:border-yellow-600 transition-all duration-200"
-                                    aria-label="Save form progress"
-                                  >
-                                  <Save className="w-4 h-4" />
-                                  Save Progress
-                                </Button>
-                                
-                                {currentStep < totalSteps ? (
-                                  <Button
-                                    type="button"
-                                    onClick={nextStep}
-                                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                                    aria-label="Go to next step"
-                                  >
-                                    Next Step
-                                    <ChevronRight className="w-4 h-4" />
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    type="button"
-                                    onClick={handleSubmit}
-                                    disabled={isSubmitting}
-                                    className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-500 dark:hover:bg-yellow-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    aria-label="Submit form"
-                                  >
-                                    {isSubmitting ? (
-                                      <>
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        Submitting...
-                                      </>
-                                    ) : (
-                                      "🎉 Submit Form"
-                                    )}
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
+
+                <div className="flex flex-col sm:flex-row justify-between gap-4 mt-8 sm:mt-12 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  {/* Back to Dashboard button - always visible */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate('/dashboard')}
+                    className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200"
+                    aria-label="Return to dashboard"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Back to Dashboard
+                  </Button>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {/* Previous button - only show from step 2 onwards */}
+                    {currentStep > 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={prevStep}
+                        className="flex items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200"
+                        aria-label="Go to previous step"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        Previous
+                      </Button>
+                    )}
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        toast.success("Form data saved!");
+                      }}
+                      className="flex items-center gap-2 hover:bg-yellow-50 dark:hover:bg-yellow-900 hover:border-yellow-300 dark:hover:border-yellow-600 transition-all duration-200"
+                      aria-label="Save form progress"
+                    >
+                      <Save className="w-4 h-4" />
+                      Save Progress
+                    </Button>
+
+                    {currentStep < totalSteps ? (
+                      <Button
+                        type="button"
+                        onClick={nextStep}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                        aria-label="Go to next step"
+                      >
+                        Next Step
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-500 dark:hover:bg-yellow-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Submit form"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Submitting...
+                          </>
+                        ) : (
+                          "🎉 Submit Form"
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </form>
             </CardContent>
           </Card>

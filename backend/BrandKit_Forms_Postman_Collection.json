@@ -1,0 +1,481 @@
+{
+    "info": {
+        "name": "Brand Kit Forms API - All 12 Steps",
+        "description": "Complete collection for testing all 12 steps of Brand Kit Form",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:3000/api",
+            "type": "string"
+        },
+        {
+            "key": "auth_token",
+            "value": "your-auth-token-here",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Step 1 - Business Type",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"current_step\": 1,\n  \"progress_percentage\": 8.33,\n  \"is_completed\": false,\n  \"form_data\": {\n    \"what_building\": \"Business/Company\"\n  }\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/brandkit/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit",
+                        "progress"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 2 - Identity Verification",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"current_step\": 2,\n  \"progress_percentage\": 16.67,\n  \"is_completed\": false,\n  \"form_data\": {\n    \"what_building\": \"Business/Company\",\n    \"business_email\": \"test@example.com\",\n    \"has_proventous_id\": \"No\",\n    \"full_business_name\": \"Test Business Inc.\"\n  }\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/brandkit/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit",
+                        "progress"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 3 - About Your Business",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"current_step\": 3,\n  \"progress_percentage\": 25.00,\n  \"is_completed\": false,\n  \"form_data\": {\n    \"what_building\": \"Business/Company\",\n    \"business_email\": \"test@example.com\",\n    \"has_proventous_id\": \"No\",\n    \"full_business_name\": \"Test Business Inc.\",\n    \"contact_number\": \"+1234567890\",\n    \"preferred_communication\": \"email\",\n    \"industry_niche\": [\"Technology\", \"SaaS\"],\n    \"year_started\": 2023,\n    \"primary_location\": \"New York, NY\"\n  }\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/brandkit/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit",
+                        "progress"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 4 - Audience Clarity",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"current_step\": 4,\n  \"progress_percentage\": 33.33,\n  \"is_completed\": false,\n  \"form_data\": {\n    \"what_building\": \"Business/Company\",\n    \"business_email\": \"test@example.com\",\n    \"has_proventous_id\": \"No\",\n    \"full_business_name\": \"Test Business Inc.\",\n    \"contact_number\": \"+1234567890\",\n    \"preferred_communication\": \"email\",\n    \"industry_niche\": [\"Technology\", \"SaaS\"],\n    \"year_started\": 2023,\n    \"primary_location\": \"New York, NY\",\n    \"desired_feeling\": \"inspired\",\n    \"target_interests\": [\"Technology\", \"Innovation\"],\n    \"target_professions\": [\"Entrepreneurs\", \"Developers\"],\n    \"target_reach_locations\": [\"Online\", \"Social Media\"],\n    \"target_age_groups\": [\"Young Adults (20–29)\", \"Adults (30–39)\"]\n  }\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/brandkit/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit",
+                        "progress"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 5 - Team Culture",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"current_step\": 5,\n  \"progress_percentage\": 41.67,\n  \"is_completed\": false,\n  \"form_data\": {\n    \"what_building\": \"Business/Company\",\n    \"business_email\": \"test@example.com\",\n    \"has_proventous_id\": \"No\",\n    \"full_business_name\": \"Test Business Inc.\",\n    \"contact_number\": \"+1234567890\",\n    \"preferred_communication\": \"email\",\n    \"industry_niche\": [\"Technology\", \"SaaS\"],\n    \"year_started\": 2023,\n    \"primary_location\": \"New York, NY\",\n    \"desired_feeling\": \"inspired\",\n    \"target_interests\": [\"Technology\", \"Innovation\"],\n    \"target_professions\": [\"Entrepreneurs\", \"Developers\"],\n    \"target_reach_locations\": [\"Online\", \"Social Media\"],\n    \"target_age_groups\": [\"Young Adults (20–29)\", \"Adults (30–39)\"],\n    \"culture_words\": [\"Innovative\", \"Collaborative\", \"Fast-paced\"],\n    \"team_traditions\": \"Weekly innovation sessions\"\n  }\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/brandkit/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit",
+                        "progress"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 6 - Brand Identity",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"current_step\": 6,\n  \"progress_percentage\": 50.00,\n  \"is_completed\": false,\n  \"form_data\": {\n    \"what_building\": \"Business/Company\",\n    \"business_email\": \"test@example.com\",\n    \"has_proventous_id\": \"No\",\n    \"full_business_name\": \"Test Business Inc.\",\n    \"contact_number\": \"+1234567890\",\n    \"preferred_communication\": \"email\",\n    \"industry_niche\": [\"Technology\", \"SaaS\"],\n    \"year_started\": 2023,\n    \"primary_location\": \"New York, NY\",\n    \"desired_feeling\": \"inspired\",\n    \"target_interests\": [\"Technology\", \"Innovation\"],\n    \"target_professions\": [\"Entrepreneurs\", \"Developers\"],\n    \"target_reach_locations\": [\"Online\", \"Social Media\"],\n    \"target_age_groups\": [\"Young Adults (20–29)\", \"Adults (30–39)\"],\n    \"culture_words\": [\"Innovative\", \"Collaborative\", \"Fast-paced\"],\n    \"team_traditions\": \"Weekly innovation sessions\",\n    \"reason1\": \"Solve complex problems\",\n    \"reason2\": \"Innovate in the industry\",\n    \"reason3\": \"Help businesses grow\",\n    \"brand_soul\": \"Innovation-driven problem solver\",\n    \"personality_words\": [\"Innovative\", \"Professional\", \"Reliable\"],\n    \"brand_voice\": [\"Professional\", \"Friendly\"]\n  }\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/brandkit/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit",
+                        "progress"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 7 - Visual Preferences",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"current_step\": 7,\n  \"progress_percentage\": 58.33,\n  \"is_completed\": false,\n  \"form_data\": {\n    \"what_building\": \"Business/Company\",\n    \"business_email\": \"test@example.com\",\n    \"has_proventous_id\": \"No\",\n    \"full_business_name\": \"Test Business Inc.\",\n    \"contact_number\": \"+1234567890\",\n    \"preferred_communication\": \"email\",\n    \"industry_niche\": [\"Technology\", \"SaaS\"],\n    \"year_started\": 2023,\n    \"primary_location\": \"New York, NY\",\n    \"desired_feeling\": \"inspired\",\n    \"target_interests\": [\"Technology\", \"Innovation\"],\n    \"target_professions\": [\"Entrepreneurs\", \"Developers\"],\n    \"target_reach_locations\": [\"Online\", \"Social Media\"],\n    \"target_age_groups\": [\"Young Adults (20–29)\", \"Adults (30–39)\"],\n    \"culture_words\": [\"Innovative\", \"Collaborative\", \"Fast-paced\"],\n    \"team_traditions\": \"Weekly innovation sessions\",\n    \"reason1\": \"Solve complex problems\",\n    \"reason2\": \"Innovate in the industry\",\n    \"reason3\": \"Help businesses grow\",\n    \"brand_soul\": \"Innovation-driven problem solver\",\n    \"personality_words\": [\"Innovative\", \"Professional\", \"Reliable\"],\n    \"brand_voice\": [\"Professional\", \"Friendly\"],\n    \"has_logo\": \"no\",\n    \"logo_action\": [\"Create\"],\n    \"preferred_colors\": [\"#2563eb\", \"#1e40af\"],\n    \"colors_to_avoid\": [\"#dc2626\", \"#991b1b\"],\n    \"font_styles\": [\"Sans-serif\", \"Modern\"],\n    \"design_style\": [\"Minimalist\", \"Modern\"]\n  }\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/brandkit/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit",
+                        "progress"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 8 - Collateral Needs",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"current_step\": 8,\n  \"progress_percentage\": 66.67,\n  \"is_completed\": false,\n  \"form_data\": {\n    \"what_building\": \"Business/Company\",\n    \"business_email\": \"test@example.com\",\n    \"has_proventous_id\": \"No\",\n    \"full_business_name\": \"Test Business Inc.\",\n    \"contact_number\": \"+1234567890\",\n    \"preferred_communication\": \"email\",\n    \"industry_niche\": [\"Technology\", \"SaaS\"],\n    \"year_started\": 2023,\n    \"primary_location\": \"New York, NY\",\n    \"desired_feeling\": \"inspired\",\n    \"target_interests\": [\"Technology\", \"Innovation\"],\n    \"target_professions\": [\"Entrepreneurs\", \"Developers\"],\n    \"target_reach_locations\": [\"Online\", \"Social Media\"],\n    \"target_age_groups\": [\"Young Adults (20–29)\", \"Adults (30–39)\"],\n    \"culture_words\": [\"Innovative\", \"Collaborative\", \"Fast-paced\"],\n    \"team_traditions\": \"Weekly innovation sessions\",\n    \"reason1\": \"Solve complex problems\",\n    \"reason2\": \"Innovate in the industry\",\n    \"reason3\": \"Help businesses grow\",\n    \"brand_soul\": \"Innovation-driven problem solver\",\n    \"personality_words\": [\"Innovative\", \"Professional\", \"Reliable\"],\n    \"brand_voice\": [\"Professional\", \"Friendly\"],\n    \"has_logo\": \"no\",\n    \"logo_action\": [\"Create\"],\n    \"preferred_colors\": [\"#2563eb\", \"#1e40af\"],\n    \"colors_to_avoid\": [\"#dc2626\", \"#991b1b\"],\n    \"font_styles\": [\"Sans-serif\", \"Modern\"],\n    \"design_style\": [\"Minimalist\", \"Modern\"],\n    \"brand_kit_usage\": [\"Website\", \"Social Media\", \"Print Materials\"],\n    \"brand_elements_needed\": [\"Logo\", \"Color Palette\", \"Typography\"],\n    \"file_format_preferences\": [\"PNG\", \"PDF\", \"SVG\"]\n  }\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/brandkit/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit",
+                        "progress"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 9 - Business Goals & Vision",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"current_step\": 9,\n  \"progress_percentage\": 75.00,\n  \"is_completed\": false,\n  \"form_data\": {\n    \"what_building\": \"Business/Company\",\n    \"business_email\": \"test@example.com\",\n    \"has_proventous_id\": \"No\",\n    \"full_business_name\": \"Test Business Inc.\",\n    \"contact_number\": \"+1234567890\",\n    \"preferred_communication\": \"email\",\n    \"industry_niche\": [\"Technology\", \"SaaS\"],\n    \"year_started\": 2023,\n    \"primary_location\": \"New York, NY\",\n    \"desired_feeling\": \"inspired\",\n    \"target_interests\": [\"Technology\", \"Innovation\"],\n    \"target_professions\": [\"Entrepreneurs\", \"Developers\"],\n    \"target_reach_locations\": [\"Online\", \"Social Media\"],\n    \"target_age_groups\": [\"Young Adults (20–29)\", \"Adults (30–39)\"],\n    \"culture_words\": [\"Innovative\", \"Collaborative\", \"Fast-paced\"],\n    \"team_traditions\": \"Weekly innovation sessions\",\n    \"reason1\": \"Solve complex problems\",\n    \"reason2\": \"Innovate in the industry\",\n    \"reason3\": \"Help businesses grow\",\n    \"brand_soul\": \"Innovation-driven problem solver\",\n    \"personality_words\": [\"Innovative\", \"Professional\", \"Reliable\"],\n    \"brand_voice\": [\"Professional\", \"Friendly\"],\n    \"has_logo\": \"no\",\n    \"logo_action\": [\"Create\"],\n    \"preferred_colors\": [\"#2563eb\", \"#1e40af\"],\n    \"colors_to_avoid\": [\"#dc2626\", \"#991b1b\"],\n    \"font_styles\": [\"Sans-serif\", \"Modern\"],\n    \"design_style\": [\"Minimalist\", \"Modern\"],\n    \"brand_kit_usage\": [\"Website\", \"Social Media\", \"Print Materials\"],\n    \"brand_elements_needed\": [\"Logo\", \"Color Palette\", \"Typography\"],\n    \"file_format_preferences\": [\"PNG\", \"PDF\", \"SVG\"],\n    \"primary_goal_this_year\": \"Launch MVP and get first 100 customers\",\n    \"short_term_goals\": \"Improve user onboarding and reduce churn\",\n    \"three_to_five_year_goal\": \"Become market leader in our niche\",\n    \"mid_term_goals\": \"Expand to international markets\",\n    \"long_term_vision\": \"Revolutionize how businesses handle complex workflows\",\n    \"success_metrics\": [\"Revenue Growth\", \"Customer Satisfaction\"]\n  }\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/brandkit/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit",
+                        "progress"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 10 - Mission, Vision & Values",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"current_step\": 10,\n  \"progress_percentage\": 83.33,\n  \"is_completed\": false,\n  \"form_data\": {\n    \"what_building\": \"Business/Company\",\n    \"business_email\": \"test@example.com\",\n    \"has_proventous_id\": \"No\",\n    \"full_business_name\": \"Test Business Inc.\",\n    \"contact_number\": \"+1234567890\",\n    \"preferred_communication\": \"email\",\n    \"industry_niche\": [\"Technology\", \"SaaS\"],\n    \"year_started\": 2023,\n    \"primary_location\": \"New York, NY\",\n    \"desired_feeling\": \"inspired\",\n    \"target_interests\": [\"Technology\", \"Innovation\"],\n    \"target_professions\": [\"Entrepreneurs\", \"Developers\"],\n    \"target_reach_locations\": [\"Online\", \"Social Media\"],\n    \"target_age_groups\": [\"Young Adults (20–29)\", \"Adults (30–39)\"],\n    \"culture_words\": [\"Innovative\", \"Collaborative\", \"Fast-paced\"],\n    \"team_traditions\": \"Weekly innovation sessions\",\n    \"reason1\": \"Solve complex problems\",\n    \"reason2\": \"Innovate in the industry\",\n    \"reason3\": \"Help businesses grow\",\n    \"brand_soul\": \"Innovation-driven problem solver\",\n    \"personality_words\": [\"Innovative\", \"Professional\", \"Reliable\"],\n    \"brand_voice\": [\"Professional\", \"Friendly\"],\n    \"has_logo\": \"no\",\n    \"logo_action\": [\"Create\"],\n    \"preferred_colors\": [\"#2563eb\", \"#1e40af\"],\n    \"colors_to_avoid\": [\"#dc2626\", \"#991b1b\"],\n    \"font_styles\": [\"Sans-serif\", \"Modern\"],\n    \"design_style\": [\"Minimalist\", \"Modern\"],\n    \"brand_kit_usage\": [\"Website\", \"Social Media\", \"Print Materials\"],\n    \"brand_elements_needed\": [\"Logo\", \"Color Palette\", \"Typography\"],\n    \"file_format_preferences\": [\"PNG\", \"PDF\", \"SVG\"],\n    \"primary_goal_this_year\": \"Launch MVP and get first 100 customers\",\n    \"short_term_goals\": \"Improve user onboarding and reduce churn\",\n    \"three_to_five_year_goal\": \"Become market leader in our niche\",\n    \"mid_term_goals\": \"Expand to international markets\",\n    \"long_term_vision\": \"Revolutionize how businesses handle complex workflows\",\n    \"success_metrics\": [\"Revenue Growth\", \"Customer Satisfaction\"],\n    \"business_mission\": \"Empower businesses with innovative solutions\",\n    \"long_term_vision_ai\": \"Transform business operations globally\",\n    \"business_values\": [\"Innovation\", \"Excellence\", \"Customer-First\"],\n    \"business_journey_stage\": \"growing\",\n    \"spending_type\": \"premium\",\n    \"other_audiences\": \"Enterprise clients and international markets\"\n  }\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/brandkit/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit",
+                        "progress"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 11 - Wrap-Up",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"current_step\": 11,\n  \"progress_percentage\": 91.67,\n  \"is_completed\": false,\n  \"form_data\": {\n    \"what_building\": \"Business/Company\",\n    \"business_email\": \"test@example.com\",\n    \"has_proventous_id\": \"No\",\n    \"full_business_name\": \"Test Business Inc.\",\n    \"contact_number\": \"+1234567890\",\n    \"preferred_communication\": \"email\",\n    \"industry_niche\": [\"Technology\", \"SaaS\"],\n    \"year_started\": 2023,\n    \"primary_location\": \"New York, NY\",\n    \"desired_feeling\": \"inspired\",\n    \"target_interests\": [\"Technology\", \"Innovation\"],\n    \"target_professions\": [\"Entrepreneurs\", \"Developers\"],\n    \"target_reach_locations\": [\"Online\", \"Social Media\"],\n    \"target_age_groups\": [\"Young Adults (20–29)\", \"Adults (30–39)\"],\n    \"culture_words\": [\"Innovative\", \"Collaborative\", \"Fast-paced\"],\n    \"team_traditions\": \"Weekly innovation sessions\",\n    \"reason1\": \"Solve complex problems\",\n    \"reason2\": \"Innovate in the industry\",\n    \"reason3\": \"Help businesses grow\",\n    \"brand_soul\": \"Innovation-driven problem solver\",\n    \"personality_words\": [\"Innovative\", \"Professional\", \"Reliable\"],\n    \"brand_voice\": [\"Professional\", \"Friendly\"],\n    \"has_logo\": \"no\",\n    \"logo_action\": [\"Create\"],\n    \"preferred_colors\": [\"#2563eb\", \"#1e40af\"],\n    \"colors_to_avoid\": [\"#dc2626\", \"#991b1b\"],\n    \"font_styles\": [\"Sans-serif\", \"Modern\"],\n    \"design_style\": [\"Minimalist\", \"Modern\"],\n    \"brand_kit_usage\": [\"Website\", \"Social Media\", \"Print Materials\"],\n    \"brand_elements_needed\": [\"Logo\", \"Color Palette\", \"Typography\"],\n    \"file_format_preferences\": [\"PNG\", \"PDF\", \"SVG\"],\n    \"primary_goal_this_year\": \"Launch MVP and get first 100 customers\",\n    \"short_term_goals\": \"Improve user onboarding and reduce churn\",\n    \"three_to_five_year_goal\": \"Become market leader in our niche\",\n    \"mid_term_goals\": \"Expand to international markets\",\n    \"long_term_vision\": \"Revolutionize how businesses handle complex workflows\",\n    \"success_metrics\": [\"Revenue Growth\", \"Customer Satisfaction\"],\n    \"business_mission\": \"Empower businesses with innovative solutions\",\n    \"long_term_vision_ai\": \"Transform business operations globally\",\n    \"business_values\": [\"Innovation\", \"Excellence\", \"Customer-First\"],\n    \"business_journey_stage\": \"growing\",\n    \"spending_type\": \"premium\",\n    \"other_audiences\": \"Enterprise clients and international markets\",\n    \"special_requirements\": \"Must work well on mobile devices\",\n    \"brand_kit_timeline\": \"Within 1 month\",\n    \"review_approval_person\": \"John Doe\"\n  }\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/brandkit/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit",
+                        "progress"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Step 12 - Uploads & Reference",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"current_step\": 12,\n  \"progress_percentage\": 100.00,\n  \"is_completed\": true,\n  \"form_data\": {\n    \"what_building\": \"Business/Company\",\n    \"business_email\": \"test@example.com\",\n    \"has_proventous_id\": \"No\",\n    \"full_business_name\": \"Test Business Inc.\",\n    \"contact_number\": \"+1234567890\",\n    \"preferred_communication\": \"email\",\n    \"industry_niche\": [\"Technology\", \"SaaS\"],\n    \"year_started\": 2023,\n    \"primary_location\": \"New York, NY\",\n    \"desired_feeling\": \"inspired\",\n    \"target_interests\": [\"Technology\", \"Innovation\"],\n    \"target_professions\": [\"Entrepreneurs\", \"Developers\"],\n    \"target_reach_locations\": [\"Online\", \"Social Media\"],\n    \"target_age_groups\": [\"Young Adults (20–29)\", \"Adults (30–39)\"],\n    \"culture_words\": [\"Innovative\", \"Collaborative\", \"Fast-paced\"],\n    \"team_traditions\": \"Weekly innovation sessions\",\n    \"reason1\": \"Solve complex problems\",\n    \"reason2\": \"Innovate in the industry\",\n    \"reason3\": \"Help businesses grow\",\n    \"brand_soul\": \"Innovation-driven problem solver\",\n    \"personality_words\": [\"Innovative\", \"Professional\", \"Reliable\"],\n    \"brand_voice\": [\"Professional\", \"Friendly\"],\n    \"has_logo\": \"no\",\n    \"logo_action\": [\"Create\"],\n    \"preferred_colors\": [\"#2563eb\", \"#1e40af\"],\n    \"colors_to_avoid\": [\"#dc2626\", \"#991b1b\"],\n    \"font_styles\": [\"Sans-serif\", \"Modern\"],\n    \"design_style\": [\"Minimalist\", \"Modern\"],\n    \"brand_kit_usage\": [\"Website\", \"Social Media\", \"Print Materials\"],\n    \"brand_elements_needed\": [\"Logo\", \"Color Palette\", \"Typography\"],\n    \"file_format_preferences\": [\"PNG\", \"PDF\", \"SVG\"],\n    \"primary_goal_this_year\": \"Launch MVP and get first 100 customers\",\n    \"short_term_goals\": \"Improve user onboarding and reduce churn\",\n    \"three_to_five_year_goal\": \"Become market leader in our niche\",\n    \"mid_term_goals\": \"Expand to international markets\",\n    \"long_term_vision\": \"Revolutionize how businesses handle complex workflows\",\n    \"success_metrics\": [\"Revenue Growth\", \"Customer Satisfaction\"],\n    \"business_mission\": \"Empower businesses with innovative solutions\",\n    \"long_term_vision_ai\": \"Transform business operations globally\",\n    \"business_values\": [\"Innovation\", \"Excellence\", \"Customer-First\"],\n    \"business_journey_stage\": \"growing\",\n    \"spending_type\": \"premium\",\n    \"other_audiences\": \"Enterprise clients and international markets\",\n    \"special_requirements\": \"Must work well on mobile devices\",\n    \"brand_kit_timeline\": \"Within 1 month\",\n    \"review_approval_person\": \"John Doe\",\n    \"reference_materials\": \"https://example.com/references\"\n  }\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/brandkit/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit",
+                        "progress"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Get Form Progress",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/brandkit/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit",
+                        "progress"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Complete Form Submission",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"what_building\": \"Business/Company\",\n  \"business_email\": \"test@example.com\",\n  \"has_proventous_id\": \"No\",\n  \"full_business_name\": \"Test Business Inc.\",\n  \"contact_number\": \"+1234567890\",\n  \"preferred_communication\": \"email\",\n  \"industry_niche\": [\"Technology\", \"SaaS\"],\n  \"year_started\": 2023,\n  \"primary_location\": \"New York, NY\",\n  \"desired_feeling\": \"inspired\",\n  \"target_interests\": [\"Technology\", \"Innovation\"],\n  \"target_professions\": [\"Entrepreneurs\", \"Developers\"],\n  \"target_reach_locations\": [\"Online\", \"Social Media\"],\n  \"target_age_groups\": [\"Young Adults (20–29)\", \"Adults (30–39)\"],\n  \"current_customer_interests\": [\"Technology\", \"Business\"],\n  \"current_spending_habits\": [\"Value-seeking\", \"Premium\"],\n  \"current_audience_behavior\": [\"Early adopters\", \"Tech-savvy\"],\n  \"interaction_methods\": [\"Website\", \"Email\"],\n  \"customer_challenges\": \"Complex technical solutions\",\n  \"customer_motivation\": \"Innovation and efficiency\",\n  \"current_brand_feeling\": \"inspired\",\n  \"culture_words\": [\"Innovative\", \"Collaborative\", \"Fast-paced\"],\n  \"team_traditions\": \"Weekly innovation sessions\",\n  \"reason1\": \"Solve complex problems\",\n  \"reason2\": \"Innovate in the industry\",\n  \"reason3\": \"Help businesses grow\",\n  \"brand_soul\": \"Innovation-driven problem solver\",\n  \"personality_words\": [\"Innovative\", \"Professional\", \"Reliable\"],\n  \"brand_voice\": [\"Professional\", \"Friendly\"],\n  \"brand1\": \"Apple - Clean, innovative design\",\n  \"brand2\": \"Tesla - Disruptive innovation\",\n  \"brand3\": \"Google - User-focused simplicity\",\n  \"brand_avoid_associations\": \"Outdated, complex interfaces\",\n  \"has_logo\": \"no\",\n  \"logo_action\": [\"Create\"],\n  \"preferred_colors\": [\"#2563eb\", \"#1e40af\"],\n  \"colors_to_avoid\": [\"#dc2626\", \"#991b1b\"],\n  \"font_styles\": [\"Sans-serif\", \"Modern\"],\n  \"design_style\": [\"Minimalist\", \"Modern\"],\n  \"logo_type\": [\"Wordmark\", \"Symbol\"],\n  \"visual_imagery_style\": [\"Clean\", \"Professional\"],\n  \"design_inspiration_links\": \"https://example.com/inspiration\",\n  \"brand_kit_usage\": [\"Website\", \"Social Media\", \"Print Materials\"],\n  \"brand_elements_needed\": [\"Logo\", \"Color Palette\", \"Typography\"],\n  \"file_format_preferences\": [\"PNG\", \"PDF\", \"SVG\"],\n  \"primary_goal_this_year\": \"Launch MVP and get first 100 customers\",\n  \"short_term_goals\": \"Improve user onboarding and reduce churn\",\n  \"three_to_five_year_goal\": \"Become market leader in our niche\",\n  \"mid_term_goals\": \"Expand to international markets\",\n  \"long_term_vision\": \"Revolutionize how businesses handle complex workflows\",\n  \"success_metrics\": [\"Revenue Growth\", \"Customer Satisfaction\"],\n  \"business_mission\": \"Empower businesses with innovative solutions\",\n  \"long_term_vision_ai\": \"Transform business operations globally\",\n  \"business_values\": [\"Innovation\", \"Excellence\", \"Customer-First\"],\n  \"business_journey_stage\": \"growing\",\n  \"spending_type\": \"premium\",\n  \"other_audiences\": \"Enterprise clients and international markets\",\n  \"special_requirements\": \"Must work well on mobile devices\",\n  \"brand_kit_timeline\": \"Within 1 month\",\n  \"review_approval_person\": \"John Doe\",\n  \"reference_materials\": \"https://example.com/references\",\n  \"current_step\": 12,\n  \"progress_percentage\": 100.00,\n  \"is_completed\": true\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/brandkit",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Delete Form",
+            "request": {
+                "method": "DELETE",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/brandkit",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "brandkit"
+                    ]
+                }
+            }
+        }
+    ]
+}

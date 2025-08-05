@@ -10,11 +10,13 @@ const {
   deleteBrandKitForm
 } = require('../controllers/brandKitController');
 
-// User routes (require authentication)
-router.post('/', authenticateToken, createOrUpdateBrandKitForm);
-router.get('/', authenticateToken, getBrandKitForm);
-router.put('/', authenticateToken, updateFormProgress);
-router.delete('/', authenticateToken, deleteBrandKitForm);
+// Form Progress Routes (Primary routes for step-by-step form handling)
+router.put('/progress', authenticateToken, updateFormProgress); // Update form step by step
+router.get('/progress', authenticateToken, getBrandKitForm);    // Get current form data
+
+// Complete Form Routes
+router.post('/', authenticateToken, createOrUpdateBrandKitForm); // Create/update complete form
+router.delete('/', authenticateToken, deleteBrandKitForm);       // Delete form
 
 // Admin routes (require admin role)
 router.get('/admin/all', authenticateToken, requireRole(['admin']), getAllBrandKitForms);
