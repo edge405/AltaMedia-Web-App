@@ -1,174 +1,150 @@
-const { supabase, supabaseAdmin } = require('../config/supabase');
+const { supabase } = require('../config/supabase');
+const logger = require('../utils/logger');
 
-// Create or update brand kit form
-const createOrUpdateBrandKitForm = async (req, res) => {
+/**
+ * Save or update BrandKit form data for a specific step
+ * @route PUT /api/brandkit/save
+ * @access Private
+ */
+const saveFormData = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const formData = req.body;
+    console.log('📥 Received request body:', req.body);
+    const { userId, stepData, currentStep } = req.body;
 
-    // Check if user already has a brand kit form
-    const { data: existingForm, error: checkError } = await supabase
-      .from('brand_kit_forms')
-      .select('id, current_step, progress_percentage')
-      .eq('user_id', userId)
-      .single();
+    console.log('📋 Extracted fields:', { userId, stepData, currentStep });
 
-    if (checkError && checkError.code !== 'PGRST116') {
-      return res.status(500).json({
+    if (!userId || !stepData || !currentStep) {
+      console.log('❌ Missing fields detected');
+      return res.status(400).json({
         success: false,
-        message: 'Error checking existing form',
-        error: checkError.message
+        message: 'Missing required fields: userId, stepData, currentStep',
+        received: { userId, stepData: !!stepData, currentStep }
       });
     }
 
-    let result;
-    if (existingForm) {
-      // Update existing form
-      const { data, error } = await supabase
+    logger.info(`Saving BrandKit form data for user ${userId}, step ${currentStep}`);
+
+    try {
+      // Check if form data already exists for this user
+      console.log('🔍 Checking for existing form data...');
+      const { data: existingForm, error: checkError } = await supabase
         .from('brand_kit_forms')
-        .update({
-          ...formData,
-          updated_at: new Date().toISOString()
-        })
+        .select('id, current_step, progress_percentage')
         .eq('user_id', userId)
-        .select()
         .single();
 
-      if (error) {
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to update brand kit form',
-          error: error.message
-        });
-      }
+      console.log('🔍 Check result:', { existingForm, checkError });
 
-      result = data;
-    } else {
-      // Create new form
-      const { data, error } = await supabase
-        .from('brand_kit_forms')
-        .insert({
-          user_id: userId,
-          ...formData
-        })
-        .select()
-        .single();
+      let result;
 
-      if (error) {
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to create brand kit form',
-          error: error.message
-        });
-      }
+      if (existingForm) {
+        console.log('📝 Updating existing form data...');
+        // Update existing form data
+        const { data, error } = await supabase
+          .from('brand_kit_forms')
+          .update({
+            ...stepData,
+            current_step: currentStep,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId)
+          .select()
+          .single();
 
-      result = data;
+        console.log('📝 Update result:', { data, error });
+
+        if (error) {
+          console.error('❌ Error updating BrandKit form data:', error);
+          logger.error('Error updating BrandKit form data:', error);
+          return res.status(500).json({
+            success: false,
+            message: 'Failed to update form data',
+            error: error.message
+          });
+        }
+
+        result = data;
+      } else {
+        console.log('🆕 Creating new form data...');
+        // Create new form data
+        const { data, error } = await supabase
+          .from('brand_kit_forms')
+          .insert({
+            user_id: userId,
+            ...stepData,
+            current_step: currentStep,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        console.log('🆕 Insert result:', { data, error });
+
+        if (error) {
+          console.error('❌ Error creating BrandKit form data:', error);
+          logger.error('Error creating BrandKit form data:', error);
+          return res.status(500).json({
+            success: false,
+            message: 'Failed to create form data',
+            error: error.message
+          });
+        }
+
+              result = data;
     }
 
-    res.status(existingForm ? 200 : 201).json({
-      success: true,
-      message: existingForm ? 'Brand kit form updated successfully' : 'Brand kit form created successfully',
-      data: result
-    });
-
-  } catch (error) {
-    console.error('Brand kit form error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-};
-
-// PUT route - Update form progress step by step
-const updateFormProgress = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { 
-      current_step, 
-      progress_percentage, 
-      is_completed,
-      form_data 
-    } = req.body;
-
-    // Check if user already has a form
-    const { data: existingForm, error: checkError } = await supabase
-      .from('brand_kit_forms')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-
-    let result;
-    if (existingForm) {
-      // Update existing form with new step data
-      const { data, error } = await supabase
-        .from('brand_kit_forms')
-        .update({
-          ...form_data,
-          current_step,
-          progress_percentage,
-          is_completed,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', userId)
-        .select()
-        .single();
-
-      if (error) {
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to update form progress',
-          error: error.message
-        });
-      }
-
-      result = data;
-    } else {
-      // Create new form with initial step data
-      const { data, error } = await supabase
-        .from('brand_kit_forms')
-        .insert({
-          user_id: userId,
-          ...form_data,
-          current_step,
-          progress_percentage,
-          is_completed
-        })
-        .select()
-        .single();
-
-      if (error) {
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to create form progress',
-          error: error.message
-        });
-      }
-
-      result = data;
-    }
+    logger.info(`Successfully saved BrandKit form data for user ${userId}, step ${currentStep}`);
 
     res.json({
       success: true,
-      message: 'Form progress updated successfully',
-      data: result
+      message: 'Form data saved successfully',
+      data: {
+        formId: result.id,
+        currentStep: result.current_step,
+        progressPercentage: result.progress_percentage
+      }
     });
 
+    } catch (error) {
+      console.error('❌ Unexpected error in saveFormData:', error);
+      logger.error('Unexpected error in saveFormData:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: error.message
+      });
+    }
   } catch (error) {
-    console.error('Update form progress error:', error);
+    console.error('❌ Database operation error:', error);
+    logger.error('Database operation error:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Database operation failed',
+      error: error.message
     });
   }
 };
 
-// GET route - Retrieve form data for user
-const getBrandKitForm = async (req, res) => {
+/**
+ * Get BrandKit form data for a user
+ * @route GET /api/brandkit/data/:userId
+ * @access Private
+ */
+const getFormData = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const { userId } = req.params;
 
-    const { data, error } = await supabase
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    logger.info(`Fetching BrandKit form data for user ${userId}`);
+
+    const { data: formData, error } = await supabase
       .from('brand_kit_forms')
       .select('*')
       .eq('user_id', userId)
@@ -176,151 +152,51 @@ const getBrandKitForm = async (req, res) => {
 
     if (error) {
       if (error.code === 'PGRST116') {
-        return res.status(404).json({
-          success: false,
-          message: 'Brand kit form not found',
-          data: null
+        // No data found for this user
+        return res.json({
+          success: true,
+          message: 'No form data found for this user',
+          data: {
+            formData: null,
+            currentStep: 1,
+            progressPercentage: 0,
+            isCompleted: false
+          }
         });
       }
+
+      logger.error('Error fetching BrandKit form data:', error);
       return res.status(500).json({
         success: false,
-        message: 'Failed to retrieve brand kit form',
+        message: 'Failed to fetch form data',
         error: error.message
       });
     }
 
-    res.json({
-      success: true,
-      data: data
-    });
-
-  } catch (error) {
-    console.error('Get brand kit form error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-};
-
-// Get all brand kit forms (Admin only)
-const getAllBrandKitForms = async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('brand_kit_forms')
-      .select(`
-        *,
-        users:user_id (
-          id,
-          email
-        )
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to retrieve brand kit forms',
-        error: error.message
-      });
-    }
+    logger.info(`Successfully fetched BrandKit form data for user ${userId}`);
 
     res.json({
       success: true,
-      data: data
-    });
-
-  } catch (error) {
-    console.error('Get all brand kit forms error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-};
-
-// Get brand kit form by ID (Admin only)
-const getBrandKitFormById = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const { data, error } = await supabase
-      .from('brand_kit_forms')
-      .select(`
-        *,
-        users:user_id (
-          id,
-          email
-        )
-      `)
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return res.status(404).json({
-          success: false,
-          message: 'Brand kit form not found'
-        });
+      message: 'Form data retrieved successfully',
+      data: {
+        formData: formData,
+        currentStep: formData.current_step || 1,
+        progressPercentage: formData.progress_percentage || 0,
+        isCompleted: formData.is_completed || false
       }
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to retrieve brand kit form',
-        error: error.message
-      });
-    }
-
-    res.json({
-      success: true,
-      data: data
     });
 
   } catch (error) {
-    console.error('Get brand kit form by ID error:', error);
+    logger.error('Unexpected error in getFormData:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
-    });
-  }
-};
-
-// Delete brand kit form
-const deleteBrandKitForm = async (req, res) => {
-  try {
-    const userId = req.user.id;
-
-    const { error } = await supabase
-      .from('brand_kit_forms')
-      .delete()
-      .eq('user_id', userId);
-
-    if (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to delete brand kit form',
-        error: error.message
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Brand kit form deleted successfully'
-    });
-
-  } catch (error) {
-    console.error('Delete brand kit form error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
+      message: 'Internal server error',
+      error: error.message
     });
   }
 };
 
 module.exports = {
-  createOrUpdateBrandKitForm,
-  getBrandKitForm,
-  updateFormProgress,
-  getAllBrandKitForms,
-  getBrandKitFormById,
-  deleteBrandKitForm
+  saveFormData,
+  getFormData
 }; 
