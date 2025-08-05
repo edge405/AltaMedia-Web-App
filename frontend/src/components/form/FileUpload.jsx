@@ -22,7 +22,7 @@ const FileUpload = ({ value, onChange, placeholder }) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFiles(e.dataTransfer.files);
     }
@@ -50,19 +50,18 @@ const FileUpload = ({ value, onChange, placeholder }) => {
   return (
     <div className="space-y-3">
       {/* URL Input */}
-      <Input
+      {/* <Input
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder || "Paste link or upload files below"}
-      />
-      
+      /> */}
+
       {/* File Upload Area */}
       <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-          dragActive 
-            ? "border-primary bg-primary/5" 
-            : "border-muted-foreground/25 hover:border-muted-foreground/50"
-        }`}
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragActive
+          ? "border-primary bg-primary/5"
+          : "border-muted-foreground/25 hover:border-muted-foreground/50"
+          }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -89,7 +88,7 @@ const FileUpload = ({ value, onChange, placeholder }) => {
           accept="image/*,.pdf,.doc,.docx"
         />
       </div>
-      
+
       {/* Uploaded Files */}
       {uploadedFiles.length > 0 && (
         <div className="space-y-2">

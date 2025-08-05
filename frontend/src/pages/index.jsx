@@ -5,6 +5,7 @@ import Dashboard from "./Dashboard";
 import Profile from "./Profile";
 import Forms from "./Forms.jsx";
 import KnowingYouFormPage from "./KnowingYouFormPage.jsx";
+import BrandKitFormPage from "./BrandKitFormPage.jsx";
 import AdminLogin from "./AdminLogin.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
 import AdminTest from "./AdminTest.jsx";
@@ -19,6 +20,7 @@ const PAGES = {
     Profile: Profile,
     Forms: Forms,
     KnowYourForm: KnowingYouFormPage,
+    BrandKitForm: BrandKitFormPage,
 }
 
 function _getCurrentPage(url) {
@@ -91,6 +93,14 @@ function PagesContent() {
                 <Layout currentPageName={currentPage}>
                     <ProtectedRoute>
                         <KnowingYouFormPage />
+                    </ProtectedRoute>
+                </Layout>
+            } />
+
+            <Route path="/brandkit-form" element={
+                <Layout currentPageName={currentPage}>
+                    <ProtectedRoute>
+                        <BrandKitFormPage />
                     </ProtectedRoute>
                 </Layout>
             } />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import KnowingYouForm from '@/components/form/KnowingYouForm';
+import BrandKitForm from '@/components/form/BrandKitForm';
 
 const KnowingYouFormPage = () => {
   return (
@@ -14,7 +15,7 @@ const KnowingYouFormPage = () => {
             Complete the "Knowing You Form" to help us understand your business and create the perfect brand identity.
           </p>
         </div>
-        
+
         <KnowingYouForm />
       </div>
     </div>

@@ -142,8 +142,15 @@ export default function Profile({ isDarkMode = false }) {
   };
 
   const handleChangePassword = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("New passwords do not match");
+    // Validate current password
+    if (!passwordData.currentPassword) {
+      toast.error("Current password is required");
+      return;
+    }
+
+    // Validate new password
+    if (!passwordData.newPassword) {
+      toast.error("New password is required");
       return;
     }
 
@@ -152,19 +159,38 @@ export default function Profile({ isDarkMode = false }) {
       return;
     }
 
+    // Validate password confirmation
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    // Check if new password is different from current
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      toast.error("New password must be different from current password");
+      return;
+    }
+
     try {
       const result = await changePassword(passwordData.currentPassword, passwordData.newPassword);
 
       if (result.success) {
+        // Clear form data
         setPasswordData({
           currentPassword: "",
           newPassword: "",
           confirmPassword: ""
         });
+
+        // Close modal
         document.getElementById('password-modal').close();
+
+        // Show success message
+        toast.success("Password changed successfully!");
       }
     } catch (error) {
       console.error("Error changing password:", error);
+      // Error message is already handled by the changePassword function
     }
   };
 
@@ -656,64 +682,100 @@ export default function Profile({ isDarkMode = false }) {
       </Tabs>
 
       {/* Password Change Modal */}
-      <dialog id="password-modal" className="modal">
-        <div className="modal-box bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-w-md w-full">
-          <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-4">Change Password</h3>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="current-password" className="text-gray-700 dark:text-gray-300">Current Password</Label>
-              <div className="relative">
+      <dialog id="password-modal" className="modal backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-bold text-xl text-gray-900 dark:text-gray-100">Change Password</h3>
+              <button
+                onClick={() => document.getElementById('password-modal').close()}
+                className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="current-password" className="text-gray-700 dark:text-gray-300 font-medium">
+                  Current Password
+                </Label>
+                <div className="relative mt-1">
+                  <Input
+                    id="current-password"
+                    type={showPassword ? "text" : "password"}
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    placeholder="Enter your current password"
+                    className="pr-10 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="new-password" className="text-gray-700 dark:text-gray-300 font-medium">
+                  New Password
+                </Label>
                 <Input
-                  id="current-password"
-                  type={showPassword ? "text" : "password"}
-                  value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                  className="pr-10"
+                  id="new-password"
+                  type="password"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                  placeholder="Enter your new password"
+                  className="mt-1 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Password must be at least 6 characters long
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="confirm-password" className="text-gray-700 dark:text-gray-300 font-medium">
+                  Confirm New Password
+                </Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  placeholder="Confirm your new password"
+                  className="mt-1 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+                />
               </div>
             </div>
-            <div>
-              <Label htmlFor="new-password" className="text-gray-700 dark:text-gray-300">New Password</Label>
-              <Input
-                id="new-password"
-                type="password"
-                value={passwordData.newPassword}
-                onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-              />
+
+            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPasswordData({
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: ""
+                  });
+                  document.getElementById('password-modal').close();
+                }}
+                className="hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleChangePassword}
+                className="bg-blue-600 hover:bg-blue-700 text-white transform hover:scale-105 transition-all duration-200"
+              >
+                <Key className="w-4 h-4 mr-2" />
+                Change Password
+              </Button>
             </div>
-            <div>
-              <Label htmlFor="confirm-password" className="text-gray-700 dark:text-gray-300">Confirm New Password</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={passwordData.confirmPassword}
-                onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-              />
-            </div>
-          </div>
-          <div className="modal-action">
-            <Button
-              variant="outline"
-              onClick={() => document.getElementById('password-modal').close()}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                handleChangePassword();
-                document.getElementById('password-modal').close();
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Change Password
-            </Button>
           </div>
         </div>
       </dialog>

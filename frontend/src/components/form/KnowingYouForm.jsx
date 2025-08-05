@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Check, Send, ArrowLeft } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Check, Send, ArrowLeft, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { brandKitApi, transformToDatabaseFormat, transformToFrontendFormat } from '@/utils/brandKitApi';
 import ProgressBar from './ProgressBar';
 import FormField from './FormField';
 import TagInput from './TagInput';
@@ -19,9 +22,13 @@ import MapPicker from './MapPicker';
 
 const KnowingYouForm = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState(null);
 
   const totalSteps = 11;
   const steps = [
@@ -38,16 +45,86 @@ const KnowingYouForm = () => {
     'Upload References'
   ];
 
+  // Load existing form data on component mount
+  useEffect(() => {
+    const loadFormData = async () => {
+      // For testing, use a default user ID if not authenticated
+      const userId = user?.id || 1;
+
+      if (!user?.id) {
+        console.log('No authenticated user, using test user ID:', userId);
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await brandKitApi.getFormData(userId);
+
+        if (response.success && response.data?.formData) {
+          const frontendData = transformToFrontendFormat(response.data.formData);
+          setFormData(frontendData);
+          setCurrentStep(response.data.currentStep || 1);
+          console.log('Loaded existing form data:', frontendData);
+        }
+      } catch (err) {
+        console.error('Error loading form data:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFormData();
+  }, [user?.id]);
+
   const updateFormData = (field, value) => {
+    console.log(`Field change: ${field} =`, value);
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const nextStep = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
+  const nextStep = async () => {
+    console.log('User object:', user);
+    console.log('User ID:', user?.id);
+
+    // For testing, use a default user ID if not authenticated
+    const userId = user?.id || 1;
+
+    if (!user?.id) {
+      console.log('No authenticated user, using test user ID:', userId);
+    }
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      // Transform form data to database format
+      const stepData = transformToDatabaseFormat(formData);
+
+      console.log('Saving form data for step:', currentStep);
+      console.log('User ID:', user.id);
+      console.log('Step data:', stepData);
+
+      // Save current step data
+      const response = await brandKitApi.saveFormData(userId, stepData, currentStep);
+
+      if (response.success) {
+        console.log('Form data saved successfully:', response.data);
+
+        if (currentStep < totalSteps) {
+          setCurrentStep(currentStep + 1);
+        }
+      } else {
+        setError('Failed to save form data');
+      }
+    } catch (err) {
+      console.error('Error saving form data:', err);
+      setError(err.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -57,9 +134,40 @@ const KnowingYouForm = () => {
     }
   };
 
-  const handleSubmit = () => {
-    setIsSubmitted(true);
-    console.log('Form submitted:', formData);
+  const handleSubmit = async () => {
+    // For testing, use a default user ID if not authenticated
+    const userId = user?.id || 1;
+
+    if (!user?.id) {
+      console.log('No authenticated user, using test user ID:', userId);
+    }
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      // Transform form data to database format
+      const finalData = transformToDatabaseFormat(formData);
+
+      console.log('Completing form with data:', finalData);
+
+      // Save the final step data (step 11)
+      const response = await brandKitApi.saveFormData(userId, finalData, 11);
+
+      if (response.success) {
+        console.log('Form completed successfully:', response.data);
+        setIsSubmitted(true);
+        // Show success message
+        toast.success('🎉 BrandKit form completed successfully! Your brand identity is ready.');
+      } else {
+        setError('Failed to complete form');
+      }
+    } catch (err) {
+      console.error('Error completing form:', err);
+      setError(err.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleBackToDashboard = () => {
@@ -68,27 +176,27 @@ const KnowingYouForm = () => {
 
   const renderStep1 = () => (
     <div className="space-y-8">
-             <FormField label="What are you building?" type="Dropdown" required>
-         <Select value={formData.buildingType} onValueChange={(value) => updateFormData('buildingType', value)}>
-           <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-             <SelectValue placeholder="Select what you're building" />
-           </SelectTrigger>
-           <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
-             <SelectItem value="business">Business/Company</SelectItem>
-             <SelectItem value="product">Specific Product/Service</SelectItem>
-           </SelectContent>
-         </Select>
-       </FormField>
+      <FormField label="What are you building?" type="Dropdown" required>
+        <Select value={formData.buildingType} onValueChange={(value) => updateFormData('buildingType', value)}>
+          <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            <SelectValue placeholder="Select what you're building" />
+          </SelectTrigger>
+          <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+            <SelectItem value="business">Business/Company</SelectItem>
+            <SelectItem value="product">Specific Product/Service</SelectItem>
+          </SelectContent>
+        </Select>
+      </FormField>
 
-             <FormField label="Business Email" type="Short Text" required>
-                   <Input
-            type="email"
-            value={formData.businessEmail || ''}
-            onChange={(e) => updateFormData('businessEmail', e.target.value)}
-            placeholder="Enter your business email"
-            className="w-full border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-          />
-       </FormField>
+      <FormField label="Business Email" type="Short Text" required>
+        <Input
+          type="email"
+          value={formData.businessEmail || ''}
+          onChange={(e) => updateFormData('businessEmail', e.target.value)}
+          placeholder="Enter your business email"
+          className="w-full border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+        />
+      </FormField>
 
       <FormField label="Do you have a Proventous ID?" type="Dropdown">
         <Select value={formData.hasProventousId} onValueChange={(value) => updateFormData('hasProventousId', value)}>
@@ -172,13 +280,13 @@ const KnowingYouForm = () => {
         </Select>
       </FormField>
 
-             <FormField label="Primary Location" type="Map" required>
-         <MapPicker
-           value={formData.primaryLocation || ''}
-           onChange={(value) => updateFormData('primaryLocation', value)}
-           placeholder="Enter your primary location"
-         />
-       </FormField>
+      <FormField label="Primary Location" type="Map" required>
+        <MapPicker
+          value={formData.primaryLocation || ''}
+          onChange={(value) => updateFormData('primaryLocation', value)}
+          placeholder="Enter your primary location"
+        />
+      </FormField>
 
       <FormField label="Who's Behind the Brand?" type="Long Text">
         <Textarea
@@ -190,13 +298,13 @@ const KnowingYouForm = () => {
         />
       </FormField>
 
-             <FormField label="Who Typically Buys from You Now?" type="Checkbox">
-         <CheckboxGroup
-           options={['Male', 'Female', 'Everyone']}
-           value={formData.currentCustomers || []}
-           onChange={(value) => updateFormData('currentCustomers', value)}
-         />
-       </FormField>
+      <FormField label="Who Typically Buys from You Now?" type="Checkbox">
+        <CheckboxGroup
+          options={['Male', 'Female', 'Everyone']}
+          value={formData.currentCustomers || []}
+          onChange={(value) => updateFormData('currentCustomers', value)}
+        />
+      </FormField>
 
       <FormField label="Who Do You Want to Attract?" type="Long Text" required>
         <Textarea
@@ -222,9 +330,9 @@ const KnowingYouForm = () => {
 
   const renderStep3 = () => (
     <div className="space-y-8">
-             <div className="space-y-6">
-         <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Target Market</h3>
-        
+      <div className="space-y-6">
+        <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Target Market</h3>
+
         <FormField label="Desired Emotional Response" type="Dropdown" required>
           <Select value={formData.desiredEmotion} onValueChange={(value) => updateFormData('desiredEmotion', value)}>
             <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
@@ -256,18 +364,18 @@ const KnowingYouForm = () => {
           />
         </FormField>
 
-                 <FormField label="Age Groups" type="Checkbox">
-           <CheckboxGroup
-             options={['Teens', 'Young Adults', 'Adults', 'Mature Adults', 'Seniors']}
-             value={formData.ageGroups || []}
-             onChange={(value) => updateFormData('ageGroups', value)}
-           />
-         </FormField>
+        <FormField label="Age Groups" type="Checkbox">
+          <CheckboxGroup
+            options={['Teens', 'Young Adults', 'Adults', 'Mature Adults', 'Seniors']}
+            value={formData.ageGroups || []}
+            onChange={(value) => updateFormData('ageGroups', value)}
+          />
+        </FormField>
       </div>
 
-             <div className="space-y-6">
-         <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Current Market</h3>
-        
+      <div className="space-y-6">
+        <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Current Market</h3>
+
         <FormField label="Describe Current Customers' Spending Habits" type="Tags">
           <TagInput
             value={formData.spendingHabits || []}
@@ -277,13 +385,13 @@ const KnowingYouForm = () => {
           />
         </FormField>
 
-                 <FormField label="How Do People Interact With Your Business?" type="Checkbox">
-           <CheckboxGroup
-             options={['Online', 'In-person', 'Phone', 'Email', 'Social Media', 'Mobile App']}
-             value={formData.interactionMethods || []}
-             onChange={(value) => updateFormData('interactionMethods', value)}
-           />
-         </FormField>
+        <FormField label="How Do People Interact With Your Business?" type="Checkbox">
+          <CheckboxGroup
+            options={['Online', 'In-person', 'Phone', 'Email', 'Social Media', 'Mobile App']}
+            value={formData.interactionMethods || []}
+            onChange={(value) => updateFormData('interactionMethods', value)}
+          />
+        </FormField>
 
         <FormField label="Challenges Customers Face That You Solve" type="Long Text">
           <Textarea
@@ -357,13 +465,13 @@ const KnowingYouForm = () => {
         />
       </FormField>
 
-             <FormField label="If Your Brand Spoke Like a Person" type="Checkbox">
-         <CheckboxGroup
-           options={['Friendly', 'Professional', 'Casual', 'Formal', 'Humorous', 'Serious', 'Inspirational', 'Direct']}
-           value={formData.brandTone || []}
-           onChange={(value) => updateFormData('brandTone', value)}
-         />
-       </FormField>
+      <FormField label="If Your Brand Spoke Like a Person" type="Checkbox">
+        <CheckboxGroup
+          options={['Friendly', 'Professional', 'Casual', 'Formal', 'Humorous', 'Serious', 'Inspirational', 'Direct']}
+          value={formData.brandTone || []}
+          onChange={(value) => updateFormData('brandTone', value)}
+        />
+      </FormField>
 
       <FormField label="Brand 1: Name + Why" type="Long Text">
         <Textarea
@@ -421,15 +529,15 @@ const KnowingYouForm = () => {
         </Select>
       </FormField>
 
-             {formData.hasLogo === 'yes' && (
-         <FormField label="If Yes, What Do You Want Done?" type="Checkbox">
-           <CheckboxGroup
-             options={['Keep', 'Improve', 'Redo']}
-             value={formData.logoAction || []}
-             onChange={(value) => updateFormData('logoAction', value)}
-           />
-         </FormField>
-       )}
+      {formData.hasLogo === 'yes' && (
+        <FormField label="If Yes, What Do You Want Done?" type="Checkbox">
+          <CheckboxGroup
+            options={['Keep', 'Improve', 'Redo']}
+            value={formData.logoAction || []}
+            onChange={(value) => updateFormData('logoAction', value)}
+          />
+        </FormField>
+      )}
 
       <FormField label="Preferred Brand Colors" type="Color Picker">
         <ColorPicker
@@ -447,39 +555,39 @@ const KnowingYouForm = () => {
         />
       </FormField>
 
-             <FormField label="Preferred Font Styles" type="Checkbox">
-         <CheckboxGroup
-           options={['Serif', 'Sans-serif', 'Script', 'Display', 'Modern', 'Classic', 'Bold', 'Light']}
-           value={formData.fontStyles || []}
-           onChange={(value) => updateFormData('fontStyles', value)}
-         />
-       </FormField>
+      <FormField label="Preferred Font Styles" type="Checkbox">
+        <CheckboxGroup
+          options={['Serif', 'Sans-serif', 'Script', 'Display', 'Modern', 'Classic', 'Bold', 'Light']}
+          value={formData.fontStyles || []}
+          onChange={(value) => updateFormData('fontStyles', value)}
+        />
+      </FormField>
 
-             <FormField label="Design Style" type="Checkbox">
-         <CheckboxGroup
-           options={['Minimalist', 'Bold', 'Playful', 'Professional', 'Creative', 'Traditional', 'Modern', 'Vintage']}
-           value={formData.designStyle || []}
-           onChange={(value) => updateFormData('designStyle', value)}
-         />
-       </FormField>
+      <FormField label="Design Style" type="Checkbox">
+        <CheckboxGroup
+          options={['Minimalist', 'Bold', 'Playful', 'Professional', 'Creative', 'Traditional', 'Modern', 'Vintage']}
+          value={formData.designStyle || []}
+          onChange={(value) => updateFormData('designStyle', value)}
+        />
+      </FormField>
 
-             <FormField label="Logo Type" type="Checkbox">
-         <CheckboxGroup
-           options={['Wordmark', 'Symbol', 'Combination', 'Lettermark', 'Emblem', 'Abstract']}
-           value={formData.logoType || []}
-           onChange={(value) => updateFormData('logoType', value)}
-         />
-       </FormField>
+      <FormField label="Logo Type" type="Checkbox">
+        <CheckboxGroup
+          options={['Wordmark', 'Symbol', 'Combination', 'Lettermark', 'Emblem', 'Abstract']}
+          value={formData.logoType || []}
+          onChange={(value) => updateFormData('logoType', value)}
+        />
+      </FormField>
 
-             <FormField label="Visual Imagery Style" type="Checkbox">
-         <CheckboxGroup
-           options={['Photography', 'Illustration', 'Abstract', 'Geometric', 'Nature', 'Urban', 'Hand-drawn', 'Digital']}
-           value={formData.imageryStyle || []}
-           onChange={(value) => updateFormData('imageryStyle', value)}
-         />
-       </FormField>
+      <FormField label="Visual Imagery Style" type="Checkbox">
+        <CheckboxGroup
+          options={['Photography', 'Illustration', 'Abstract', 'Geometric', 'Nature', 'Urban', 'Hand-drawn', 'Digital']}
+          value={formData.imageryStyle || []}
+          onChange={(value) => updateFormData('imageryStyle', value)}
+        />
+      </FormField>
 
-      <FormField label="Any Design Inspiration Links" type="Upload">
+      <FormField label="Any Design Inspiration" type="Upload">
         <FileUpload
           value={formData.inspirationLinks || ''}
           onChange={(value) => updateFormData('inspirationLinks', value)}
@@ -491,29 +599,29 @@ const KnowingYouForm = () => {
 
   const renderStep7 = () => (
     <div className="space-y-8">
-             <FormField label="Where Will the Brand Kit Be Used?" type="Checkbox" required>
-         <CheckboxGroup
-           options={['Website', 'Social Media', 'Business Cards', 'Letterhead', 'Packaging', 'Signage', 'Apparel', 'Digital Ads', 'Print Materials']}
-           value={formData.brandKitUse || []}
-           onChange={(value) => updateFormData('brandKitUse', value)}
-         />
-       </FormField>
+      <FormField label="Where Will the Brand Kit Be Used?" type="Checkbox" required>
+        <CheckboxGroup
+          options={['Website', 'Social Media', 'Business Cards', 'Letterhead', 'Packaging', 'Signage', 'Apparel', 'Digital Ads', 'Print Materials']}
+          value={formData.brandKitUse || []}
+          onChange={(value) => updateFormData('brandKitUse', value)}
+        />
+      </FormField>
 
-             <FormField label="Brand Elements Needed" type="Checkbox" required>
-         <CheckboxGroup
-           options={['Logo', 'Color Palette', 'Typography', 'Icon Set', 'Patterns', 'Photography Style', 'Illustration Style', 'Brand Guidelines']}
-           value={formData.brandElements || []}
-           onChange={(value) => updateFormData('brandElements', value)}
-         />
-       </FormField>
+      <FormField label="Brand Elements Needed" type="Checkbox" required>
+        <CheckboxGroup
+          options={['Logo', 'Color Palette', 'Typography', 'Icon Set', 'Patterns', 'Photography Style', 'Illustration Style', 'Brand Guidelines']}
+          value={formData.brandElements || []}
+          onChange={(value) => updateFormData('brandElements', value)}
+        />
+      </FormField>
 
-             <FormField label="File Format Preferences" type="Checkbox" required>
-         <CheckboxGroup
-           options={['PNG', 'SVG', 'PDF', 'AI', 'EPS', 'JPG', 'TIFF']}
-           value={formData.fileFormats || []}
-           onChange={(value) => updateFormData('fileFormats', value)}
-         />
-       </FormField>
+      <FormField label="File Format Preferences" type="Checkbox" required>
+        <CheckboxGroup
+          options={['PNG', 'SVG', 'PDF', 'AI', 'EPS', 'JPG', 'TIFF']}
+          value={formData.fileFormats || []}
+          onChange={(value) => updateFormData('fileFormats', value)}
+        />
+      </FormField>
     </div>
   );
 
@@ -565,13 +673,13 @@ const KnowingYouForm = () => {
         />
       </FormField>
 
-             <FormField label="Key Metrics for Success" type="Checkbox">
-         <CheckboxGroup
-           options={['Revenue Growth', 'Customer Acquisition', 'Brand Recognition', 'Market Share', 'Customer Satisfaction', 'Employee Retention', 'Operational Efficiency', 'Innovation']}
-           value={formData.successMetrics || []}
-           onChange={(value) => updateFormData('successMetrics', value)}
-         />
-       </FormField>
+      <FormField label="Key Metrics for Success" type="Checkbox">
+        <CheckboxGroup
+          options={['Revenue Growth', 'Customer Acquisition', 'Brand Recognition', 'Market Share', 'Customer Satisfaction', 'Employee Retention', 'Operational Efficiency', 'Innovation']}
+          value={formData.successMetrics || []}
+          onChange={(value) => updateFormData('successMetrics', value)}
+        />
+      </FormField>
     </div>
   );
 
@@ -831,30 +939,58 @@ const KnowingYouForm = () => {
       <div className="max-w-4xl mx-auto p-6">
         <Card className="border-2 border-green-200 bg-green-50 dark:bg-green-900/20 shadow-lg">
           <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-              <Check className="w-8 h-8 text-white" />
+            <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <Check className="w-10 h-10 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-              Form Completed Successfully!
+            <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+              🎉 BrandKit Form Completed!
             </h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-8 text-lg">
-              Thank you for completing the "Knowing You Form – Alta Media". We've received your information and will be in touch soon.
+            <p className="text-gray-600 dark:text-gray-300 mb-6 text-lg">
+              Congratulations! Your brand identity information has been successfully saved.
             </p>
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border mb-8 shadow-sm">
-              <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-4 text-lg">Form Summary:</h3>
-              <pre className="text-sm text-gray-600 dark:text-gray-300 overflow-auto max-h-64 form-scroll">
-                {JSON.stringify(formData, null, 2)}
-              </pre>
+              <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-4 text-lg">All Submitted Data:</h3>
+              <div className="text-left space-y-3 text-sm text-gray-600 dark:text-gray-300 max-h-96 overflow-y-auto">
+                {Object.entries(formData).map(([key, value]) => (
+                  <div key={key} className="border-b border-gray-200 dark:border-gray-700 pb-2">
+                    <div className="font-semibold text-gray-800 dark:text-gray-200 mb-1">
+                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:
+                    </div>
+                    <div className="text-gray-600 dark:text-gray-400">
+                      {Array.isArray(value)
+                        ? value.join(', ')
+                        : typeof value === 'object' && value !== null
+                          ? JSON.stringify(value, null, 2)
+                          : value || 'Not provided'
+                      }
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
             <Button
               onClick={handleBackToDashboard}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 px-8 py-3 text-lg"
             >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Dashboard
+              <ArrowLeft className="w-5 h-5" />
+              Return to Dashboard
             </Button>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  // Show loading state while initializing
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-4xl mx-auto p-4 sm:p-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+            <p className="text-gray-600 dark:text-gray-300">Loading your form data...</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -869,6 +1005,13 @@ const KnowingYouForm = () => {
           Let's get to know your business and create the perfect brand identity
         </p>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
+        </div>
+      )}
 
       <ProgressBar
         currentStep={currentStep}
@@ -898,7 +1041,7 @@ const KnowingYouForm = () => {
             <span className="hidden sm:inline">Back to Dashboard</span>
             <span className="sm:hidden">Dashboard</span>
           </Button>
-          
+
           {currentStep > 1 && (
             <Button
               variant="outline"
@@ -915,22 +1058,42 @@ const KnowingYouForm = () => {
           <span className="text-sm text-gray-600 dark:text-gray-300 font-medium text-center sm:text-left">
             Step {currentStep} of {totalSteps}
           </span>
-          
+
           {currentStep === totalSteps ? (
             <Button
               onClick={handleSubmit}
+              disabled={isSaving}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
             >
-              <Send className="w-4 h-4" />
-              Submit Form
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  Submit Form
+                </>
+              )}
             </Button>
           ) : (
             <Button
               onClick={nextStep}
+              disabled={currentStep === totalSteps || isSaving}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
             >
-              Next
-              <ChevronRight className="w-4 h-4" />
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </>
+              )}
             </Button>
           )}
         </div>
