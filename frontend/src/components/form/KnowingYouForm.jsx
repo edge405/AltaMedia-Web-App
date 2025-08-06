@@ -19,6 +19,7 @@ import FileUpload from './FileUpload';
 import AISuggestion from './AISuggestion';
 import CheckboxGroup from './CheckboxGroup';
 import MapPicker from './MapPicker';
+import ProductServiceForm from './ProductServiceForm';
 
 const KnowingYouForm = () => {
   const navigate = useNavigate();
@@ -85,6 +86,11 @@ const KnowingYouForm = () => {
       [field]: value
     }));
   };
+
+  // Debug: Log when buildingType changes
+  useEffect(() => {
+    console.log('Building type changed to:', formData.buildingType);
+  }, [formData.buildingType]);
 
   const nextStep = async () => {
     console.log('User object:', user);
@@ -174,6 +180,16 @@ const KnowingYouForm = () => {
     navigate('/dashboard');
   };
 
+  // If building type is "product", render the ProductServiceForm component
+  if (formData.buildingType === 'product') {
+    return <ProductServiceForm onFormTypeChange={(type) => {
+      if (type === 'business') {
+        updateFormData('buildingType', 'business');
+        setCurrentStep(1); // Reset to first step
+      }
+    }} />;
+  }
+
   const renderStep1 = () => (
     <div className="space-y-8">
       <FormField label="What are you building?" type="Dropdown" required>
@@ -220,7 +236,6 @@ const KnowingYouForm = () => {
           />
         </FormField>
       )}
-
       <FormField label="Full Name of Business/Organization" type="Short Text" required>
         <Input
           value={formData.businessName || ''}
@@ -229,11 +244,14 @@ const KnowingYouForm = () => {
           className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
       </FormField>
+
+
     </div>
   );
 
   const renderStep2 = () => (
     <div className="space-y-8">
+      {/* Common fields for both business and product */}
       <FormField label="Contact Number" type="Short Text">
         <Input
           type="tel"
@@ -288,120 +306,130 @@ const KnowingYouForm = () => {
         />
       </FormField>
 
-      <FormField label="Who's Behind the Brand?" type="Long Text">
-        <Textarea
-          value={formData.behindBrand || ''}
-          onChange={(e) => updateFormData('behindBrand', e.target.value)}
-          placeholder="Tell us about the people behind your brand"
-          rows={4}
-          className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-        />
-      </FormField>
+      {/* Business-specific fields */}
+      {formData.buildingType === 'business' && (
+        <>
+          <FormField label="Who's Behind the Brand?" type="Long Text">
+            <Textarea
+              value={formData.behindBrand || ''}
+              onChange={(e) => updateFormData('behindBrand', e.target.value)}
+              placeholder="Tell us about the people behind your brand"
+              rows={4}
+              className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+            />
+          </FormField>
 
-      <FormField label="Who Typically Buys from You Now?" type="Checkbox">
-        <CheckboxGroup
-          options={['Male', 'Female', 'Everyone']}
-          value={formData.currentCustomers || []}
-          onChange={(value) => updateFormData('currentCustomers', value)}
-        />
-      </FormField>
+          <FormField label="Who Typically Buys from You Now?" type="Checkbox">
+            <CheckboxGroup
+              options={['Male', 'Female', 'Everyone']}
+              value={formData.currentCustomers || []}
+              onChange={(value) => updateFormData('currentCustomers', value)}
+            />
+          </FormField>
 
-      <FormField label="Who Do You Want to Attract?" type="Long Text" required>
-        <Textarea
-          value={formData.wantToAttract || ''}
-          onChange={(e) => updateFormData('wantToAttract', e.target.value)}
-          placeholder="Describe your ideal target audience"
-          rows={4}
-          className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-        />
-      </FormField>
+          <FormField label="Who Do You Want to Attract?" type="Long Text" required>
+            <Textarea
+              value={formData.wantToAttract || ''}
+              onChange={(e) => updateFormData('wantToAttract', e.target.value)}
+              placeholder="Describe your ideal target audience"
+              rows={4}
+              className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+            />
+          </FormField>
 
-      <FormField label="How Would Your Team Describe Working at Your Business?" type="Long Text">
-        <Textarea
-          value={formData.teamDescription || ''}
-          onChange={(e) => updateFormData('teamDescription', e.target.value)}
-          placeholder="Describe your company culture from your team's perspective"
-          rows={4}
-          className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-        />
-      </FormField>
+          <FormField label="How Would Your Team Describe Working at Your Business?" type="Long Text">
+            <Textarea
+              value={formData.teamDescription || ''}
+              onChange={(e) => updateFormData('teamDescription', e.target.value)}
+              placeholder="Describe your company culture from your team's perspective"
+              rows={4}
+              className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+            />
+          </FormField>
+        </>
+      )}
     </div>
   );
 
   const renderStep3 = () => (
     <div className="space-y-8">
-      <div className="space-y-6">
-        <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Target Market</h3>
+      {/* Business-specific content */}
+      {formData.buildingType === 'business' && (
+        <>
+          <div className="space-y-6">
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Target Market</h3>
 
-        <FormField label="Desired Emotional Response" type="Dropdown" required>
-          <Select value={formData.desiredEmotion} onValueChange={(value) => updateFormData('desiredEmotion', value)}>
-            <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-              <SelectValue placeholder="Select desired emotional response" />
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
-              {['Happy', 'Fulfilled', 'Inspired', 'Satisfied', 'Energized', 'Empowered', 'Safe & Secure', 'Confident'].map(emotion => (
-                <SelectItem key={emotion} value={emotion.toLowerCase()}>{emotion}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormField>
+            <FormField label="Desired Emotional Response" type="Dropdown" required>
+              <Select value={formData.desiredEmotion} onValueChange={(value) => updateFormData('desiredEmotion', value)}>
+                <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                  <SelectValue placeholder="Select desired emotional response" />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                  {['Happy', 'Fulfilled', 'Inspired', 'Satisfied', 'Energized', 'Empowered', 'Safe & Secure', 'Confident'].map(emotion => (
+                    <SelectItem key={emotion} value={emotion.toLowerCase()}>{emotion}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
 
-        <FormField label="Professions or Roles to Attract" type="Tags">
-          <TagInput
-            value={formData.targetProfessions || []}
-            onChange={(value) => updateFormData('targetProfessions', value)}
-            placeholder="Enter professions or roles"
-            suggestions={['Entrepreneurs', 'Managers', 'Professionals', 'Students', 'Parents', 'Seniors']}
-          />
-        </FormField>
+            <FormField label="Professions or Roles to Attract" type="Tags">
+              <TagInput
+                value={formData.targetProfessions || []}
+                onChange={(value) => updateFormData('targetProfessions', value)}
+                placeholder="Enter professions or roles"
+                suggestions={['Entrepreneurs', 'Managers', 'Professionals', 'Students', 'Parents', 'Seniors']}
+              />
+            </FormField>
 
-        <FormField label="Where to Reach Them" type="Tags">
-          <TagInput
-            value={formData.reachLocations || []}
-            onChange={(value) => updateFormData('reachLocations', value)}
-            placeholder="Enter locations or platforms"
-            suggestions={['Social Media', 'LinkedIn', 'Google', 'Trade Shows', 'Networking Events', 'Online Forums']}
-          />
-        </FormField>
+            <FormField label="Where to Reach Them" type="Tags">
+              <TagInput
+                value={formData.reachLocations || []}
+                onChange={(value) => updateFormData('reachLocations', value)}
+                placeholder="Enter locations or platforms"
+                suggestions={['Social Media', 'LinkedIn', 'Google', 'Trade Shows', 'Networking Events', 'Online Forums']}
+              />
+            </FormField>
 
-        <FormField label="Age Groups" type="Checkbox">
-          <CheckboxGroup
-            options={['Teens', 'Young Adults', 'Adults', 'Mature Adults', 'Seniors']}
-            value={formData.ageGroups || []}
-            onChange={(value) => updateFormData('ageGroups', value)}
-          />
-        </FormField>
-      </div>
+            <FormField label="Age Groups" type="Checkbox">
+              <CheckboxGroup
+                options={['Teens', 'Young Adults', 'Adults', 'Mature Adults', 'Seniors']}
+                value={formData.ageGroups || []}
+                onChange={(value) => updateFormData('ageGroups', value)}
+              />
+            </FormField>
+          </div>
 
-      <div className="space-y-6">
-        <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Current Market</h3>
+          <div className="space-y-6">
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Current Market</h3>
 
-        <FormField label="Describe Current Customers' Spending Habits" type="Tags">
-          <TagInput
-            value={formData.spendingHabits || []}
-            onChange={(value) => updateFormData('spendingHabits', value)}
-            placeholder="Enter spending habits"
-            suggestions={['Premium', 'Budget-conscious', 'Value-focused', 'Luxury', 'Practical', 'Impulse buyers']}
-          />
-        </FormField>
+            <FormField label="Describe Current Customers' Spending Habits" type="Tags">
+              <TagInput
+                value={formData.spendingHabits || []}
+                onChange={(value) => updateFormData('spendingHabits', value)}
+                placeholder="Enter spending habits"
+                suggestions={['Premium', 'Budget-conscious', 'Value-focused', 'Luxury', 'Practical', 'Impulse buyers']}
+              />
+            </FormField>
 
-        <FormField label="How Do People Interact With Your Business?" type="Checkbox">
-          <CheckboxGroup
-            options={['Online', 'In-person', 'Phone', 'Email', 'Social Media', 'Mobile App']}
-            value={formData.interactionMethods || []}
-            onChange={(value) => updateFormData('interactionMethods', value)}
-          />
-        </FormField>
+            <FormField label="How Do People Interact With Your Business?" type="Checkbox">
+              <CheckboxGroup
+                options={['Online', 'In-person', 'Phone', 'Email', 'Social Media', 'Mobile App']}
+                value={formData.interactionMethods || []}
+                onChange={(value) => updateFormData('interactionMethods', value)}
+              />
+            </FormField>
 
-        <FormField label="Challenges Customers Face That You Solve" type="Long Text">
-          <Textarea
-            value={formData.customerChallenges || ''}
-            onChange={(e) => updateFormData('customerChallenges', e.target.value)}
-            placeholder="Describe the problems your customers face that your business solves"
-            rows={4}
-          />
-        </FormField>
-      </div>
+            <FormField label="Challenges Customers Face That You Solve" type="Long Text">
+              <Textarea
+                value={formData.customerChallenges || ''}
+                onChange={(e) => updateFormData('customerChallenges', e.target.value)}
+                placeholder="Describe the problems your customers face that your business solves"
+                rows={4}
+              />
+            </FormField>
+          </div>
+        </>
+      )}
     </div>
   );
 

@@ -32,25 +32,56 @@ const getUserPackagePurchases = async (req, res) => {
       });
     }
 
-    // Organize package purchases with clear labeling
-    const labeledPackagePurchases = packagePurchases.map(purchase => ({
-      package_purchase_id: purchase.id,
-      purchase_info: {
-        purchase_date: purchase.purchase_date,
-        expiration_date: purchase.expiration_date,
-        status: purchase.status,
-        total_amount: purchase.total_amount,
-        created_at: purchase.created_at,
-        updated_at: purchase.updated_at
-      },
-      package_details: {
-        package_id: purchase.packages.id,
-        package_name: purchase.packages.name,
-        package_description: purchase.packages.description,
-        package_price: purchase.packages.price,
-        duration_days: purchase.packages.duration_days
-      }
-    }));
+    // Get package IDs to fetch features
+    const packageIds = packagePurchases.map(purchase => purchase.packages.id);
+    
+    // Get features for all packages
+    const { data: allFeatures, error: featuresError } = await supabase
+      .from('package_features')
+      .select('*')
+      .in('package_id', packageIds)
+      .eq('is_active', true);
+
+    if (featuresError) {
+      console.error('Features fetch error:', featuresError);
+    }
+
+    // Organize package purchases with clear labeling and features
+    const labeledPackagePurchases = packagePurchases.map(purchase => {
+      // Get features for this package
+      const packageFeatures = allFeatures ? allFeatures.filter(feature => feature.package_id === purchase.packages.id) : [];
+      
+      // Organize features with clear labeling
+      const labeledFeatures = packageFeatures.map(feature => ({
+        feature_id: feature.id,
+        feature_info: {
+          feature_name: feature.feature_name,
+          feature_description: feature.feature_description,
+          is_active: feature.is_active,
+          created_at: feature.created_at
+        }
+      }));
+
+      return {
+        package_purchase_id: purchase.id,
+        purchase_info: {
+          purchase_date: purchase.purchase_date,
+          expiration_date: purchase.expiration_date,
+          status: purchase.status,
+          total_amount: purchase.total_amount,
+          created_at: purchase.created_at,
+          updated_at: purchase.updated_at
+        },
+        package_details: {
+          package_id: purchase.packages.id,
+          package_name: purchase.packages.name,
+          package_description: purchase.packages.description,
+          package_price: purchase.packages.price,
+          duration_days: purchase.packages.duration_days,
+          features: labeledFeatures
+        }
+      };
+    });
 
     res.json({
       success: true,
@@ -104,6 +135,28 @@ const getPackagePurchaseById = async (req, res) => {
       });
     }
 
+    // Get package features
+    const { data: features, error: featuresError } = await supabase
+      .from('package_features')
+      .select('*')
+      .eq('package_id', packagePurchase.packages.id)
+      .eq('is_active', true);
+
+    if (featuresError) {
+      console.error('Features fetch error:', featuresError);
+    }
+
+    // Organize features with clear labeling
+    const labeledFeatures = (features || []).map(feature => ({
+      feature_id: feature.id,
+      feature_info: {
+        feature_name: feature.feature_name,
+        feature_description: feature.feature_description,
+        is_active: feature.is_active,
+        created_at: feature.created_at
+      }
+    }));
+
     res.json({
       success: true,
       message: 'Package purchase details retrieved successfully',
@@ -122,7 +175,8 @@ const getPackagePurchaseById = async (req, res) => {
           package_name: packagePurchase.packages.name,
           package_description: packagePurchase.packages.description,
           package_price: packagePurchase.packages.price,
-          duration_days: packagePurchase.packages.duration_days
+          duration_days: packagePurchase.packages.duration_days,
+          features: labeledFeatures
         }
       }
     });
@@ -169,29 +223,60 @@ const getAllPackagePurchases = async (req, res) => {
       });
     }
 
-    // Organize package purchases with clear labeling
-    const labeledPackagePurchases = packagePurchases.map(purchase => ({
-      package_purchase_id: purchase.id,
-      purchase_info: {
-        purchase_date: purchase.purchase_date,
-        expiration_date: purchase.expiration_date,
-        status: purchase.status,
-        total_amount: purchase.total_amount,
-        created_at: purchase.created_at,
-        updated_at: purchase.updated_at
-      },
-      user_details: {
-        user_id: purchase.users?.id || null,
-        user_email: purchase.users?.email || null
-      },
-      package_details: {
-        package_id: purchase.packages.id,
-        package_name: purchase.packages.name,
-        package_description: purchase.packages.description,
-        package_price: purchase.packages.price,
-        duration_days: purchase.packages.duration_days
-      }
-    }));
+    // Get package IDs to fetch features
+    const packageIds = packagePurchases.map(purchase => purchase.packages.id);
+    
+    // Get features for all packages
+    const { data: allFeatures, error: featuresError } = await supabaseAdmin
+      .from('package_features')
+      .select('*')
+      .in('package_id', packageIds)
+      .eq('is_active', true);
+
+    if (featuresError) {
+      console.error('Features fetch error:', featuresError);
+    }
+
+    // Organize package purchases with clear labeling and features
+    const labeledPackagePurchases = packagePurchases.map(purchase => {
+      // Get features for this package
+      const packageFeatures = allFeatures ? allFeatures.filter(feature => feature.package_id === purchase.packages.id) : [];
+      
+      // Organize features with clear labeling
+      const labeledFeatures = packageFeatures.map(feature => ({
+        feature_id: feature.id,
+        feature_info: {
+          feature_name: feature.feature_name,
+          feature_description: feature.feature_description,
+          is_active: feature.is_active,
+          created_at: feature.created_at
+        }
+      }));
+
+      return {
+        package_purchase_id: purchase.id,
+        purchase_info: {
+          purchase_date: purchase.purchase_date,
+          expiration_date: purchase.expiration_date,
+          status: purchase.status,
+          total_amount: purchase.total_amount,
+          created_at: purchase.created_at,
+          updated_at: purchase.updated_at
+        },
+        user_details: {
+          user_id: purchase.users?.id || null,
+          user_email: purchase.users?.email || null
+        },
+        package_details: {
+          package_id: purchase.packages.id,
+          package_name: purchase.packages.name,
+          package_description: purchase.packages.description,
+          package_price: purchase.packages.price,
+          duration_days: purchase.packages.duration_days,
+          features: labeledFeatures
+        }
+      };
+    });
 
     res.json({
       success: true,
