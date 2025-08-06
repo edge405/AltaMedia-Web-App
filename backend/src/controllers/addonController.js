@@ -20,9 +20,56 @@ const getAllAddons = async (req, res) => {
       });
     }
 
+    // Get features for all addons
+    const addonIds = addons.map(addon => addon.id);
+    const { data: allFeatures, error: featuresError } = await supabase
+      .from('addon_features')
+      .select('*')
+      .in('addon_id', addonIds)
+      .eq('is_active', true);
+
+    if (featuresError) {
+      console.error('Features fetch error:', featuresError);
+    }
+
+    // Organize addons with clear labeling and features
+    const labeledAddons = addons.map(addon => {
+      // Get features for this addon
+      const addonFeatures = allFeatures ? allFeatures.filter(feature => feature.addon_id === addon.id) : [];
+      
+      // Organize features with clear labeling
+      const labeledFeatures = addonFeatures.map(feature => ({
+        feature_id: feature.id,
+        feature_info: {
+          feature_name: feature.feature_name,
+          feature_description: feature.feature_description,
+          is_active: feature.is_active,
+          created_at: feature.created_at
+        }
+      }));
+
+      return {
+        addon_id: addon.id,
+        addon_info: {
+          name: addon.name,
+          description: addon.description,
+          price_type: addon.price_type,
+          base_price: addon.base_price,
+          is_active: addon.is_active,
+          created_at: addon.created_at,
+          updated_at: addon.updated_at
+        },
+        features: labeledFeatures
+      };
+    });
+
     res.json({
       success: true,
-      data: addons
+      message: 'Addons retrieved successfully',
+      data: {
+        total_addons: labeledAddons.length,
+        addons: labeledAddons
+      }
     });
 
   } catch (error) {
@@ -35,30 +82,69 @@ const getAllAddons = async (req, res) => {
 };
 
 /**
- * Get addon by ID
+ * Get addon by ID with features
  * GET /api/addons/:id
  */
 const getAddonById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { data: addon, error } = await supabase
+    // Get addon details
+    const { data: addon, error: addonError } = await supabase
       .from('addons')
       .select('*')
       .eq('id', id)
       .eq('is_active', true)
       .single();
 
-    if (error || !addon) {
+    if (addonError || !addon) {
       return res.status(404).json({
         success: false,
         message: 'Addon not found'
       });
     }
 
+    // Get addon features
+    const { data: features, error: featuresError } = await supabase
+      .from('addon_features')
+      .select('*')
+      .eq('addon_id', id)
+      .eq('is_active', true);
+
+    if (featuresError) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch addon features'
+      });
+    }
+
+    // Organize features with clear labeling
+    const labeledFeatures = (features || []).map(feature => ({
+      feature_id: feature.id,
+      feature_info: {
+        feature_name: feature.feature_name,
+        feature_description: feature.feature_description,
+        is_active: feature.is_active,
+        created_at: feature.created_at
+      }
+    }));
+
     res.json({
       success: true,
-      data: addon
+      message: 'Addon retrieved successfully',
+      data: {
+        addon_id: addon.id,
+        addon_info: {
+          name: addon.name,
+          description: addon.description,
+          price_type: addon.price_type,
+          base_price: addon.base_price,
+          is_active: addon.is_active,
+          created_at: addon.created_at,
+          updated_at: addon.updated_at
+        },
+        features: labeledFeatures
+      }
     });
 
   } catch (error) {
@@ -76,9 +162,10 @@ const getAddonById = async (req, res) => {
  */
 const createAddon = async (req, res) => {
   try {
-    const { name, description, price_type, base_price } = req.body;
+    const { name, description, price_type, base_price, features } = req.body;
 
-    const { data: addon, error } = await supabaseAdmin
+    // Create addon
+    const { data: addon, error: addonError } = await supabaseAdmin
       .from('addons')
       .insert({
         name,
@@ -90,18 +177,52 @@ const createAddon = async (req, res) => {
       .select()
       .single();
 
-    if (error) {
+    if (addonError) {
       return res.status(500).json({
         success: false,
         message: 'Failed to create addon',
-        error: error.message
+        error: addonError.message
       });
+    }
+
+    // Create features if provided
+    if (features && features.length > 0) {
+      const featuresData = features.map(feature => ({
+        addon_id: addon.id,
+        feature_name: feature.name,
+        feature_description: feature.description,
+        is_active: true
+      }));
+
+      const { error: featuresError } = await supabaseAdmin
+        .from('addon_features')
+        .insert(featuresData);
+
+      if (featuresError) {
+        console.error('Features creation error:', featuresError);
+      }
     }
 
     res.status(201).json({
       success: true,
       message: 'Addon created successfully',
-      data: addon
+      data: {
+        addon_id: addon.id,
+        addon_info: {
+          name: addon.name,
+          description: addon.description,
+          price_type: addon.price_type,
+          base_price: addon.base_price,
+          is_active: addon.is_active,
+          created_at: addon.created_at,
+          updated_at: addon.updated_at
+        },
+        features: features ? features.map(feature => ({
+          feature_name: feature.name,
+          feature_description: feature.description,
+          status: 'active'
+        })) : []
+      }
     });
 
   } catch (error) {

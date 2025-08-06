@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS package_purchases (
     FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE CASCADE
 );
 
--- Create purchased_addons table
+-- Create purchased_addons table (for addons purchased with packages)
 CREATE TABLE IF NOT EXISTS purchased_addons (
     id SERIAL PRIMARY KEY,
     package_purchase_id INTEGER NOT NULL,
@@ -75,6 +75,21 @@ CREATE TABLE IF NOT EXISTS purchased_addons (
     status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'expired', 'cancelled')),
     created_at TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (package_purchase_id) REFERENCES package_purchases(id) ON DELETE CASCADE,
+    FOREIGN KEY (addon_id) REFERENCES addons(id) ON DELETE CASCADE
+);
+
+-- Create addon_purchases table (for independent addon purchases)
+CREATE TABLE IF NOT EXISTS addon_purchases (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    addon_id INTEGER NOT NULL,
+    purchase_date TIMESTAMP DEFAULT NOW(),
+    expiration_date DATE NOT NULL,
+    status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'expired', 'cancelled')),
+    amount_paid DECIMAL(10, 2) NOT NULL CHECK (amount_paid >= 0),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (addon_id) REFERENCES addons(id) ON DELETE CASCADE
 );
 
@@ -103,6 +118,11 @@ CREATE TRIGGER update_package_purchases_updated_at
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_addon_purchases_updated_at 
+    BEFORE UPDATE ON addon_purchases 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_packages_active ON packages(is_active);
 CREATE INDEX IF NOT EXISTS idx_packages_name ON packages(name);
@@ -117,3 +137,7 @@ CREATE INDEX IF NOT EXISTS idx_package_purchases_expiration ON package_purchases
 CREATE INDEX IF NOT EXISTS idx_purchased_addons_package_purchase_id ON purchased_addons(package_purchase_id);
 CREATE INDEX IF NOT EXISTS idx_purchased_addons_addon_id ON purchased_addons(addon_id);
 CREATE INDEX IF NOT EXISTS idx_purchased_addons_status ON purchased_addons(status);
+CREATE INDEX IF NOT EXISTS idx_addon_purchases_user_id ON addon_purchases(user_id);
+CREATE INDEX IF NOT EXISTS idx_addon_purchases_addon_id ON addon_purchases(addon_id);
+CREATE INDEX IF NOT EXISTS idx_addon_purchases_status ON addon_purchases(status);
+CREATE INDEX IF NOT EXISTS idx_addon_purchases_expiration ON addon_purchases(expiration_date);

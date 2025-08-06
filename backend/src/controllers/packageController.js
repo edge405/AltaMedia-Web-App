@@ -20,9 +20,56 @@ const getAllPackages = async (req, res) => {
       });
     }
 
+    // Get features for all packages
+    const packageIds = packages.map(pkg => pkg.id);
+    const { data: allFeatures, error: featuresError } = await supabase
+      .from('package_features')
+      .select('*')
+      .in('package_id', packageIds)
+      .eq('is_active', true);
+
+    if (featuresError) {
+      console.error('Features fetch error:', featuresError);
+    }
+
+    // Organize packages with clear labeling and features
+    const labeledPackages = packages.map(package => {
+      // Get features for this package
+      const packageFeatures = allFeatures ? allFeatures.filter(feature => feature.package_id === package.id) : [];
+      
+      // Organize features with clear labeling
+      const labeledFeatures = packageFeatures.map(feature => ({
+        feature_id: feature.id,
+        feature_info: {
+          feature_name: feature.feature_name,
+          feature_description: feature.feature_description,
+          is_active: feature.is_active,
+          created_at: feature.created_at
+        }
+      }));
+
+      return {
+        package_id: package.id,
+        package_info: {
+          name: package.name,
+          description: package.description,
+          price: package.price,
+          duration_days: package.duration_days,
+          is_active: package.is_active,
+          created_at: package.created_at,
+          updated_at: package.updated_at
+        },
+        features: labeledFeatures
+      };
+    });
+
     res.json({
       success: true,
-      data: packages
+      message: 'Packages retrieved successfully',
+      data: {
+        total_packages: labeledPackages.length,
+        packages: labeledPackages
+      }
     });
 
   } catch (error) {
@@ -71,11 +118,32 @@ const getPackageById = async (req, res) => {
       });
     }
 
+    // Organize features with clear labeling
+    const labeledFeatures = (features || []).map(feature => ({
+      feature_id: feature.id,
+      feature_info: {
+        feature_name: feature.feature_name,
+        feature_description: feature.feature_description,
+        is_active: feature.is_active,
+        created_at: feature.created_at
+      }
+    }));
+
     res.json({
       success: true,
+      message: 'Package details retrieved successfully',
       data: {
-        ...package,
-        features: features || []
+        package_id: package.id,
+        package_info: {
+          name: package.name,
+          description: package.description,
+          price: package.price,
+          duration_days: package.duration_days,
+          is_active: package.is_active,
+          created_at: package.created_at,
+          updated_at: package.updated_at
+        },
+        features: labeledFeatures
       }
     });
 
@@ -138,7 +206,23 @@ const createPackage = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Package created successfully',
-      data: package
+      data: {
+        package_id: package.id,
+        package_info: {
+          name: package.name,
+          description: package.description,
+          price: package.price,
+          duration_days: package.duration_days,
+          is_active: package.is_active,
+          created_at: package.created_at,
+          updated_at: package.updated_at
+        },
+        features: features ? features.map(feature => ({
+          feature_name: feature.name,
+          feature_description: feature.description,
+          status: 'active'
+        })) : []
+      }
     });
 
   } catch (error) {
@@ -182,7 +266,18 @@ const updatePackage = async (req, res) => {
     res.json({
       success: true,
       message: 'Package updated successfully',
-      data: package
+      data: {
+        package_id: package.id,
+        package_info: {
+          name: package.name,
+          description: package.description,
+          price: package.price,
+          duration_days: package.duration_days,
+          is_active: package.is_active,
+          created_at: package.created_at,
+          updated_at: package.updated_at
+        }
+      }
     });
 
   } catch (error) {

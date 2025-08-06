@@ -9,6 +9,8 @@ const authRoutes = require('./routes/authRoutes');
 const packageRoutes = require('./routes/packageRoutes');
 const addonRoutes = require('./routes/addonRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
+const addonPurchaseRoutes = require('./routes/addonPurchaseRoutes');
+const packagePurchaseRoutes = require('./routes/packagePurchaseRoutes');
 const brandKitRoutes = require('./routes/brandKitRoutes');
 
 // Import middleware
@@ -58,6 +60,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/packages', packageRoutes);
 app.use('/api/addons', addonRoutes);
 app.use('/api/purchases', purchaseRoutes);
+app.use('/api/addon-purchases', addonPurchaseRoutes);
+app.use('/api/package-purchases', packagePurchaseRoutes);
 app.use('/api/brandkit', brandKitRoutes);
 
 // 404 handler

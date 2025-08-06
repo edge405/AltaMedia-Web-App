@@ -32,7 +32,7 @@ const getUserPurchases = async (req, res) => {
       });
     }
 
-    // Get addons for each purchase
+    // Get addons for each purchase and organize data with clear labels
     const purchasesWithAddons = await Promise.all(
       purchases.map(async (purchase) => {
         const { data: addons, error: addonsError } = await supabase
@@ -56,21 +56,74 @@ const getUserPurchases = async (req, res) => {
         if (addonsError) {
           console.error('Error fetching addons for purchase:', purchase.id, addonsError);
           return {
-            ...purchase,
+            purchase_id: purchase.id,
+            purchase_info: {
+              purchase_date: purchase.purchase_date,
+              expiration_date: purchase.expiration_date,
+              status: purchase.status,
+              total_amount: purchase.total_amount,
+              created_at: purchase.created_at,
+              updated_at: purchase.updated_at
+            },
+            package_details: {
+              package_id: purchase.packages.id,
+              package_name: purchase.packages.name,
+              package_description: purchase.packages.description,
+              package_price: purchase.packages.price,
+              duration_days: purchase.packages.duration_days
+            },
             addons: []
           };
         }
 
+        // Organize addons with clear labeling
+        const organizedAddons = (addons || []).map(addon => ({
+          addon_purchase_id: addon.id,
+          addon_details: {
+            addon_id: addon.addons.id,
+            addon_name: addon.addons.name,
+            addon_description: addon.addons.description,
+            price_type: addon.addons.price_type,
+            base_price: addon.addons.base_price
+          },
+          purchase_info: {
+            amount_paid: addon.amount_paid,
+            status: addon.status,
+            purchase_date: addon.purchase_date,
+            created_at: addon.created_at
+          }
+        }));
+
         return {
-          ...purchase,
-          addons: addons || []
+          purchase_id: purchase.id,
+          purchase_info: {
+            purchase_date: purchase.purchase_date,
+            expiration_date: purchase.expiration_date,
+            status: purchase.status,
+            total_amount: purchase.total_amount,
+            created_at: purchase.created_at,
+            updated_at: purchase.updated_at
+          },
+          package_details: {
+            package_id: purchase.packages.id,
+            package_name: purchase.packages.name,
+            package_description: purchase.packages.description,
+            package_price: purchase.packages.price,
+            duration_days: purchase.packages.duration_days
+          },
+          addons: organizedAddons
         };
       })
     );
 
     res.json({
       success: true,
-      data: purchasesWithAddons
+      message: 'User purchases retrieved successfully',
+      data: {
+        user_id: userId,
+        total_purchases: purchasesWithAddons.length,
+        purchases: purchasesWithAddons
+      }
     });
 
   } catch (error) {
@@ -137,11 +190,45 @@ const getPurchaseById = async (req, res) => {
       });
     }
 
+    // Organize addons with clear labeling
+    const organizedAddons = (addons || []).map(addon => ({
+      addon_purchase_id: addon.id,
+      addon_details: {
+        addon_id: addon.addons.id,
+        addon_name: addon.addons.name,
+        addon_description: addon.addons.description,
+        price_type: addon.addons.price_type,
+        base_price: addon.addons.base_price
+      },
+      purchase_info: {
+        amount_paid: addon.amount_paid,
+        status: addon.status,
+        purchase_date: addon.purchase_date,
+        created_at: addon.created_at
+      }
+    }));
+
     res.json({
       success: true,
+      message: 'Purchase details retrieved successfully',
       data: {
-        ...purchase,
-        addons: addons || []
+        purchase_id: purchase.id,
+        purchase_info: {
+          purchase_date: purchase.purchase_date,
+          expiration_date: purchase.expiration_date,
+          status: purchase.status,
+          total_amount: purchase.total_amount,
+          created_at: purchase.created_at,
+          updated_at: purchase.updated_at
+        },
+        package_details: {
+          package_id: purchase.packages.id,
+          package_name: purchase.packages.name,
+          package_description: purchase.packages.description,
+          package_price: purchase.packages.price,
+          duration_days: purchase.packages.duration_days
+        },
+        addons: organizedAddons
       }
     });
 
@@ -245,8 +332,26 @@ const createPurchase = async (req, res) => {
       success: true,
       message: 'Purchase created successfully',
       data: {
-        ...purchase,
-        total_amount: totalAmount
+        purchase_id: purchase.id,
+        purchase_info: {
+          purchase_date: purchase.purchase_date,
+          expiration_date: purchase.expiration_date,
+          status: purchase.status,
+          total_amount: totalAmount,
+          created_at: purchase.created_at,
+          updated_at: purchase.updated_at
+        },
+        package_details: {
+          package_id: package.id,
+          package_name: package.name,
+          package_description: package.description,
+          package_price: package.price,
+          duration_days: package.duration_days
+        },
+        addons: addons ? addons.map(addonId => ({
+          addon_id: addonId,
+          status: 'active'
+        })) : []
       }
     });
 
@@ -335,7 +440,7 @@ const getAllPurchases = async (req, res) => {
       });
     }
 
-    // Get addons for each purchase
+    // Get addons for each purchase and organize data with clear labels
     const purchasesWithAddons = await Promise.all(
       purchases.map(async (purchase) => {
         const { data: addons, error: addonsError } = await supabaseAdmin
@@ -359,21 +464,77 @@ const getAllPurchases = async (req, res) => {
         if (addonsError) {
           console.error('Error fetching addons for purchase:', purchase.id, addonsError);
           return {
-            ...purchase,
+            purchase_id: purchase.id,
+            purchase_info: {
+              purchase_date: purchase.purchase_date,
+              expiration_date: purchase.expiration_date,
+              status: purchase.status,
+              total_amount: purchase.total_amount,
+              created_at: purchase.created_at,
+              updated_at: purchase.updated_at
+            },
+            user_details: {
+              user_id: purchase.users.id,
+              user_email: purchase.users.email
+            },
+            package_details: {
+              package_id: purchase.packages.id,
+              package_name: purchase.packages.name,
+              package_description: purchase.packages.description
+            },
             addons: []
           };
         }
 
+        // Organize addons with clear labeling
+        const organizedAddons = (addons || []).map(addon => ({
+          addon_purchase_id: addon.id,
+          addon_details: {
+            addon_id: addon.addons.id,
+            addon_name: addon.addons.name,
+            addon_description: addon.addons.description,
+            price_type: addon.addons.price_type,
+            base_price: addon.addons.base_price
+          },
+          purchase_info: {
+            amount_paid: addon.amount_paid,
+            status: addon.status,
+            purchase_date: addon.purchase_date,
+            created_at: addon.created_at
+          }
+        }));
+
         return {
-          ...purchase,
-          addons: addons || []
+          purchase_id: purchase.id,
+          purchase_info: {
+            purchase_date: purchase.purchase_date,
+            expiration_date: purchase.expiration_date,
+            status: purchase.status,
+            total_amount: purchase.total_amount,
+            created_at: purchase.created_at,
+            updated_at: purchase.updated_at
+          },
+          user_details: {
+            user_id: purchase.users.id,
+            user_email: purchase.users.email
+          },
+          package_details: {
+            package_id: purchase.packages.id,
+            package_name: purchase.packages.name,
+            package_description: purchase.packages.description
+          },
+          addons: organizedAddons
         };
       })
     );
 
     res.json({
       success: true,
-      data: purchasesWithAddons
+      message: 'All purchases retrieved successfully',
+      data: {
+        total_purchases: purchasesWithAddons.length,
+        purchases: purchasesWithAddons
+      }
     });
 
   } catch (error) {

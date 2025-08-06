@@ -1,4 +1,4 @@
-# AltaMedia Client Dashboard API Documentation
+# AltaMedia API Documentation
 
 ## Base URL
 ```
@@ -6,80 +6,51 @@ http://localhost:3000/api
 ```
 
 ## Authentication
-
-All authenticated endpoints require a Bearer token in the Authorization header:
+All protected endpoints require a Bearer token in the Authorization header:
 ```
-Authorization: Bearer <jwt_token>
+Authorization: Bearer YOUR_JWT_TOKEN
 ```
-
-**Note:** This API uses custom authentication with a local users table. Users are stored in the database with hashed passwords using bcrypt. JWT tokens are used for session management.
 
 ---
 
 ## 🔐 Authentication Endpoints
 
-### 1. User Registration
-
+### Register User
 **POST** `/auth/register`
 
-**Request Body:**
+**Body:**
 ```json
 {
   "email": "user@example.com",
   "password": "password123",
-  "fullname": "John Doe",
-  "phone_number": "+1234567890",
-  "address": "123 Main St, City, State 12345"
+  "first_name": "John",
+  "last_name": "Doe"
 }
 ```
 
-**Response (201):**
+**Response:**
 ```json
 {
   "success": true,
-  "message": "Registration successful",
+  "message": "User registered successfully",
   "data": {
     "user": {
       "id": 1,
       "email": "user@example.com",
-      "fullname": "John Doe",
-      "phone_number": "+1234567890",
-      "address": "123 Main St, City, State 12345",
-      "createdAt": "2024-01-01T00:00:00.000Z"
+      "first_name": "John",
+      "last_name": "Doe",
+      "role": "user",
+      "created_at": "2024-01-15T10:30:00Z"
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
   }
 }
 ```
 
-**Response (400):**
-```json
-{
-  "success": false,
-  "message": "User with this email already exists"
-}
-```
-
-**Note:** This endpoint does not include input validation. All fields are accepted as provided. The registration process creates a user in the custom users table with a bcrypt-hashed password.
-
-**Postman Example:**
-```
-Method: POST
-URL: http://localhost:3000/api/auth/register
-Headers: 
-  Content-Type: application/json
-Body (raw JSON):
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-### 2. User Login
-
+### Login User
 **POST** `/auth/login`
 
-**Request Body:**
+**Body:**
 ```json
 {
   "email": "user@example.com",
@@ -87,7 +58,7 @@ Body (raw JSON):
 }
 ```
 
-**Response (200):**
+**Response:**
 ```json
 {
   "success": true,
@@ -96,874 +67,143 @@ Body (raw JSON):
     "user": {
       "id": 1,
       "email": "user@example.com",
-      "fullname": "John Doe",
-      "phone_number": "+1234567890",
-      "address": "123 Main St, City, State 12345",
-      "createdAt": "2024-01-01T00:00:00.000Z"
+      "first_name": "John",
+      "last_name": "Doe",
+      "role": "user"
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
   }
 }
 ```
 
-**Response (401):**
+### Admin Login
+**POST** `/auth/admin/login`
+
+**Body:**
 ```json
 {
-  "success": false,
-  "message": "Invalid email or password"
+  "email": "admin@example.com",
+  "password": "admin123"
 }
 ```
 
-**Note:** This endpoint authenticates users against the custom users table and verifies passwords using bcrypt.
-
-**Postman Example:**
-```
-Method: POST
-URL: http://localhost:3000/api/auth/login
-Headers: 
-  Content-Type: application/json
-Body (raw JSON):
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-### 3. User Logout
-
-**POST** `/auth/logout`
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
-
-**Response (200):**
+**Response:**
 ```json
 {
   "success": true,
-  "message": "Logout successful"
-}
-```
-
-**Note:** This endpoint currently returns a success message. Token blacklisting is not implemented in this version.
-
-**Postman Example:**
-```
-Method: POST
-URL: http://localhost:3000/api/auth/logout
-Headers: 
-  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-### 4. Get User Profile
-
-**GET** `/auth/profile`
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
+  "message": "Admin login successful",
   "data": {
-    "id": 1,
-    "email": "user@example.com",
-    "fullname": "John Doe",
-    "phone_number": "+1234567890",
-    "address": "123 Main St, City, State 12345",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Postman Example:**
-```
-Method: GET
-URL: http://localhost:3000/api/auth/profile
-Headers: 
-  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-### 5. Edit User Profile
-
-**PUT** `/auth/profile`
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "fullname": "John Smith",
-  "phone_number": "+1987654321",
-  "address": "456 Oak Ave, City, State 54321"
-}
-```
-
-**Note:** All fields are optional. At least one field must be provided.
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Profile updated successfully",
-  "data": {
-    "id": 1,
-    "email": "user@example.com",
-    "fullname": "John Smith",
-    "phone_number": "+1987654321",
-    "address": "456 Oak Ave, City, State 54321",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T12:00:00.000Z"
-  }
-}
-```
-
-**Response (400):**
-```json
-{
-  "success": false,
-  "message": "At least one field (fullname, phone_number, or address) must be provided"
-}
-```
-
-**Response (404):**
-```json
-{
-  "success": false,
-  "message": "User not found or update failed"
-}
-```
-
-**Postman Example:**
-```
-Method: PUT
-URL: http://localhost:3000/api/auth/profile
-Headers: 
-  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-  Content-Type: application/json
-Body (raw JSON):
-{
-  "fullname": "John Smith",
-  "phone_number": "+1987654321",
-  "address": "456 Oak Ave, City, State 54321"
-}
-```
-
-### 6. Edit Password
-
-**PUT** `/auth/password`
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "currentPassword": "oldpassword123",
-  "newPassword": "newpassword123"
-}
-```
-
-**Note:** New password must be at least 6 characters long.
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Password updated successfully"
-}
-```
-
-**Response (400):**
-```json
-{
-  "success": false,
-  "message": "Both currentPassword and newPassword are required"
-}
-```
-
-**Response (400):**
-```json
-{
-  "success": false,
-  "message": "New password must be at least 6 characters long"
-}
-```
-
-**Response (400):**
-```json
-{
-  "success": false,
-  "message": "Current password is incorrect"
-}
-```
-
-**Response (404):**
-```json
-{
-  "success": false,
-  "message": "User not found"
-}
-```
-
-**Postman Example:**
-```
-Method: PUT
-URL: http://localhost:3000/api/auth/password
-Headers: 
-  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-  Content-Type: application/json
-Body (raw JSON):
-{
-  "currentPassword": "oldpassword123",
-  "newPassword": "newpassword123"
-}
-```
-
-### 7. Refresh Token
-
-**POST** `/auth/refresh`
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Token refreshed successfully",
-  "data": {
+    "user": {
+      "id": 1,
+      "email": "admin@example.com",
+      "role": "admin"
+    },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
   }
 }
 ```
 
-**Note:** This endpoint validates the current token and issues a new one with extended expiration.
-
 ---
 
-## 🔧 Authentication Middleware
+## 📦 Package Endpoints
 
-The API uses custom authentication middleware that:
-
-1. **Validates JWT tokens** against the custom users table
-2. **Temporarily disables role-based access control** (all authenticated users have access)
-3. **Uses simplified user data** (id, email only)
-
-**Future Implementation:** Role-based access control will be implemented when roles are added to the database schema.
-
----
-
-## 🗄️ Database Schema Changes
-
-The API has been updated to align with the custom database schema:
-
-### Users Table
-- **ID**: `BIGSERIAL` (auto-incrementing integer)
-- **Fields**: `email`, `password` (bcrypt-hashed), `email_verified_at`, `created_at`, `updated_at`
-
-### Package Purchases Table
-- **Foreign Keys**: `user_id` (INTEGER), `package_id` (INTEGER)
-
-### Purchased Addons Table
-- **Foreign Keys**: `package_purchase_id` (INTEGER), `addon_id` (INTEGER)
-
----
-
-## 📦 Package Management Endpoints
-
-### 1. Get All Packages
-
+### Get All Packages
 **GET** `/packages`
 
-**Response (200):**
+**Response:**
 ```json
 {
   "success": true,
+  "message": "Packages retrieved successfully",
   "data": [
     {
-      "id": 1,
-      "name": "Basic Package",
-      "description": "Essential features for small businesses",
-      "price": 99.99,
-      "duration_days": 30,
-      "is_active": true,
-      "created_at": "2024-01-01T00:00:00.000Z",
-      "updated_at": "2024-01-01T00:00:00.000Z"
+      "package_id": 1,
+      "package_info": {
+        "name": "Premium Package",
+        "description": "Complete branding solution",
+        "price": 99.99,
+        "duration_days": 30,
+        "is_active": true,
+        "created_at": "2024-01-15T10:30:00Z",
+        "updated_at": "2024-01-15T10:30:00Z"
+      }
     }
   ]
 }
 ```
 
-**Postman Example:**
-```
-Method: GET
-URL: http://localhost:3000/api/packages
-```
-
-### 2. Get Package by ID
-
+### Get Package by ID
 **GET** `/packages/:id`
 
-**Response (200):**
+**Response:**
 ```json
 {
   "success": true,
+  "message": "Package retrieved successfully",
   "data": {
-    "id": 1,
-    "name": "Basic Package",
-    "description": "Essential features for small businesses",
-    "price": 99.99,
-    "duration_days": 30,
-    "is_active": true,
-    "created_at": "2024-01-01T00:00:00.000Z",
-    "updated_at": "2024-01-01T00:00:00.000Z",
+    "package_id": 1,
+    "package_info": {
+      "name": "Premium Package",
+      "description": "Complete branding solution",
+      "price": 99.99,
+      "duration_days": 30,
+      "is_active": true,
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    },
     "features": [
       {
-        "id": 1,
-        "package_id": 1,
-        "feature_name": "Basic Analytics",
-        "feature_description": "Simple analytics dashboard",
-        "is_active": true,
-        "created_at": "2024-01-01T00:00:00.000Z"
+        "feature_id": 1,
+        "feature_info": {
+          "name": "Logo Design",
+          "description": "Professional logo creation",
+          "is_active": true
+        }
       }
     ]
   }
 }
 ```
 
-**Postman Example:**
-```
-Method: GET
-URL: http://localhost:3000/api/packages/1
-```
-
-### 3. Create Package (Admin Only)
-
+### Create Package (Admin Only)
 **POST** `/packages`
 
-**Headers:**
-```
-Authorization: Bearer <admin_jwt_token>
-Content-Type: application/json
-```
+**Headers:** `Authorization: Bearer ADMIN_TOKEN`
 
-**Request Body:**
+**Body:**
 ```json
 {
-  "name": "Premium Package",
-  "description": "Advanced features for growing businesses",
-  "price": 199.99,
-  "duration_days": 30,
-  "features": [
-    {
-      "name": "Advanced Analytics",
-      "description": "Comprehensive analytics dashboard"
-    },
-    {
-      "name": "Priority Support",
-      "description": "24/7 priority customer support"
-    }
-  ]
+  "name": "New Package",
+  "description": "Package description",
+  "price": 149.99,
+  "duration_days": 60,
+  "features": [1, 2, 3]
 }
 ```
 
-**Response (201):**
+**Response:**
 ```json
 {
   "success": true,
   "message": "Package created successfully",
   "data": {
-    "id": 2,
-    "name": "Premium Package",
-    "description": "Advanced features for growing businesses",
-    "price": 199.99,
-    "duration_days": 30,
-    "is_active": true,
-    "created_at": "2024-01-01T00:00:00.000Z",
-    "updated_at": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Postman Example:**
-```
-Method: POST
-URL: http://localhost:3000/api/packages
-Headers: 
-  Authorization: Bearer <admin_token>
-  Content-Type: application/json
-Body (raw JSON):
-{
-  "name": "Premium Package",
-  "description": "Advanced features for growing businesses",
-  "price": 199.99,
-  "duration_days": 30,
-  "features": [
-    {
-      "name": "Advanced Analytics",
-      "description": "Comprehensive analytics dashboard"
-    }
-  ]
-}
-```
-
-### 4. Update Package (Admin Only)
-
-**PUT** `/packages/:id`
-
-**Headers:**
-```
-Authorization: Bearer <admin_jwt_token>
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "name": "Updated Premium Package",
-  "description": "Updated description",
-  "price": 249.99,
-  "duration_days": 30,
-  "is_active": true
-}
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Package updated successfully",
-  "data": {
-    "id": 2,
-    "name": "Updated Premium Package",
-    "description": "Updated description",
-    "price": 249.99,
-    "duration_days": 30,
-    "is_active": true,
-    "updated_at": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Postman Example:**
-```
-Method: PUT
-URL: http://localhost:3000/api/packages/2
-Headers: 
-  Authorization: Bearer <admin_token>
-  Content-Type: application/json
-Body (raw JSON):
-{
-  "name": "Updated Premium Package",
-  "description": "Updated description",
-  "price": 249.99,
-  "duration_days": 30,
-  "is_active": true
-}
-```
-
-### 5. Delete Package (Admin Only)
-
-**DELETE** `/packages/:id`
-
-**Headers:**
-```
-Authorization: Bearer <admin_jwt_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Package deleted successfully"
-}
-```
-
-**Postman Example:**
-```
-Method: DELETE
-URL: http://localhost:3000/api/packages/2
-Headers: 
-  Authorization: Bearer <admin_token>
-```
-
----
-
-## 🎯 Addon Management Endpoints
-
-### 1. Get All Addons
-
-**GET** `/addons`
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "name": "Priority Support",
-      "description": "24/7 priority customer support",
-      "price_type": "recurring",
-      "base_price": 29.99,
+    "package_id": 2,
+    "package_info": {
+      "name": "New Package",
+      "description": "Package description",
+      "price": 149.99,
+      "duration_days": 60,
       "is_active": true,
-      "created_at": "2024-01-01T00:00:00.000Z",
-      "updated_at": "2024-01-01T00:00:00.000Z"
-    }
-  ]
-}
-```
-
-**Postman Example:**
-```
-Method: GET
-URL: http://localhost:3000/api/addons
-```
-
-### 2. Get Addon by ID
-
-**GET** `/addons/:id`
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "name": "Priority Support",
-    "description": "24/7 priority customer support",
-    "price_type": "recurring",
-    "base_price": 29.99,
-    "is_active": true,
-    "created_at": "2024-01-01T00:00:00.000Z",
-    "updated_at": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Postman Example:**
-```
-Method: GET
-URL: http://localhost:3000/api/addons/1
-```
-
-### 3. Get User Addons
-
-**GET** `/addons/user`
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "purchase_date": "2024-01-01T00:00:00.000Z",
-      "amount_paid": 29.99,
-      "status": "active",
-      "created_at": "2024-01-01T00:00:00.000Z",
-      "addon": {
-        "id": 1,
-        "name": "Priority Support",
-        "description": "24/7 priority customer support",
-        "price_type": "recurring",
-        "base_price": 29.99
-      },
-      "package_purchase": {
-        "id": 1,
-        "purchase_date": "2024-01-01T00:00:00.000Z",
-        "expiration_date": "2024-02-01",
-        "status": "active",
-        "package": {
-          "id": 1,
-          "name": "Basic Package",
-          "description": "Essential features for small businesses"
-        }
-      }
-    }
-  ]
-}
-```
-
-**Response (401):**
-```json
-{
-  "success": false,
-  "message": "Access denied"
-}
-```
-
-**Postman Example:**
-```
-Method: GET
-URL: http://localhost:3000/api/addons/user
-Headers: 
-  Authorization: Bearer <user_token>
-```
-
-### 4. Create Addon (Admin Only)
-
-**POST** `/addons`
-
-**Headers:**
-```
-Authorization: Bearer <admin_jwt_token>
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "name": "Custom Domain",
-  "description": "Use your own domain name",
-  "price_type": "one-time",
-  "base_price": 49.99
-}
-```
-
-**Response (201):**
-```json
-{
-  "success": true,
-  "message": "Addon created successfully",
-  "data": {
-    "id": 2,
-    "name": "Custom Domain",
-    "description": "Use your own domain name",
-    "price_type": "one-time",
-    "base_price": 49.99,
-    "is_active": true,
-    "created_at": "2024-01-01T00:00:00.000Z",
-    "updated_at": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Postman Example:**
-```
-Method: POST
-URL: http://localhost:3000/api/addons
-Headers: 
-  Authorization: Bearer <admin_token>
-  Content-Type: application/json
-Body (raw JSON):
-{
-  "name": "Custom Domain",
-  "description": "Use your own domain name",
-  "price_type": "one-time",
-  "base_price": 49.99
-}
-```
-
-### 5. Update Addon (Admin Only)
-
-**PUT** `/addons/:id`
-
-**Headers:**
-```
-Authorization: Bearer <admin_jwt_token>
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "name": "Updated Custom Domain",
-  "description": "Updated description",
-  "price_type": "one-time",
-  "base_price": 59.99,
-  "is_active": true
-}
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Addon updated successfully",
-  "data": {
-    "id": 2,
-    "name": "Updated Custom Domain",
-    "description": "Updated description",
-    "price_type": "one-time",
-    "base_price": 59.99,
-    "is_active": true,
-    "updated_at": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Postman Example:**
-```
-Method: PUT
-URL: http://localhost:3000/api/addons/2
-Headers: 
-  Authorization: Bearer <admin_token>
-  Content-Type: application/json
-Body (raw JSON):
-{
-  "name": "Updated Custom Domain",
-  "description": "Updated description",
-  "price_type": "one-time",
-  "base_price": 59.99,
-  "is_active": true
-}
-```
-
-### 6. Delete Addon (Admin Only)
-
-**DELETE** `/addons/:id`
-
-**Headers:**
-```
-Authorization: Bearer <admin_jwt_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Addon deleted successfully"
-}
-```
-
-**Postman Example:**
-```
-Method: DELETE
-URL: http://localhost:3000/api/addons/2
-Headers: 
-  Authorization: Bearer <admin_token>
-```
-
----
-
-## 🛒 Purchase Management Endpoints
-
-### 1. Get User Purchases
-
-**GET** `/purchases`
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "user_id": 1,
-      "package_id": 1,
-      "purchase_date": "2024-01-01T00:00:00.000Z",
-      "expiration_date": "2024-02-01",
-      "status": "active",
-      "total_amount": 129.98,
-      "created_at": "2024-01-01T00:00:00.000Z",
-      "updated_at": "2024-01-01T00:00:00.000Z",
-      "packages": {
-        "id": 1,
-        "name": "Basic Package",
-        "description": "Essential features for small businesses",
-        "price": 99.99,
-        "duration_days": 30
-      },
-      "addons": [
-        {
-          "id": 1,
-          "purchase_date": "2024-01-01T00:00:00.000Z",
-          "amount_paid": 29.99,
-          "status": "active",
-          "created_at": "2024-01-01T00:00:00.000Z",
-          "addons": {
-            "id": 1,
-            "name": "Priority Support",
-            "description": "24/7 priority customer support",
-            "price_type": "recurring",
-            "base_price": 29.99
-          }
-        }
-      ]
-    }
-  ]
-}
-```
-
-**Postman Example:**
-```
-Method: GET
-URL: http://localhost:3000/api/purchases
-Headers: 
-  Authorization: Bearer <user_token>
-```
-
-### 2. Get Purchase by ID
-
-**GET** `/purchases/:id`
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "user_id": 1,
-    "package_id": 1,
-    "purchase_date": "2024-01-01T00:00:00.000Z",
-    "expiration_date": "2024-02-01",
-    "status": "active",
-    "total_amount": 129.98,
-    "created_at": "2024-01-01T00:00:00.000Z",
-    "updated_at": "2024-01-01T00:00:00.000Z",
-    "packages": {
-      "id": 1,
-      "name": "Basic Package",
-      "description": "Essential features for small businesses",
-      "price": 99.99,
-      "duration_days": 30
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
     },
-    "purchased_addons": [
+    "features": [
       {
-        "id": 1,
-        "package_purchase_id": 1,
-        "addon_id": 1,
-        "purchase_date": "2024-01-01T00:00:00.000Z",
-        "amount_paid": 29.99,
-        "status": "active",
-        "created_at": "2024-01-01T00:00:00.000Z",
-        "addons": {
-          "id": 1,
-          "name": "Priority Support",
-          "description": "24/7 priority customer support",
-          "price_type": "recurring",
-          "base_price": 29.99
+        "feature_id": 1,
+        "feature_info": {
+          "name": "Logo Design",
+          "description": "Professional logo creation",
+          "is_active": true
         }
       }
     ]
@@ -971,223 +211,728 @@ Authorization: Bearer <jwt_token>
 }
 ```
 
-**Postman Example:**
-```
-Method: GET
-URL: http://localhost:3000/api/purchases/1
-Headers: 
-  Authorization: Bearer <user_token>
-```
+### Update Package (Admin Only)
+**PUT** `/packages/:id`
 
-### 3. Create Purchase
+**Headers:** `Authorization: Bearer ADMIN_TOKEN`
 
-**POST** `/purchases`
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
-```
-
-**Request Body:**
+**Body:**
 ```json
 {
-  "package_id": 1,
-  "addons": [1, 2]
+  "name": "Updated Package",
+  "description": "Updated description",
+  "price": 199.99,
+  "duration_days": 90,
+  "is_active": true
 }
 ```
 
-**Response (201):**
+---
+
+## 🎯 Addon Endpoints
+
+### Get All Addons
+**GET** `/addons`
+
+**Response:**
 ```json
 {
   "success": true,
-  "message": "Purchase created successfully",
-  "data": {
-    "id": 2,
-    "user_id": 1,
-    "package_id": 1,
-    "purchase_date": "2024-01-01T00:00:00.000Z",
-    "expiration_date": "2024-02-01",
-    "status": "active",
-    "total_amount": 179.97,
-    "created_at": "2024-01-01T00:00:00.000Z",
-    "updated_at": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Postman Example:**
-```
-Method: POST
-URL: http://localhost:3000/api/purchases
-Headers: 
-  Authorization: Bearer <user_token>
-  Content-Type: application/json
-Body (raw JSON):
-{
-  "package_id": 1,
-  "addons": [1, 2]
-}
-```
-
-### 4. Cancel Purchase
-
-**PUT** `/purchases/:id/cancel`
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Purchase cancelled successfully",
-  "data": {
-    "id": 1,
-    "user_id": 1,
-    "package_id": 1,
-    "purchase_date": "2024-01-01T00:00:00.000Z",
-    "expiration_date": "2024-02-01",
-    "status": "cancelled",
-    "total_amount": 129.98,
-    "updated_at": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Postman Example:**
-```
-Method: PUT
-URL: http://localhost:3000/api/purchases/1/cancel
-Headers: 
-  Authorization: Bearer <user_token>
-```
-
-### 5. Get All Purchases (Admin Only)
-
-**GET** `/purchases/admin/all`
-
-**Headers:**
-```
-Authorization: Bearer <admin_jwt_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
+  "message": "Addons retrieved successfully",
   "data": [
     {
-      "id": 1,
-      "user_id": 1,
-      "package_id": 1,
-      "purchase_date": "2024-01-01T00:00:00.000Z",
-      "expiration_date": "2024-02-01",
-      "status": "active",
-      "total_amount": 129.98,
-      "created_at": "2024-01-01T00:00:00.000Z",
-      "updated_at": "2024-01-01T00:00:00.000Z",
-      "packages": {
-        "id": 1,
-        "name": "Basic Package",
-        "description": "Essential features for small businesses"
-      },
-      "users": {
-        "id": 1,
-        "email": "user@example.com"
-      },
-      "addons": [
-        {
-          "id": 1,
-          "purchase_date": "2024-01-01T00:00:00.000Z",
-          "amount_paid": 29.99,
-          "status": "active",
-          "created_at": "2024-01-01T00:00:00.000Z",
-          "addons": {
-            "id": 1,
-            "name": "Priority Support",
-            "description": "24/7 priority customer support",
-            "price_type": "recurring",
-            "base_price": 29.99
-          }
-        }
-      ]
+      "addon_id": 1,
+      "addon_info": {
+        "name": "Social Media Kit",
+        "description": "Complete social media assets",
+        "price_type": "one-time",
+        "base_price": 49.99,
+        "is_active": true,
+        "created_at": "2024-01-15T10:30:00Z",
+        "updated_at": "2024-01-15T10:30:00Z"
+      }
     }
   ]
 }
 ```
 
-**Postman Example:**
-```
-Method: GET
-URL: http://localhost:3000/api/purchases/admin/all
-Headers: 
-  Authorization: Bearer <admin_token>
-```
+### Get Addon by ID
+**GET** `/addons/:id`
 
----
-
-## 🧪 Testing and Troubleshooting
-
-### Quick Test Script
-Use the provided `test-api.js` script to test all endpoints:
-
-```bash
-node test-api.js
-```
-
-### Common Issues
-
-1. **Registration Fails**: 
-   - Check if user already exists
-   - Verify database connection
-   - Ensure bcrypt is properly hashing passwords
-
-2. **Login Fails**:
-   - Verify email exists in users table
-   - Check password hashing/verification
-   - Ensure JWT secret is set in environment
-
-3. **Authentication Errors**:
-   - Verify token format: `Bearer <token>`
-   - Check token expiration
-   - Ensure user exists in database
-
-4. **Database Connection**:
-   - Verify Supabase credentials in `.env`
-   - Check network connectivity
-   - Ensure database schema is properly set up
-
-### Environment Variables Required
-```
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRES_IN=24h
-PORT=3000
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Addon retrieved successfully",
+  "data": {
+    "addon_id": 1,
+    "addon_info": {
+      "name": "Social Media Kit",
+      "description": "Complete social media assets",
+      "price_type": "one-time",
+      "base_price": 49.99,
+      "is_active": true,
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    }
+  }
+}
 ```
 
 ---
 
-## 🔍 Error Responses
+## 🛒 Purchase Endpoints (Combined Package + Addons)
 
-All endpoints return consistent error responses:
+### Get User Purchases
+**GET** `/purchases`
+
+**Headers:** `Authorization: Bearer YOUR_TOKEN`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Purchases retrieved successfully",
+  "data": {
+    "user_id": 1,
+    "total_purchases": 2,
+    "purchases": [
+      {
+        "purchase_id": 1,
+        "purchase_info": {
+          "purchase_date": "2024-01-15T10:30:00Z",
+          "expiration_date": "2024-02-15",
+          "status": "active",
+          "total_amount": 149.98,
+          "created_at": "2024-01-15T10:30:00Z",
+          "updated_at": "2024-01-15T10:30:00Z"
+        },
+        "package_details": {
+          "package_id": 1,
+          "package_name": "Premium Package",
+          "package_description": "Complete branding solution",
+          "package_price": 99.99,
+          "duration_days": 30
+        },
+        "addons": [
+          {
+            "addon_purchase_id": 1,
+            "addon_details": {
+              "addon_id": 1,
+              "addon_name": "Social Media Kit",
+              "addon_description": "Complete social media assets",
+              "price_type": "one-time",
+              "base_price": 49.99
+            },
+            "purchase_info": {
+              "purchase_date": "2024-01-15T10:30:00Z",
+              "status": "active",
+              "amount_paid": 49.99,
+              "created_at": "2024-01-15T10:30:00Z"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Get Purchase by ID
+**GET** `/purchases/:id`
+
+**Headers:** `Authorization: Bearer YOUR_TOKEN`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Purchase details retrieved successfully",
+  "data": {
+    "purchase_id": 1,
+    "purchase_info": {
+      "purchase_date": "2024-01-15T10:30:00Z",
+      "expiration_date": "2024-02-15",
+      "status": "active",
+      "total_amount": 149.98,
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    },
+    "package_details": {
+      "package_id": 1,
+      "package_name": "Premium Package",
+      "package_description": "Complete branding solution",
+      "package_price": 99.99,
+      "duration_days": 30
+    },
+    "addons": [
+      {
+        "addon_purchase_id": 1,
+        "addon_details": {
+          "addon_id": 1,
+          "addon_name": "Social Media Kit",
+          "addon_description": "Complete social media assets",
+          "price_type": "one-time",
+          "base_price": 49.99
+        },
+        "purchase_info": {
+          "purchase_date": "2024-01-15T10:30:00Z",
+          "status": "active",
+          "amount_paid": 49.99,
+          "created_at": "2024-01-15T10:30:00Z"
+        }
+      }
+    ]
+  }
+}
+```
+
+### Create Purchase
+**POST** `/purchases`
+
+**Headers:** `Authorization: Bearer YOUR_TOKEN`
+
+**Body:**
+```json
+{
+  "package_id": 1,
+  "addon_ids": [1, 2]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Purchase created successfully",
+  "data": {
+    "purchase_id": 1,
+    "purchase_info": {
+      "purchase_date": "2024-01-15T10:30:00Z",
+      "expiration_date": "2024-02-15",
+      "status": "active",
+      "total_amount": 149.98,
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    },
+    "package_details": {
+      "package_id": 1,
+      "package_name": "Premium Package",
+      "package_description": "Complete branding solution",
+      "package_price": 99.99,
+      "duration_days": 30
+    },
+    "addons": [
+      {
+        "addon_id": 1,
+        "addon_name": "Social Media Kit",
+        "addon_description": "Complete social media assets",
+        "price_type": "one-time",
+        "base_price": 49.99
+      }
+    ]
+  }
+}
+```
+
+### Get All Purchases (Admin Only)
+**GET** `/purchases/admin/all`
+
+**Headers:** `Authorization: Bearer ADMIN_TOKEN`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "All purchases retrieved successfully",
+  "data": {
+    "total_purchases": 5,
+    "purchases": [
+      {
+        "purchase_id": 1,
+        "user_details": {
+          "user_id": 1,
+          "user_email": "user@example.com"
+        },
+        "purchase_info": {
+          "purchase_date": "2024-01-15T10:30:00Z",
+          "expiration_date": "2024-02-15",
+          "status": "active",
+          "total_amount": 149.98,
+          "created_at": "2024-01-15T10:30:00Z",
+          "updated_at": "2024-01-15T10:30:00Z"
+        },
+        "package_details": {
+          "package_id": 1,
+          "package_name": "Premium Package",
+          "package_description": "Complete branding solution",
+          "package_price": 99.99,
+          "duration_days": 30
+        },
+        "addons": [
+          {
+            "addon_purchase_id": 1,
+            "addon_details": {
+              "addon_id": 1,
+              "addon_name": "Social Media Kit",
+              "addon_description": "Complete social media assets",
+              "price_type": "one-time",
+              "base_price": 49.99
+            },
+            "purchase_info": {
+              "purchase_date": "2024-01-15T10:30:00Z",
+              "status": "active",
+              "amount_paid": 49.99,
+              "created_at": "2024-01-15T10:30:00Z"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 🎯 Independent Addon Purchase Endpoints
+
+### Get User's Addon Purchases
+**GET** `/addon-purchases`
+
+**Headers:** `Authorization: Bearer YOUR_TOKEN`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Addon purchases retrieved successfully",
+  "data": {
+    "user_id": 1,
+    "total_addon_purchases": 2,
+    "addon_purchases": [
+      {
+        "addon_purchase_id": 1,
+        "purchase_info": {
+          "purchase_date": "2024-01-15T10:30:00Z",
+          "status": "active",
+          "base_price": 49.99,
+          "price_type": "one-time",
+          "duration": null,
+          "created_at": "2024-01-15T10:30:00Z"
+        },
+        "addon_details": {
+          "addon_id": 1,
+          "addon_name": "Social Media Kit",
+          "addon_description": "Complete social media assets",
+          "price_type": "one-time",
+          "base_price": 49.99
+        }
+      }
+    ]
+  }
+}
+```
+
+### Get Addon Purchase by ID
+**GET** `/addon-purchases/:id`
+
+**Headers:** `Authorization: Bearer YOUR_TOKEN`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Addon purchase details retrieved successfully",
+  "data": {
+    "addon_purchase_id": 1,
+    "purchase_info": {
+      "purchase_date": "2024-01-15T10:30:00Z",
+      "status": "active",
+      "base_price": 49.99,
+      "price_type": "one-time",
+      "duration": null,
+      "created_at": "2024-01-15T10:30:00Z"
+    },
+    "addon_details": {
+      "addon_id": 1,
+      "addon_name": "Social Media Kit",
+      "addon_description": "Complete social media assets",
+      "price_type": "one-time",
+      "base_price": 49.99
+    }
+  }
+}
+```
+
+### Create Addon Purchase
+**POST** `/addon-purchases`
+
+**Headers:** `Authorization: Bearer YOUR_TOKEN`
+
+**Body:**
+```json
+{
+  "addon_id": 1
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Addon purchase created successfully",
+  "data": {
+    "addon_purchase_id": 1,
+    "purchase_info": {
+      "purchase_date": "2024-01-15T10:30:00Z",
+      "status": "active",
+      "base_price": 49.99,
+      "price_type": "one-time",
+      "duration": null,
+      "created_at": "2024-01-15T10:30:00Z"
+    },
+    "addon_details": {
+      "addon_id": 1,
+      "addon_name": "Social Media Kit",
+      "addon_description": "Complete social media assets",
+      "price_type": "one-time",
+      "base_price": 49.99
+    }
+  }
+}
+```
+
+### Cancel Addon Purchase
+**PUT** `/addon-purchases/:id/cancel`
+
+**Headers:** `Authorization: Bearer YOUR_TOKEN`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Addon purchase cancelled successfully",
+  "data": {
+    "addon_purchase_id": 1,
+    "status": "cancelled"
+  }
+}
+```
+
+### Get All Addon Purchases (Admin Only)
+**GET** `/addon-purchases/admin/all`
+
+**Headers:** `Authorization: Bearer ADMIN_TOKEN`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "All addon purchases retrieved successfully",
+  "data": {
+    "total_addon_purchases": 5,
+    "addon_purchases": [
+      {
+        "addon_purchase_id": 1,
+        "purchase_info": {
+          "purchase_date": "2024-01-15T10:30:00Z",
+          "status": "active",
+          "base_price": 49.99,
+          "price_type": "one-time",
+          "duration": null,
+          "created_at": "2024-01-15T10:30:00Z"
+        },
+        "user_details": {
+          "user_id": 1,
+          "user_email": "user@example.com"
+        },
+        "addon_details": {
+          "addon_id": 1,
+          "addon_name": "Social Media Kit",
+          "addon_description": "Complete social media assets",
+          "price_type": "one-time",
+          "base_price": 49.99
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 📦 Package Purchase Endpoints (Package Only)
+
+### Get User's Package Purchases
+**GET** `/package-purchases`
+
+**Headers:** `Authorization: Bearer YOUR_TOKEN`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Package purchases retrieved successfully",
+  "data": {
+    "user_id": 1,
+    "total_package_purchases": 2,
+    "package_purchases": [
+      {
+        "package_purchase_id": 1,
+        "purchase_info": {
+          "purchase_date": "2024-01-15T10:30:00Z",
+          "expiration_date": "2024-02-15",
+          "status": "active",
+          "total_amount": 99.99,
+          "created_at": "2024-01-15T10:30:00Z",
+          "updated_at": "2024-01-15T10:30:00Z"
+        },
+        "package_details": {
+          "package_id": 1,
+          "package_name": "Premium Package",
+          "package_description": "Complete branding solution",
+          "package_price": 99.99,
+          "duration_days": 30
+        }
+      }
+    ]
+  }
+}
+```
+
+### Get Package Purchase by ID
+**GET** `/package-purchases/:id`
+
+**Headers:** `Authorization: Bearer YOUR_TOKEN`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Package purchase details retrieved successfully",
+  "data": {
+    "package_purchase_id": 1,
+    "purchase_info": {
+      "purchase_date": "2024-01-15T10:30:00Z",
+      "expiration_date": "2024-02-15",
+      "status": "active",
+      "total_amount": 99.99,
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    },
+    "package_details": {
+      "package_id": 1,
+      "package_name": "Premium Package",
+      "package_description": "Complete branding solution",
+      "package_price": 99.99,
+      "duration_days": 30
+    }
+  }
+}
+```
+
+### Get All Package Purchases (Admin Only)
+**GET** `/package-purchases/admin/all`
+
+**Headers:** `Authorization: Bearer ADMIN_TOKEN`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "All package purchases retrieved successfully",
+  "data": {
+    "total_package_purchases": 5,
+    "package_purchases": [
+      {
+        "package_purchase_id": 1,
+        "purchase_info": {
+          "purchase_date": "2024-01-15T10:30:00Z",
+          "expiration_date": "2024-02-15",
+          "status": "active",
+          "total_amount": 99.99,
+          "created_at": "2024-01-15T10:30:00Z",
+          "updated_at": "2024-01-15T10:30:00Z"
+        },
+        "user_details": {
+          "user_id": 1,
+          "user_email": "user@example.com"
+        },
+        "package_details": {
+          "package_id": 1,
+          "package_name": "Premium Package",
+          "package_description": "Complete branding solution",
+          "package_price": 99.99,
+          "duration_days": 30
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 🎨 Brand Kit Endpoints
+
+### Get Brand Kit Forms
+**GET** `/brandkit/forms`
+
+**Headers:** `Authorization: Bearer YOUR_TOKEN`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Brand kit forms retrieved successfully",
+  "data": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "form_data": {
+        "company_name": "Example Corp",
+        "industry": "Technology",
+        "brand_colors": ["#FF0000", "#00FF00"],
+        "logo_preferences": "Modern and minimal"
+      },
+      "status": "completed",
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+### Get Brand Kit Form by ID
+**GET** `/brandkit/forms/:id`
+
+**Headers:** `Authorization: Bearer YOUR_TOKEN`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Brand kit form retrieved successfully",
+  "data": {
+    "id": 1,
+    "user_id": 1,
+    "form_data": {
+      "company_name": "Example Corp",
+      "industry": "Technology",
+      "brand_colors": ["#FF0000", "#00FF00"],
+      "logo_preferences": "Modern and minimal"
+    },
+    "status": "completed",
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+### Create Brand Kit Form
+**POST** `/brandkit/forms`
+
+**Headers:** `Authorization: Bearer YOUR_TOKEN`
+
+**Body:**
+```json
+{
+  "form_data": {
+    "company_name": "Example Corp",
+    "industry": "Technology",
+    "brand_colors": ["#FF0000", "#00FF00"],
+    "logo_preferences": "Modern and minimal"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Brand kit form created successfully",
+  "data": {
+    "id": 1,
+    "user_id": 1,
+    "form_data": {
+      "company_name": "Example Corp",
+      "industry": "Technology",
+      "brand_colors": ["#FF0000", "#00FF00"],
+      "logo_preferences": "Modern and minimal"
+    },
+    "status": "draft",
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+### Update Brand Kit Form
+**PUT** `/brandkit/forms/:id`
+
+**Headers:** `Authorization: Bearer YOUR_TOKEN`
+
+**Body:**
+```json
+{
+  "form_data": {
+    "company_name": "Updated Corp",
+    "industry": "Technology",
+    "brand_colors": ["#FF0000", "#00FF00", "#0000FF"],
+    "logo_preferences": "Modern and minimal with blue accent"
+  },
+  "status": "completed"
+}
+```
+
+### Get All Brand Kit Forms (Admin Only)
+**GET** `/brandkit/forms/admin/all`
+
+**Headers:** `Authorization: Bearer ADMIN_TOKEN`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "All brand kit forms retrieved successfully",
+  "data": {
+    "total_forms": 10,
+    "forms": [
+      {
+        "id": 1,
+        "user_details": {
+          "user_id": 1,
+          "user_email": "user@example.com"
+        },
+        "form_data": {
+          "company_name": "Example Corp",
+          "industry": "Technology",
+          "brand_colors": ["#FF0000", "#00FF00"],
+          "logo_preferences": "Modern and minimal"
+        },
+        "status": "completed",
+        "created_at": "2024-01-15T10:30:00Z",
+        "updated_at": "2024-01-15T10:30:00Z"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 📊 Error Responses
 
 ### 400 Bad Request
 ```json
 {
   "success": false,
-  "message": "Validation failed",
+  "message": "Validation error",
   "errors": [
     {
-      "type": "field",
-      "value": "",
-      "msg": "Please provide a valid email address",
-      "path": "email",
-      "location": "body"
+      "field": "email",
+      "message": "Email is required"
     }
   ]
 }
@@ -1197,7 +942,7 @@ All endpoints return consistent error responses:
 ```json
 {
   "success": false,
-  "message": "Access token required"
+  "message": "Access denied. No token provided."
 }
 ```
 
@@ -1205,7 +950,7 @@ All endpoints return consistent error responses:
 ```json
 {
   "success": false,
-  "message": "Insufficient permissions"
+  "message": "Access denied. Admin role required."
 }
 ```
 
@@ -1213,15 +958,7 @@ All endpoints return consistent error responses:
 ```json
 {
   "success": false,
-  "message": "Package not found"
-}
-```
-
-### 429 Too Many Requests
-```json
-{
-  "success": false,
-  "message": "Too many requests from this IP, please try again later."
+  "message": "Resource not found"
 }
 ```
 
@@ -1235,355 +972,47 @@ All endpoints return consistent error responses:
 
 ---
 
-## 📊 Health Check
+## 🔧 Rate Limiting
 
-**GET** `/health`
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "AltaMedia Client Dashboard Backend is running",
-  "timestamp": "2024-01-01T00:00:00.000Z",
-  "environment": "development"
-}
-```
-
-**Postman Example:**
-```
-Method: GET
-URL: http://localhost:3000/health
-```
+All API endpoints are rate limited to **100 requests per 15 minutes** per IP address.
 
 ---
 
-## 🧪 Testing with Postman
+## 📝 Notes
 
-### Setup Instructions:
-
-1. **Import the collection** into Postman
-2. **Set up environment variables:**
-   - `base_url`: `http://localhost:3000/api`
-   - `token`: Your JWT token after login
-   - `admin_token`: Admin JWT token
-
-3. **Test flow:**
-   1. Login to get token
-   2. Use token for authenticated requests
-   3. Test all endpoints with sample data
-
-### Sample Test Data:
-
-**Package Creation:**
-```json
-{
-  "name": "Starter Package",
-  "description": "Perfect for new businesses",
-  "price": 49.99,
-  "duration_days": 30,
-  "features": [
-    {
-      "name": "Basic Dashboard",
-      "description": "Simple dashboard interface"
-    }
-  ]
-}
-```
-
-**Addon Creation:**
-```json
-{
-  "name": "Email Support",
-  "description": "Email support for your business",
-  "price_type": "recurring",
-  "base_price": 19.99
-}
-```
-
-**Purchase Creation:**
-```json
-{
-  "package_id": 1,
-  "addons": [1]
-}
-```
+1. **Authentication**: All protected endpoints require a valid JWT token in the Authorization header
+2. **Admin Access**: Admin-only endpoints require a user with 'admin' role
+3. **Data Labeling**: All responses use clear labeling for easy frontend integration
+4. **Error Handling**: Consistent error response format across all endpoints
+5. **Pagination**: Currently not implemented - all endpoints return all data
+6. **File Uploads**: Brand kit forms support file uploads for logos and assets
 
 ---
 
-## 🎨 Brand Kit Form Endpoints
+## 🚀 Getting Started
 
-### 1. Create or Update Brand Kit Form
+1. **Start the server:**
+   ```bash
+   cd backend
+   npm start
+   ```
 
-**POST** `/brandkit`
+2. **Register a user:**
+   ```bash
+   curl -X POST http://localhost:3000/api/auth/register \
+     -H "Content-Type: application/json" \
+     -d '{"email":"user@example.com","password":"password123","first_name":"John","last_name":"Doe"}'
+   ```
 
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
-```
+3. **Login to get token:**
+   ```bash
+   curl -X POST http://localhost:3000/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email":"user@example.com","password":"password123"}'
+   ```
 
-**Request Body:**
-```json
-{
-  "business_type": "SaaS",
-  "business_email": "contact@example.com",
-  "has_proventous_id": "yes",
-  "proventous_id": "PROV123",
-  "business_name": "Example Corp",
-  "phone_number": "+1234567890",
-  "preferred_contact_method": "email",
-  "industry": ["Technology", "SaaS"],
-  "year_started": 2020,
-  "main_location": "San Francisco, CA",
-  "mission_statement": "To revolutionize the industry",
-  "vision_statement": "Leading the future of technology",
-  "core_values": ["Innovation", "Quality", "Customer Focus"],
-  "business_stage": "growth",
-  "brand_description": "A modern tech company focused on innovation",
-  "buyer_type": ["B2B", "Enterprise"],
-  "target_audience": "Tech-savvy professionals",
-  "spending_type": "premium",
-  "secondary_audience": "Small businesses",
-  "desired_feeling": "Professional and trustworthy",
-  "audience_interests": ["Technology", "Innovation"],
-  "professions": ["Developers", "Managers"],
-  "preferred_platforms": ["LinkedIn", "Twitter"],
-  "age_groups": ["25-34", "35-44"],
-  "current_audience_interests": ["Tech news", "Productivity"],
-  "spending_habits": ["Premium products", "Quality over price"],
-  "audience_behaviors": ["Research-driven", "Early adopters"],
-  "interaction_modes": ["Digital", "Social media"],
-  "customer_pain_points": "Complex onboarding process",
-  "purchase_motivators": "Time savings and efficiency",
-  "emotional_goal": "Confidence and trust",
-  "brand_owner": "John Doe",
-  "why_started": "To solve a market gap",
-  "reasons_exist1": "Innovation in the industry",
-  "reasons_exist2": "Customer satisfaction",
-  "reasons_exist3": "Market leadership",
-  "brand_soul": "Innovation meets reliability",
-  "brand_personality": ["Professional", "Innovative", "Friendly"],
-  "brand_voice": ["Clear", "Confident", "Approachable"],
-  "admire_brand1": "Apple",
-  "admire_brand2": "Tesla",
-  "admire_brand3": "Stripe",
-  "styles_to_avoid": "Overly casual or unprofessional",
-  "existing_logo": "Basic text logo",
-  "logo_action": ["Redesign", "Modernize"],
-  "brand_colors": ["Blue", "White", "Gray"],
-  "colors_to_avoid": ["Bright pink", "Neon green"],
-  "font_preferences": ["Sans-serif", "Clean"],
-  "design_style": ["Minimalist", "Modern"],
-  "logo_style": ["Wordmark", "Simple"],
-  "imagery_style": ["Professional", "Clean"],
-  "design_inspiration": "Apple's minimalist approach",
-  "usage_channels": ["Website", "Social media", "Print"],
-  "brand_elements_needed": ["Logo", "Business cards", "Website"],
-  "file_formats_needed": ["SVG", "PNG", "PDF"],
-  "goal_this_year": "Increase market share by 50%",
-  "other_short_term_goals": "Launch new product line",
-  "three_to_five_year_vision": "Become industry leader",
-  "additional_mid_term_goals": "Expand to international markets",
-  "long_term_vision": "Global technology leader",
-  "key_metrics": ["Revenue growth", "Customer satisfaction"],
-  "company_culture": ["Innovation", "Collaboration", "Excellence"],
-  "culture_description": "Fast-paced, innovative environment",
-  "internal_rituals": "Weekly team meetings",
-  "additional_notes": "Focus on premium positioning",
-  "timeline": "3 months for complete brand kit",
-  "decision_makers": "CEO and Marketing Director",
-  "reference_materials": "Competitor analysis and market research"
-}
-```
-
-**Response (201/200):**
-```json
-{
-  "success": true,
-  "message": "Brand kit form created successfully",
-  "data": {
-    "id": 1,
-    "user_id": 1,
-    "business_type": "SaaS",
-    "business_email": "contact@example.com",
-    "business_name": "Example Corp",
-    "current_step": 1,
-    "progress_percentage": 8.33,
-    "is_completed": false,
-    "created_at": "2024-01-01T00:00:00.000Z",
-    "updated_at": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Postman Example:**
-```
-Method: POST
-URL: http://localhost:3000/api/brandkit
-Headers: 
-  Authorization: Bearer <user_token>
-  Content-Type: application/json
-```
-
-### 2. Get Brand Kit Form
-
-**GET** `/brandkit`
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "user_id": 1,
-    "business_type": "SaaS",
-    "business_email": "contact@example.com",
-    "business_name": "Example Corp",
-    "current_step": 1,
-    "progress_percentage": 8.33,
-    "is_completed": false,
-    "created_at": "2024-01-01T00:00:00.000Z",
-    "updated_at": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Postman Example:**
-```
-Method: GET
-URL: http://localhost:3000/api/brandkit
-Headers: 
-  Authorization: Bearer <user_token>
-```
-
-### 3. Update Form
-
-**PUT** `/brandkit`
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "current_step": 2,
-  "progress_percentage": 16.67,
-  "is_completed": false
-}
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Form progress updated successfully",
-  "data": {
-    "id": 1,
-    "user_id": 1,
-    "current_step": 2,
-    "progress_percentage": 16.67,
-    "is_completed": false,
-    "updated_at": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-### 4. Delete Brand Kit Form
-
-**DELETE** `/brandkit`
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Brand kit form deleted successfully"
-}
-```
-
-### 5. Get All Brand Kit Forms (Admin Only)
-
-**GET** `/brandkit/admin/all`
-
-**Headers:**
-```
-Authorization: Bearer <admin_jwt_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "user_id": 1,
-      "business_name": "Example Corp",
-      "business_email": "contact@example.com",
-      "current_step": 2,
-      "progress_percentage": 16.67,
-      "is_completed": false,
-      "created_at": "2024-01-01T00:00:00.000Z",
-      "updated_at": "2024-01-01T00:00:00.000Z",
-      "users": {
-        "id": 1,
-        "email": "user@example.com"
-      }
-    }
-  ]
-}
-```
-
-### 6. Get Brand Kit Form by ID (Admin Only)
-
-**GET** `/brandkit/admin/:id`
-
-**Headers:**
-```
-Authorization: Bearer <admin_jwt_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "user_id": 1,
-    "business_type": "SaaS",
-    "business_email": "contact@example.com",
-    "business_name": "Example Corp",
-    "current_step": 2,
-    "progress_percentage": 16.67,
-    "is_completed": false,
-    "created_at": "2024-01-01T00:00:00.000Z",
-    "updated_at": "2024-01-01T00:00:00.000Z",
-    "users": {
-      "id": 1,
-      "email": "user@example.com"
-    }
-  }
-}
-```
-
----
-
-## 🔒 Security Notes
-
-- All admin endpoints require admin role
-- User purchases are restricted to their own data
-- Rate limiting is applied to all endpoints
-- Input validation is enforced on all requests
-- JWT tokens expire after 24 hours by default 
+4. **Use the token for authenticated requests:**
+   ```bash
+   curl -X GET http://localhost:3000/api/packages \
+     -H "Authorization: Bearer YOUR_TOKEN_HERE"
+   ``` 
