@@ -1,6 +1,16 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+CREATE TABLE public.addon_features (
+  id integer NOT NULL DEFAULT nextval('addon_features_id_seq'::regclass),
+  addon_id integer NOT NULL,
+  feature_name character varying NOT NULL,
+  feature_description text,
+  is_active boolean DEFAULT true,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT addon_features_pkey PRIMARY KEY (id),
+  CONSTRAINT addon_features_addon_id_fkey FOREIGN KEY (addon_id) REFERENCES public.addons(id)
+);
 CREATE TABLE public.addons (
   id integer NOT NULL DEFAULT nextval('addons_id_seq'::regclass),
   name character varying NOT NULL,
@@ -11,16 +21,6 @@ CREATE TABLE public.addons (
   created_at timestamp without time zone DEFAULT now(),
   updated_at timestamp without time zone DEFAULT now(),
   CONSTRAINT addons_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.addon_features (
-  id integer NOT NULL DEFAULT nextval('addon_features_id_seq'::regclass),
-  addon_id integer NOT NULL,
-  feature_name character varying NOT NULL,
-  feature_description text,
-  is_active boolean DEFAULT true,
-  created_at timestamp without time zone DEFAULT now(),
-  CONSTRAINT addon_features_pkey PRIMARY KEY (id),
-  CONSTRAINT addon_features_addon_id_fkey FOREIGN KEY (addon_id) REFERENCES public.addons(id)
 );
 CREATE TABLE public.brand_kit_forms (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -100,6 +100,67 @@ CREATE TABLE public.brand_kit_forms (
   CONSTRAINT brand_kit_forms_pkey PRIMARY KEY (id),
   CONSTRAINT brand_kit_forms_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+CREATE TABLE public.branding_submissions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone DEFAULT now(),
+  business_type text NOT NULL,
+  business_email text NOT NULL,
+  has_proventous_id boolean,
+  proventous_id text,
+  business_name text NOT NULL,
+  industry ARRAY NOT NULL,
+  brand_description text,
+  mission_statement text,
+  vision_statement text,
+  main_location text NOT NULL,
+  map_pin jsonb,
+  business_stage text,
+  is_subsidiary boolean,
+  contact_preference text,
+  products_services text NOT NULL,
+  target_market text NOT NULL,
+  spending_type text,
+  desired_feeling text,
+  goal_this_year text NOT NULL,
+  key_success_indicators text,
+  core_values ARRAY,
+  why_started text,
+  brand_soul text,
+  brand_personality ARRAY,
+  brand_voice ARRAY,
+  competitors text,
+  website_url text,
+  funnel_reference text,
+  vibe_code text,
+  audience_interests ARRAY,
+  secondary_audience text,
+  audience_comparison text,
+  purchase_motivators text,
+  logo_needs ARRAY,
+  design_style ARRAY,
+  brand_colors ARRAY,
+  colors_to_avoid text,
+  visual_inspiration text,
+  usage_channels ARRAY,
+  assets_needed ARRAY,
+  file_formats ARRAY,
+  platform_addons ARRAY,
+  additional_notes text,
+  timeline text,
+  decision_makers text,
+  CONSTRAINT branding_submissions_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.package_feature_comments (
+  id integer NOT NULL DEFAULT nextval('package_feature_comments_id_seq'::regclass),
+  package_feature_id integer NOT NULL,
+  user_id bigint NOT NULL,
+  comment_text text NOT NULL,
+  created_at timestamp without time zone DEFAULT now(),
+  updated_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT package_feature_comments_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_package_feature FOREIGN KEY (package_feature_id) REFERENCES public.package_features(id),
+  CONSTRAINT fk_comment_user FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
 CREATE TABLE public.package_features (
   id integer NOT NULL DEFAULT nextval('package_features_id_seq'::regclass),
   package_id integer NOT NULL,
@@ -135,6 +196,72 @@ CREATE TABLE public.packages (
   updated_at timestamp without time zone DEFAULT now(),
   CONSTRAINT packages_pkey PRIMARY KEY (id)
 );
+CREATE TABLE public.product_service_forms (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id bigint,
+  building_type character varying DEFAULT 'product'::character varying,
+  product_name character varying,
+  product_description text,
+  industry ARRAY,
+  want_to_attract text,
+  mission_story text,
+  desired_emotion character varying,
+  brand_tone character varying,
+  target_audience_profile text,
+  reach_locations ARRAY,
+  brand_personality ARRAY,
+  design_style ARRAY,
+  preferred_colors ARRAY,
+  colors_to_avoid ARRAY,
+  competitors text,
+  brand_kit_use ARRAY,
+  brand_elements ARRAY,
+  file_formats ARRAY,
+  platform_support ARRAY,
+  timeline character varying,
+  primary_location character varying,
+  preferred_contact character varying,
+  approver character varying,
+  special_notes text,
+  reference_materials text,
+  current_step integer DEFAULT 1,
+  progress_percentage integer DEFAULT 0,
+  is_completed boolean DEFAULT false,
+  completed_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT product_service_forms_pkey PRIMARY KEY (id),
+  CONSTRAINT product_service_forms_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.product_service_submissions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
+  product_name text NOT NULL,
+  product_description text NOT NULL,
+  product_industry ARRAY,
+  target_user text NOT NULL,
+  mission_statement text NOT NULL,
+  goal_this_year text NOT NULL,
+  tone_of_voice text NOT NULL,
+  why_created text NOT NULL,
+  personality_traits ARRAY,
+  competitor_products text,
+  visual_style ARRAY,
+  colors_to_use ARRAY,
+  colors_to_avoid ARRAY,
+  where_product_will_show ARRAY,
+  design_assets_needed ARRAY,
+  file_formats ARRAY,
+  platform_add_ons ARRAY,
+  preferred_contact_method text,
+  main_location text,
+  timeline text,
+  decision_makers text,
+  additional_notes text,
+  submission_status text,
+  form_type text,
+  CONSTRAINT product_service_submissions_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.purchased_addons (
   id integer NOT NULL DEFAULT nextval('purchased_addons_id_seq'::regclass),
   user_id integer NOT NULL,
@@ -146,8 +273,8 @@ CREATE TABLE public.purchased_addons (
   duration integer,
   price_type character varying DEFAULT 'one-time'::character varying,
   CONSTRAINT purchased_addons_pkey PRIMARY KEY (id),
-  CONSTRAINT purchased_addons_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT purchased_addons_addon_id_fkey FOREIGN KEY (addon_id) REFERENCES public.addons(id)
+  CONSTRAINT purchased_addons_addon_id_fkey FOREIGN KEY (addon_id) REFERENCES public.addons(id),
+  CONSTRAINT purchased_addons_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.users (
   id bigint NOT NULL DEFAULT nextval('users_id_seq'::regclass),
