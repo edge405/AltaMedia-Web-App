@@ -14,6 +14,7 @@ import TagInput from './TagInput';
 import FileUpload from './FileUpload';
 import AISuggestion from './AISuggestion';
 import CheckboxGroup from './CheckboxGroup';
+import { saveFormData, getFormData } from '@/utils/productServiceApi';
 
 const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
     const navigate = useNavigate();
@@ -35,6 +36,54 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
         'Needs & Deliverables',
         'Final Info'
     ];
+
+    // Load existing form data on component mount
+    useEffect(() => {
+        const loadFormData = async () => {
+            if (!user?.id) {
+                console.log('❌ No user ID available, starting with empty form');
+                setCurrentStep(1);
+                return;
+            }
+
+            setIsLoading(true);
+            setError(null);
+
+            try {
+                console.log('🔄 Loading existing ProductService form data...');
+                console.log('👤 User ID:', user.id);
+                console.log('🔗 API Base URL:', import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api');
+
+                const response = await getFormData(user.id);
+
+                console.log('📥 API Response:', response);
+
+                if (response.success && response.data.formData) {
+                    console.log('✅ Found existing form data, loading...');
+                    setFormData(response.data.formData);
+                    setCurrentStep(response.data.currentStep || 1);
+                } else {
+                    console.log('📭 No existing form data found, starting fresh');
+                    setFormData({ buildingType: 'product' });
+                    setCurrentStep(1);
+                }
+            } catch (err) {
+                console.error('❌ Error loading form data:', err);
+                console.error('❌ Error details:', {
+                    message: err.message,
+                    stack: err.stack,
+                    response: err.response?.data
+                });
+                setError('Failed to load existing form data. Starting fresh.');
+                setFormData({ buildingType: 'product' });
+                setCurrentStep(1);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadFormData();
+    }, [user?.id]);
 
     // Log form data changes
     useEffect(() => {
@@ -61,35 +110,48 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
     };
 
     const nextStep = async () => {
-        console.log('User object:', user);
-        console.log('User ID:', user?.id);
-
-        // For testing, use a default user ID if not authenticated
-        const userId = user?.id || 1;
+        if (!user?.id) {
+            console.error('❌ No user ID available');
+            toast.error('Please log in to save your progress');
+            return;
+        }
 
         setIsSaving(true);
         setError(null);
 
         try {
-            const stepData = formData; // No transformation needed for local state
-
             console.log('=== SAVING STEP DATA ===');
             console.log('Step Number:', currentStep);
             console.log('Step Name:', steps[currentStep - 1]);
-            console.log('User ID:', userId);
-            console.log('Step Data:', stepData);
+            console.log('User ID:', user.id);
+            console.log('Form Data:', formData);
+            console.log('🔗 API Base URL:', import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api');
             console.log('========================');
 
-            // Simulate API save
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const response = await saveFormData(user.id, formData, currentStep);
 
-            if (currentStep < totalSteps) {
-                setCurrentStep(currentStep + 1);
-                console.log(`Moving to step ${currentStep + 1}: ${steps[currentStep]}`);
+            console.log('💾 Save response:', response);
+
+            if (response.success) {
+                console.log('✅ Step data saved successfully');
+                toast.success(`Step ${currentStep} saved successfully!`);
+
+                if (currentStep < totalSteps) {
+                    setCurrentStep(currentStep + 1);
+                    console.log(`Moving to step ${currentStep + 1}: ${steps[currentStep]}`);
+                }
+            } else {
+                throw new Error(response.message || 'Failed to save step data');
             }
         } catch (err) {
-            console.error('Error saving step data:', err);
-            setError(err.message);
+            console.error('❌ Error saving step data:', err);
+            console.error('❌ Error details:', {
+                message: err.message,
+                stack: err.stack,
+                response: err.response?.data
+            });
+            setError(err.message || 'Failed to save your progress. Please try again.');
+            toast.error('Failed to save progress. Please try again.');
         } finally {
             setIsSaving(false);
         }
@@ -103,9 +165,15 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
     };
 
     const handleSubmit = async () => {
+        if (!user?.id) {
+            console.error('No user ID available');
+            toast.error('Please log in to submit your form');
+            return;
+        }
+
         console.log('=== COMPLETING PRODUCT SERVICE FORM ===');
         console.log('Final Form Data:', formData);
-        console.log('User ID:', user?.id || 1);
+        console.log('User ID:', user.id);
         console.log('Total Steps Completed:', totalSteps);
         console.log('=====================================');
 
@@ -113,22 +181,27 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
         setError(null);
 
         try {
-            const finalData = formData; // No transformation needed for local state
+            console.log('Completing form with data:', formData);
 
-            console.log('Completing form with data:', finalData);
+            const response = await saveFormData(user.id, formData, totalSteps);
 
-            // Simulate API save
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log('💾 Final save response:', response);
 
-            setIsSubmitted(true);
-            toast.success('🎉 Product/Service form completed successfully! Your brand identity is ready.');
+            if (response.success) {
+                console.log('✅ Form completed successfully');
+                setIsSubmitted(true);
+                toast.success('🎉 Product/Service form completed successfully! Your brand identity is ready.');
 
-            console.log('=== FORM COMPLETED SUCCESSFULLY ===');
-            console.log('All data logged above');
-            console.log('===============================');
+                console.log('=== FORM COMPLETED SUCCESSFULLY ===');
+                console.log('All data logged above');
+                console.log('===============================');
+            } else {
+                throw new Error(response.message || 'Failed to complete form');
+            }
         } catch (err) {
-            console.error('Error completing form:', err);
-            setError(err.message);
+            console.error('❌ Error completing form:', err);
+            setError(err.message || 'Failed to submit form. Please try again.');
+            toast.error('Failed to submit form. Please try again.');
         } finally {
             setIsSaving(false);
         }

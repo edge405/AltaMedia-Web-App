@@ -12,6 +12,7 @@ const purchaseRoutes = require('./routes/purchaseRoutes');
 const addonPurchaseRoutes = require('./routes/addonPurchaseRoutes');
 const packagePurchaseRoutes = require('./routes/packagePurchaseRoutes');
 const brandKitRoutes = require('./routes/brandKitRoutes');
+const productServiceRoutes = require('./routes/productServiceRoutes');
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -63,6 +64,7 @@ app.use('/api/purchases', purchaseRoutes);
 app.use('/api/addon-purchases', addonPurchaseRoutes);
 app.use('/api/package-purchases', packagePurchaseRoutes);
 app.use('/api/brandkit', brandKitRoutes);
+app.use('/api/productservice', productServiceRoutes);
 
 // 404 handler
 app.use(notFound);
