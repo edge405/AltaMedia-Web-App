@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   ExternalLink,
   MessageSquare,
-  Star,
   FileText,
   Eye,
   ThumbsUp,
@@ -55,20 +54,12 @@ export default function FeatureDetails({
 
 
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (!newComment.trim()) return;
 
-    const comment = {
-      id: Date.now(),
-      user: "You",
-      comment: newComment,
-      rating: 5,
-      date: "Just now"
-    };
-
-    onAddComment(feature.id, comment);
-    setNewComment("");
-    toast.success("Comment added successfully!");
+    // Call the parent component's handleAddComment function
+    // which will handle the API call and state updates
+    await onAddComment(feature.id, newComment.trim());
   };
 
   return (
@@ -171,24 +162,27 @@ export default function FeatureDetails({
           <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Feedback & Comments</h4>
           <div className="space-y-3">
             {/* Add Comment */}
-            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-              <div className="flex items-center space-x-2 mb-2">
-                <MessageSquare className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Add Comment</span>
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+              <div className="flex items-center space-x-2 mb-3">
+                <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <span className="text-base font-semibold text-gray-800 dark:text-gray-200">Add Your Feedback</span>
               </div>
               <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Share your feedback..."
-                className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows={3}
+                placeholder="Share your thoughts, suggestions, or feedback about this feature..."
+                className="w-full p-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                rows={4}
               />
-              <div className="flex justify-end mt-2">
+              <div className="flex justify-between items-center mt-3">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {newComment.length}/500 characters
+                </span>
                 <Button
                   size="sm"
                   onClick={handleAddComment}
-                  disabled={!newComment.trim()}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={!newComment.trim() || newComment.length > 500}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
                 >
                   Post Comment
                 </Button>
@@ -196,34 +190,29 @@ export default function FeatureDetails({
             </div>
 
             {/* Existing Comments */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               {feature.feedback && feature.feedback.length > 0 ? (
                 feature.feedback.map((comment) => (
-                  <div key={comment.id} className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-xs text-white font-medium">{comment.user.charAt(0)}</span>
-                        </div>
-                        <span className="text-sm font-medium text-gray-800 dark:text-gray-100">{comment.user}</span>
+                  <div key={comment.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600 shadow-sm">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-sm text-white font-medium">{comment.user.charAt(0).toUpperCase()}</span>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-3 h-3 ${i < comment.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                          />
-                        ))}
+                      <div className="flex-1">
+                        <span className="text-base font-semibold text-gray-900 dark:text-gray-100">{comment.user}</span>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{comment.date}</div>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{comment.comment}</p>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{comment.date}</span>
+                    <div className="ml-11">
+                      <p className="text-base text-gray-700 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">{comment.comment}</p>
+                    </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-                  <MessageSquare className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No comments yet</p>
+                <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                  <MessageSquare className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                  <p className="text-base">No comments yet</p>
+                  <p className="text-sm mt-1">Be the first to share your feedback!</p>
                 </div>
               )}
             </div>

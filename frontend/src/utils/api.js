@@ -257,6 +257,41 @@ class ApiService {
   async getUserAnalytics() {
     return this.get('/analytics/user');
   }
+
+  // Package Feature Comments methods
+  async createFeatureComment(packageFeatureId, userId, commentText) {
+    return this.post('/package-feature-comments', {
+      package_feature_id: packageFeatureId,
+      user_id: userId,
+      comment_text: commentText
+    });
+  }
+
+  async getCommentsByFeature(packageFeatureId) {
+    return this.get(`/package-feature-comments/feature/${packageFeatureId}`);
+  }
+
+  async getCommentsByUser(userId) {
+    return this.get(`/package-feature-comments/user/${userId}`);
+  }
+
+  async getCommentsByFeatureAndUser(packageFeatureId, userId) {
+    return this.get(`/package-feature-comments/feature/${packageFeatureId}/user/${userId}`);
+  }
+
+  async getCommentById(commentId) {
+    return this.get(`/package-feature-comments/${commentId}`);
+  }
+
+  async updateFeatureComment(commentId, commentText) {
+    return this.put(`/package-feature-comments/${commentId}`, {
+      comment_text: commentText
+    });
+  }
+
+  async deleteFeatureComment(commentId) {
+    return this.delete(`/package-feature-comments/${commentId}`);
+  }
 }
 
 // Create and export a singleton instance

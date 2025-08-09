@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,9 +41,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import BillingManagement from "@/components/BillingManagement";
 import PackageDetails from "@/components/PackageDetails";
-import CartModal from "@/components/CartModal";
 import CustomNotification from "@/components/CustomNotification";
 import FeatureDetails from "@/components/FeatureDetails";
 import Messages from "@/components/Messages";
@@ -51,22 +50,17 @@ import dashboardService from "@/services/dashboardService";
 
 export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedTimeframe, setSelectedTimeframe] = useState("Current");
   const incomeCardRef = useRef(null);
   const [selectedDate, setSelectedDate] = useState("April 13, 2025");
   const [expandedProjects, setExpandedProjects] = useState(new Set());
   const [showDateDropdown, setShowDateDropdown] = useState(false);
-  const [showBillingManagement, setShowBillingManagement] = useState(false);
   const [showPackageDetails, setShowPackageDetails] = useState(false);
-  const [showCartModal, setShowCartModal] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Use parent's dark mode state if provided, otherwise use local state
   const effectiveDarkMode = parentIsDarkMode !== undefined ? parentIsDarkMode : isDarkMode;
-  const [cartItems, setCartItems] = useState([]);
-  const [purchasedAddons, setPurchasedAddons] = useState([]);
-  const [showRefundNotification, setShowRefundNotification] = useState(false);
-  const [refundAddonData, setRefundAddonData] = useState(null);
   const [isCorePackageCollapsed, setIsCorePackageCollapsed] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [featureComments, setFeatureComments] = useState({});
@@ -103,16 +97,12 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
         setPackageDetails(packageData.packageDetails);
         setHasActivePackage(packageData.hasActivePackage);
 
-        // Transform addon data
-        const purchasedAddonsList = dashboardService.transformAddonPurchases(result.data.addonPurchases);
-        setPurchasedAddons(purchasedAddonsList);
-
         // Transform available addons
         const availableAddonsList = dashboardService.transformAvailableAddons(result.data.availableAddons);
         setAvailableAddons(availableAddonsList);
 
         // Generate project features
-        const features = dashboardService.generateProjectFeatures(packageData.packageDetails, purchasedAddonsList);
+        const features = dashboardService.generateProjectFeatures(packageData.packageDetails, []);
         setProjectFeatures(features);
 
         toast.success("Dashboard data loaded successfully");
@@ -239,9 +229,11 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
     toast.info(`Viewing ${stat.label} details...`);
   };
 
-  const handleManageBilling = () => {
-    setShowBillingManagement(true);
-    toast.success("Opening billing management...");
+  const handleContactSupport = () => {
+    toast.info("For billing inquiries, please contact us at +63 917 123 4567 or email support@altamedia.com");
+    // Could also open Messages component
+    setShowMessages(true);
+    setChatType('human');
   };
 
   const handleViewDetails = () => {
@@ -287,10 +279,54 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
     setShowAllFeatures(!showAllFeatures);
   };
 
-  const handleFeatureCardClick = (feature) => {
+  const handleFeatureCardClick = async (feature) => {
     setSelectedFeature(feature);
     setIsCorePackageCollapsed(true);
     toast.info(`Opening ${feature.title} details...`);
+
+    // Load comments for this feature
+    await loadFeatureComments(feature.id);
+  };
+
+  const loadFeatureComments = async (featureId) => {
+    if (!user?.id) return;
+
+    // Find the feature to get the real packageFeatureId
+    const feature = projectFeatures.find(f => f.id === featureId);
+    const packageFeatureId = feature?.packageFeatureId || feature?.id;
+
+    if (!packageFeatureId) {
+      console.log('No packageFeatureId found for feature:', featureId);
+      return;
+    }
+
+    try {
+      const response = await apiService.getCommentsByFeatureAndUser(packageFeatureId, user.id);
+
+      if (response.success && response.data?.comments) {
+        // Transform API response to match expected format
+        const transformedComments = response.data.comments.map(comment => ({
+          id: comment.id,
+          user: comment.users?.fullname || comment.users?.email || 'Unknown User',
+          comment: comment.comment_text,
+          date: new Date(comment.created_at).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        }));
+
+        setFeatureComments(prev => ({
+          ...prev,
+          [featureId]: transformedComments
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading feature comments:', error);
+      // Don't show error to user as this is not critical
+    }
   };
 
   const handleBackToCorePackage = () => {
@@ -298,11 +334,65 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
     setIsCorePackageCollapsed(false);
   };
 
-  const handleAddComment = (featureId, comment) => {
-    setFeatureComments(prev => ({
-      ...prev,
-      [featureId]: [...(prev[featureId] || []), comment]
-    }));
+  const handleAddComment = async (featureId, commentText) => {
+    if (!user?.id) {
+      toast.error("Please log in to add comments");
+      return;
+    }
+
+    if (!commentText.trim()) {
+      toast.error("Please enter a comment");
+      return;
+    }
+
+    if (commentText.length > 500) {
+      toast.error("Comment must be 500 characters or less");
+      return;
+    }
+
+    // Find the feature to get the real packageFeatureId
+    const feature = projectFeatures.find(f => f.id === featureId);
+    const packageFeatureId = feature?.packageFeatureId || feature?.id;
+
+    if (!packageFeatureId) {
+      toast.error("Cannot add comment: Feature not found");
+      return;
+    }
+
+    try {
+      const response = await apiService.createFeatureComment(packageFeatureId, user.id, commentText);
+
+      if (response.success) {
+        toast.success("Comment added successfully!");
+
+        // Update local comments state
+        const newComment = {
+          id: response.data.id,
+          user: user.fullname || user.email,
+          comment: commentText,
+          date: new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        };
+
+        setFeatureComments(prev => ({
+          ...prev,
+          [featureId]: [...(prev[featureId] || []), newComment]
+        }));
+
+        // Clear the comment input
+        setNewComment("");
+      } else {
+        toast.error("Failed to add comment");
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error("Failed to add comment. Please try again.");
+    }
   };
 
   const toggleFeatureExpansion = (index) => {
@@ -399,36 +489,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
     setShowRefundNotification(true);
   };
 
-  const handleConfirmRefund = async () => {
-    if (refundAddonData) {
-      try {
-        setLoading(true);
-        const { addon } = refundAddonData;
 
-        // Cancel the addon purchase via API
-        const response = await apiService.cancelAddonPurchase(addon.id);
-
-        if (response.success) {
-          // Refresh dashboard data to get updated purchases
-          await fetchDashboardData();
-
-          // Show success message
-          toast.success(`Refund processed for ${addon.title}. Amount: ${addon.price} will be credited to your account.`);
-
-          // Close notification
-          setShowRefundNotification(false);
-          setRefundAddonData(null);
-        } else {
-          throw new Error(response.message || 'Failed to process refund');
-        }
-      } catch (error) {
-        console.error('Refund failed:', error);
-        toast.error(error.message || "Refund failed. Please contact support.");
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
 
   const [showMessages, setShowMessages] = useState(false);
   const [chatType, setChatType] = useState('human');
@@ -446,21 +507,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
     navigate('/know-your-form');
   };
 
-  // Calculate total package value including purchased addons
-  const totalPurchasedAddonCost = purchasedAddons.reduce((sum, item) => {
-    const price = parseFloat(item.price.replace(/[^\d.]/g, '')) || 0;
-    return sum + price;
-  }, 0);
-
-  const updatedFeatures = [
-    ...(packageDetails?.features || []),
-    ...purchasedAddons.map(addon => ({
-      name: addon.title,
-      cost: addon.price,
-      included: true,
-      isAddon: true
-    }))
-  ];
+  const updatedFeatures = packageDetails?.features || [];
 
   const displayedAddons = showAllAddons ? availableAddons : availableAddons.slice(0, 2);
 
@@ -484,7 +531,10 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
       <div className="flex-1">
         {selectedFeature ? (
           <FeatureDetails
-            feature={selectedFeature}
+            feature={{
+              ...selectedFeature,
+              feedback: featureComments[selectedFeature.id] || []
+            }}
             onBack={handleBackToCorePackage}
             isDarkMode={effectiveDarkMode}
             onAddComment={handleAddComment}
@@ -520,9 +570,6 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {packageDetails?.description || "Complete multimedia automation solution for your business"}
-              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               {loading ? (
@@ -659,52 +706,13 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
                 </div>
               )}
 
-              {/* Purchased Addons List */}
-              {purchasedAddons.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
-                    Purchased Addons
-                  </h4>
-                  <div className="space-y-1">
-                    {purchasedAddons.map((addon, index) => (
-                      <div key={index} className="flex items-center justify-between py-2 px-2 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                        <div className="flex items-center space-x-2">
-                          <div className="p-1 rounded-full bg-green-100 dark:bg-green-500/20">
-                            {typeof addon.icon === 'string' ? getIconComponent(addon.icon) : addon.icon}
-                          </div>
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
-                            {addon.title}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {addon.price}
-                          </span>
-                          <CheckCircle className="w-3 h-3 text-green-500" />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRefundAddon(index);
-                            }}
-                            className="w-6 h-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full"
-                            title="Refund this addon"
-                          >
-                            <RotateCcw className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+
 
               {/* Action Buttons */}
               <div className="flex space-x-2 pt-2">
-                <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm" onClick={handleManageBilling}>
-                  <PhilippinePeso className="w-3 h-3 mr-2" />
-                  Manage Billing
+                <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm" onClick={handleContactSupport}>
+                  <MessageSquare className="w-3 h-3 mr-2" />
+                  Contact Support
                 </Button>
                 <Button variant="outline" className="flex-1 text-sm" onClick={handleViewDetails}>
                   <FileText className="w-3 h-3 mr-2" />
@@ -882,14 +890,11 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
                           className="w-6 h-6 p-0"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleAddToCart(addon);
+                            handleContactForAddon(addon);
                           }}
+                          title="Contact us for this addon"
                         >
-                          {cartItems.find(item => item.id === addon.id) ? (
-                            <CheckCircle className="w-3 h-3 text-green-500" />
-                          ) : (
-                            <Plus className="w-3 h-3 text-gray-600 dark:text-gray-300" />
-                          )}
+                          <MessageSquare className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                         </Button>
 
                         <Button
@@ -934,74 +939,17 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
                 </div>
               ))}
             </div>
-            {cartItems.length > 0 && (
-              <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-                <h4 className="font-medium text-gray-800 dark:text-gray-100 text-sm mb-2">Cart ({cartItems.length})</h4>
-                <div className="space-y-1">
-                  {cartItems.map(item => (
-                    <div key={item.id} className="flex items-center justify-between py-1 px-2 rounded bg-gray-100 dark:bg-gray-600/50">
-                      <span className="text-xs font-medium text-gray-700 dark:text-gray-100">{item.title}</span>
-                      <span className="text-xs font-medium text-gray-700 dark:text-gray-100">{item.price}</span>
-                    </div>
-                  ))}
-                </div>
-                <Button
-                  className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-sm py-1"
-                  onClick={handleCheckout}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                  ) : (
-                    <PhilippinePeso className="w-3 h-3 mr-1" />
-                  )}
-                  {loading ? "Processing..." : "Checkout"}
-                </Button>
-              </div>
-            )}
+
           </CardContent>
         </Card>
       </div>
-
-      {/* Billing Management Modal */}
-      <BillingManagement
-        isOpen={showBillingManagement}
-        onClose={() => setShowBillingManagement(false)}
-        isDarkMode={effectiveDarkMode}
-        purchasedAddons={purchasedAddons}
-      />
 
       {/* Package Details Modal */}
       <PackageDetails
         isOpen={showPackageDetails}
         onClose={() => setShowPackageDetails(false)}
         isDarkMode={effectiveDarkMode}
-        purchasedAddons={purchasedAddons}
-        onAddToCart={handleAddToCart}
         onOpenMessages={handleOpenMessages}
-      />
-
-      {/* Cart Modal */}
-      <CartModal
-        isOpen={showCartModal}
-        onClose={() => setShowCartModal(false)}
-        cartItems={cartItems}
-        onRemoveItem={handleRemoveFromCart}
-        onCheckout={handleCheckout}
-        isDarkMode={effectiveDarkMode}
-      />
-
-      {/* Custom Refund Notification */}
-      <CustomNotification
-        isOpen={showRefundNotification}
-        onClose={() => setShowRefundNotification(false)}
-        onConfirm={handleConfirmRefund}
-        title="Confirm Refund"
-        message={refundAddonData ? `Are you sure you want to refund "${refundAddonData.addon.title}"? This action cannot be undone.` : ""}
-        type="warning"
-        confirmText="Process Refund"
-        cancelText="Cancel"
-        isDarkMode={effectiveDarkMode}
       />
 
       {/* Messages Component */}

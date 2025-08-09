@@ -102,11 +102,18 @@ class DashboardService {
   transformPackageFeatures(features) {
     if (!features?.length) {
       return [
-        { name: "Dashboard", cost: "Included", included: true, description: "Basic dashboard access" }
+        { 
+          feature_id: null,
+          name: "Dashboard", 
+          cost: "Included", 
+          included: true, 
+          description: "Basic dashboard access" 
+        }
       ];
     }
 
     return features.map(feature => ({
+      feature_id: feature.feature_id, // Include the actual database feature_id
       name: feature.feature_info?.feature_name || feature.feature_name || "Feature",
       description: feature.feature_info?.feature_description || feature.feature_description || "",
       cost: "Included",
@@ -172,23 +179,24 @@ class DashboardService {
   }
 
   /**
-   * Generate project features based on package features
+   * Generate et features based on package features
    */
   generateProjectFeatures(packageDetails, purchasedAddons = []) {
     const features = [];
 
     // Only add package features if there's an active package
     if (packageDetails?.features?.length) {
-      packageDetails.features.forEach((feature, index) => {
+      packageDetails.features.forEach((feature) => {
         features.push({
-          id: index + 1,
+          id: feature.feature_id || feature.id, // Use the actual database feature_id
           title: feature.name,
           status: this.getFeatureStatus(feature.name),
           description: feature.description || `${feature.name} service`,
           output: this.getFeatureOutput(feature.name),
           time: this.getFeatureTime(feature.name),
           icon: this.getFeatureIcon(feature.name),
-          expanded: false
+          expanded: false,
+          packageFeatureId: feature.feature_id || feature.id // Explicit reference for comments API
         });
       });
     }

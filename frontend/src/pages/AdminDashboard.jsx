@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Users, 
-  Package, 
-  MessageSquare, 
-  Upload, 
-  Settings, 
+import {
+  Users,
+  Package,
+  MessageSquare,
+  Upload,
+  Settings,
   LogOut,
   Search,
   Filter,
@@ -89,7 +89,7 @@ const AdminDashboard = () => {
 
   const filteredCompanies = companies.filter(company => {
     const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         company.email.toLowerCase().includes(searchTerm.toLowerCase());
+      company.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === "all" || company.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
@@ -254,11 +254,10 @@ const AdminDashboard = () => {
                   {filteredCompanies.map((company) => (
                     <div
                       key={company.id}
-                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
-                        selectedCompany?.id === company.id
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${selectedCompany?.id === company.id
                           ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                           : "border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600"
-                      }`}
+                        }`}
                       onClick={() => setSelectedCompany(company)}
                     >
                       <div className="flex justify-between items-start">
@@ -311,7 +310,7 @@ const AdminDashboard = () => {
                           </Button>
                         </div>
                       </div>
-                      
+
                       {/* Progress Bar */}
                       <div className="mt-3">
                         <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
@@ -348,7 +347,7 @@ const AdminDashboard = () => {
                     <div className="space-y-2 text-sm">
                       <p><span className="font-medium">Email:</span> {selectedCompany.email}</p>
                       <p><span className="font-medium">Package:</span> {selectedCompany.package}</p>
-                      <p><span className="font-medium">Status:</span> 
+                      <p><span className="font-medium">Status:</span>
                         <Badge className={`ml-2 ${getStatusColor(selectedCompany.status)}`}>
                           {selectedCompany.status}
                         </Badge>
@@ -379,11 +378,10 @@ const AdminDashboard = () => {
                       {selectedCompany.messages.map((message) => (
                         <div
                           key={message.id}
-                          className={`p-3 rounded-lg ${
-                            message.from === "admin"
+                          className={`p-3 rounded-lg ${message.from === "admin"
                               ? "bg-blue-100 dark:bg-blue-900 ml-4"
                               : "bg-gray-100 dark:bg-gray-700 mr-4"
-                          }`}
+                            }`}
                         >
                           <p className="text-sm">{message.message}</p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -392,7 +390,7 @@ const AdminDashboard = () => {
                         </div>
                       ))}
                     </div>
-                    
+
                     {/* Message Input */}
                     <div className="flex gap-2">
                       <Input
