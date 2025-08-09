@@ -101,7 +101,6 @@ const Forms = () => {
 
     // Page 10: Mission, Vision & Values (AI Suggestions)
     businessMission: "",
-    longTermVision: "",
     businessValues: [],
     businessJourneyStage: "",
     spendingType: "",

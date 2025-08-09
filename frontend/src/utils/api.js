@@ -105,6 +105,158 @@ class ApiService {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
   }
+
+  // Package methods
+  async getPackages() {
+    return this.get('/packages');
+  }
+
+  async getPackageById(id) {
+    return this.get(`/packages/${id}`);
+  }
+
+  async createPackage(packageData) {
+    return this.post('/packages', packageData);
+  }
+
+  async updatePackage(id, packageData) {
+    return this.put(`/packages/${id}`, packageData);
+  }
+
+  async deletePackage(id) {
+    return this.delete(`/packages/${id}`);
+  }
+
+  // Package Purchase methods
+  async getUserPackagePurchases() {
+    return this.get('/package-purchases');
+  }
+
+  async getPackagePurchaseById(id) {
+    return this.get(`/package-purchases/${id}`);
+  }
+
+  async getAllPackagePurchases() {
+    return this.get('/package-purchases/admin/all');
+  }
+
+  // Addon methods
+  async getAddons() {
+    return this.get('/addons');
+  }
+
+  async getAddonById(id) {
+    return this.get(`/addons/${id}`);
+  }
+
+  async getUserAddons() {
+    return this.get('/addons/user');
+  }
+
+  async createAddon(addonData) {
+    return this.post('/addons', addonData);
+  }
+
+  async updateAddon(id, addonData) {
+    return this.put(`/addons/${id}`, addonData);
+  }
+
+  async deleteAddon(id) {
+    return this.delete(`/addons/${id}`);
+  }
+
+  // Addon Purchase methods
+  async getUserAddonPurchases() {
+    return this.get('/addon-purchases');
+  }
+
+  async getAddonPurchaseById(id) {
+    return this.get(`/addon-purchases/${id}`);
+  }
+
+  async createAddonPurchase(addonId) {
+    return this.post('/addon-purchases', { addon_id: addonId });
+  }
+
+  async cancelAddonPurchase(id) {
+    return this.put(`/addon-purchases/${id}/cancel`);
+  }
+
+  async getAllAddonPurchases() {
+    return this.get('/addon-purchases/admin/all');
+  }
+
+  // Combined Purchase methods (for compatibility)
+  async getUserPurchases() {
+    return this.get('/purchases');
+  }
+
+  async getPurchaseById(id) {
+    return this.get(`/purchases/${id}`);
+  }
+
+  async createPurchase(purchaseData) {
+    return this.post('/purchases', purchaseData);
+  }
+
+  async getAllPurchases() {
+    return this.get('/purchases/admin/all');
+  }
+
+  // Brand Kit methods
+  async getBrandKitForms() {
+    return this.get('/brandkit/forms');
+  }
+
+  async getBrandKitFormById(id) {
+    return this.get(`/brandkit/forms/${id}`);
+  }
+
+  async createBrandKitForm(formData) {
+    return this.post('/brandkit/forms', formData);
+  }
+
+  async updateBrandKitForm(id, formData) {
+    return this.put(`/brandkit/forms/${id}`, formData);
+  }
+
+  async getAllBrandKitForms() {
+    return this.get('/brandkit/forms/admin/all');
+  }
+
+  // Dashboard specific methods
+  async getDashboardData() {
+    try {
+      const [packagePurchases, addonPurchases, packages, addons] = await Promise.all([
+        this.getUserPackagePurchases(),
+        this.getUserAddonPurchases(),
+        this.getPackages(),
+        this.getAddons()
+      ]);
+
+      return {
+        success: true,
+        data: {
+          packagePurchases: packagePurchases.data || {},
+          addonPurchases: addonPurchases.data || {},
+          availablePackages: packages.data || {},
+          availableAddons: addons.data || {}
+        }
+      };
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+      throw error;
+    }
+  }
+
+  // Analytics methods (for future implementation)
+  async getAnalytics() {
+    return this.get('/analytics');
+  }
+
+  async getUserAnalytics() {
+    return this.get('/analytics/user');
+  }
 }
 
 // Create and export a singleton instance

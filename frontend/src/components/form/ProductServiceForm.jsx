@@ -244,8 +244,8 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
                     />
                     <AISuggestion
                         fieldName="productDescription"
-                        currentValue={formData.productDescription}
                         onApplySuggestion={(suggestion) => updateFormData('productDescription', suggestion)}
+                        formData={formData}
                     />
                 </div>
             </FormField>
@@ -283,8 +283,8 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
                     />
                     <AISuggestion
                         fieldName="missionStory"
-                        currentValue={formData.missionStory}
                         onApplySuggestion={(suggestion) => updateFormData('missionStory', suggestion)}
+                        formData={formData}
                     />
                 </div>
             </FormField>
@@ -358,8 +358,8 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
                     />
                     <AISuggestion
                         fieldName="brandPersonality"
-                        currentValue={formData.brandPersonality?.join(', ')}
                         onApplySuggestion={(suggestion) => updateFormData('brandPersonality', suggestion.split(', '))}
+                        formData={formData}
                     />
                 </div>
             </FormField>
@@ -377,8 +377,8 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
                     />
                     <AISuggestion
                         fieldName="designStyle"
-                        currentValue={formData.designStyle?.join(', ')}
                         onApplySuggestion={(suggestion) => updateFormData('designStyle', suggestion.split(', '))}
+                        formData={formData}
                     />
                 </div>
             </FormField>

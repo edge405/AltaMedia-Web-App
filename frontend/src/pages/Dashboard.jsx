@@ -1,14 +1,14 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  TrendingUp, 
-  ChevronDown, 
-  Plus, 
-  MapPin, 
+import {
+  TrendingUp,
+  ChevronDown,
+  Plus,
+  MapPin,
   Clock,
   Target,
   Send,
@@ -17,7 +17,7 @@ import {
   BarChart3,
   Package,
   CheckCircle,
-  DollarSign,
+  PhilippinePeso,
   Globe,
   Play,
   Zap,
@@ -29,7 +29,9 @@ import {
   ThumbsUp,
   Eye,
   FileEdit,
-  Palette
+  Palette,
+  AlertCircle,
+  Loader2
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -44,6 +46,8 @@ import CartModal from "@/components/CartModal";
 import CustomNotification from "@/components/CustomNotification";
 import FeatureDetails from "@/components/FeatureDetails";
 import Messages from "@/components/Messages";
+import apiService from "@/utils/api";
+import dashboardService from "@/services/dashboardService";
 
 export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
   const navigate = useNavigate();
@@ -56,7 +60,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
   const [showPackageDetails, setShowPackageDetails] = useState(false);
   const [showCartModal, setShowCartModal] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  
+
   // Use parent's dark mode state if provided, otherwise use local state
   const effectiveDarkMode = parentIsDarkMode !== undefined ? parentIsDarkMode : isDarkMode;
   const [cartItems, setCartItems] = useState([]);
@@ -68,22 +72,77 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
   const [featureComments, setFeatureComments] = useState({});
   const [newComment, setNewComment] = useState("");
 
-  const packageDetails = {
-    name: "Core Package",
-    price: "P10,999",
-    period: "month",
-    status: "Active",
-    features: [
-      { name: "Dashboard", cost: "Free", included: true },
-      { name: "Website", cost: "P5,000", included: true },
-      { name: "Content/Ad Management", cost: "P4,000", included: true },
-      { name: "Content Calendar/Creation (30 days)", cost: "P4,000", included: true },
-      { name: "Demo", cost: "P500", included: true },
-      { name: "Pin4MS", cost: "P1,000", included: true }
-    ],
-    totalCost: "P14,500",
-    sellingPrice: "P10,999",
-    savings: "P3,501"
+  // Real data states
+  const [dashboardData, setDashboardData] = useState(null);
+  const [currentPackage, setCurrentPackage] = useState(null);
+  const [packageDetails, setPackageDetails] = useState(null);
+  const [availableAddons, setAvailableAddons] = useState([]);
+  const [projectFeatures, setProjectFeatures] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [hasActivePackage, setHasActivePackage] = useState(false);
+
+  // Fetch dashboard data on component mount
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const result = await dashboardService.getDashboardData();
+
+      if (result.success) {
+        setDashboardData(result.data);
+
+        // Transform package data
+        const packageData = dashboardService.transformPackagePurchaseData(result.data.packagePurchases);
+        setCurrentPackage(packageData.currentPackage);
+        setPackageDetails(packageData.packageDetails);
+        setHasActivePackage(packageData.hasActivePackage);
+
+        // Transform addon data
+        const purchasedAddonsList = dashboardService.transformAddonPurchases(result.data.addonPurchases);
+        setPurchasedAddons(purchasedAddonsList);
+
+        // Transform available addons
+        const availableAddonsList = dashboardService.transformAvailableAddons(result.data.availableAddons);
+        setAvailableAddons(availableAddonsList);
+
+        // Generate project features
+        const features = dashboardService.generateProjectFeatures(packageData.packageDetails, purchasedAddonsList);
+        setProjectFeatures(features);
+
+        toast.success("Dashboard data loaded successfully");
+      } else {
+        setError(result.error || 'Failed to load dashboard data');
+        toast.error("Failed to load dashboard data");
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError(err.message || 'Failed to load dashboard data');
+      toast.error("Error loading dashboard");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Package details are now handled by the dashboard service and stored in state
+
+  const getIconComponent = (iconName) => {
+    const iconMap = {
+      "BarChart3": <BarChart3 className="w-4 h-4 text-white" />,
+      "Globe": <Globe className="w-4 h-4 text-white" />,
+      "FileText": <FileText className="w-4 h-4 text-white" />,
+      "Calendar": <Calendar className="w-4 h-4 text-white" />,
+      "Play": <Play className="w-4 h-4 text-white" />,
+      "Zap": <Zap className="w-4 h-4 text-white" />,
+      "Package": <Package className="w-4 h-4 text-white" />,
+      "PhilippinePeso": <PhilippinePeso className="w-4 h-4 text-white" />
+    };
+    return iconMap[iconName] || <CheckCircle className="w-4 h-4 text-white" />;
   };
 
   const getFeatureIcon = (featureName) => {
@@ -98,194 +157,23 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
     return iconMap[featureName] || <CheckCircle className="w-4 h-4" />;
   };
 
-  const packageFeatures = [
-    {
-      id: 1,
-      title: "Dashboard",
-      status: "Completed",
-      progress: 100,
-      description: "Your business dashboard with analytics and reporting tools",
-      output: "Dashboard is live and accessible",
-      time: "2 days ago",
-      icon: <BarChart3 className="w-4 h-4 text-white" />,
-      expanded: false,
-      outputs: [
-        {
-          id: 1,
-          title: "Analytics Dashboard",
-          description: "Real-time analytics and reporting interface",
-          url: "https://dashboard.altalabs.com",
-          status: "Live",
-          lastUpdated: "2 days ago"
-        },
-        {
-          id: 2,
-          title: "Performance Metrics",
-          description: "Key performance indicators and metrics",
-          url: "https://metrics.altalabs.com",
-          status: "Live",
-          lastUpdated: "1 day ago"
-        }
-      ],
-      feedback: [
-        {
-          id: 1,
-          user: "John Doe",
-          comment: "Great dashboard! The analytics are very helpful.",
-          rating: 5,
-          date: "1 day ago"
-        }
-      ]
-    },
-    {
-      id: 2,
-      title: "Website",
-      status: "In Progress",
-      progress: 75,
-      description: "Custom website development with responsive design",
-      output: "Homepage and about page completed",
-      time: "1 day ago",
-      icon: <Globe className="w-4 h-4 text-white" />,
-      expanded: false
-    },
-    {
-      id: 3,
-      title: "Content/Ad Management",
-      status: "Pending",
-      progress: 0,
-      description: "Social media content creation and ad campaign management",
-      output: "Awaiting content brief from client",
-      time: "Not started",
-      icon: <FileText className="w-4 h-4 text-white" />,
-      expanded: false
-    },
-    {
-      id: 4,
-      title: "Content Calendar/Creation",
-      status: "In Progress",
-      progress: 50,
-      description: "30-day content calendar with scheduled posts",
-      output: "15 posts created, 15 remaining",
-      time: "3 hours ago",
-      icon: <Calendar className="w-4 h-4 text-white" />,
-      expanded: false
-    }
-  ];
+  // Package features are now dynamically generated from real data via projectFeatures state
 
-  const allPackageFeatures = [
-    {
-      id: 1,
-      title: "Dashboard",
-      status: "Completed",
-      progress: 100,
-      description: "Your business dashboard with analytics and reporting tools",
-      output: "Dashboard is live and accessible",
-      time: "2 days ago",
-      icon: <BarChart3 className="w-4 h-4 text-white" />,
-      expanded: false
-    },
-    {
-      id: 2,
-      title: "Website",
-      status: "In Progress",
-      progress: 75,
-      description: "Custom website development with responsive design",
-      output: "Homepage and about page completed",
-      time: "1 day ago",
-      icon: <Globe className="w-4 h-4 text-white" />,
-      expanded: false
-    },
-    {
-      id: 3,
-      title: "Content/Ad Management",
-      status: "Pending",
-      progress: 0,
-      description: "Social media content creation and ad campaign management",
-      output: "Awaiting content brief from client",
-      time: "Not started",
-      icon: <FileText className="w-4 h-4 text-white" />,
-      expanded: false
-    },
-    {
-      id: 4,
-      title: "Content Calendar/Creation",
-      status: "In Progress",
-      progress: 50,
-      description: "30-day content calendar with scheduled posts",
-      output: "15 posts created, 15 remaining",
-      time: "3 hours ago",
-      icon: <Calendar className="w-4 h-4 text-white" />,
-      expanded: false
-    },
-    {
-      id: 5,
-      title: "Demo",
-      status: "Scheduled",
-      progress: 0,
-      description: "Product demonstration and training session",
-      output: "Scheduled for next week",
-      time: "Scheduled",
-      icon: <Play className="w-4 h-4 text-white" />,
-      expanded: false
-    },
-    {
-      id: 6,
-      title: "Pin4MS",
-      status: "Completed",
-      progress: 100,
-      description: "Pin4MS integration and setup",
-      output: "Integration complete and tested",
-      time: "1 week ago",
-      icon: <Zap className="w-4 h-4 text-white" />,
-      expanded: false
-    },
-    // Add purchased addons as project features
-    ...purchasedAddons.map((addon, index) => ({
-      id: 100 + index,
-      title: addon.title,
-      status: "Active",
-      progress: 100,
-      description: `${addon.title} addon service`,
-      output: "Addon service active",
-      time: "Just purchased",
-      icon: addon.icon,
-      expanded: false,
-      isAddon: true
-    }))
-  ];
+  // All package features are now dynamically generated from real data via projectFeatures state
 
   const [showAllFeatures, setShowAllFeatures] = useState(false);
-  const displayedFeatures = showAllFeatures ? allPackageFeatures : packageFeatures;
+  const displayedFeatures = showAllFeatures ? projectFeatures : projectFeatures.slice(0, 4);
 
   const getStatusColor = (status) => {
-    const colorMap = {
-      "Completed": "bg-green-500 text-white",
-      "In Progress": "bg-blue-500 text-white",
-      "Pending": "bg-gray-500 text-white",
-      "Scheduled": "bg-orange-500 text-white"
-    };
-    return colorMap[status] || "bg-gray-500 text-white";
+    return dashboardService.getStatusColor(status);
   };
 
-  const getProgressColor = (progress) => {
-    if (progress === 100) return "bg-green-500";
-    if (progress >= 50) return "bg-blue-500";
-    if (progress > 0) return "bg-orange-500";
-    return "bg-gray-300";
-  };
+
 
   const proposalStats = [
     { label: "Proposals sent", count: 64, color: "bg-gray-300" },
     { label: "Interviews", count: 14, color: "bg-red-500" },
     { label: "Hires", count: 10, color: "bg-gray-300" }
-  ];
-
-  const availableDates = [
-    "April 13, 2025",
-    "April 14, 2025", 
-    "April 15, 2025",
-    "April 16, 2025",
-    "April 17, 2025"
   ];
 
   const toggleProjectExpansion = (index) => {
@@ -300,14 +188,37 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
 
   const handleTimeframeChange = (timeframe) => {
     setSelectedTimeframe(timeframe);
-    // Add animation effect
-    if (incomeCardRef.current) {
-      incomeCardRef.current.style.transform = 'scale(0.98)';
-      setTimeout(() => {
-        if (incomeCardRef.current) {
-          incomeCardRef.current.style.transform = 'scale(1)';
+
+    if (dashboardData?.packagePurchases?.package_purchases?.length > 0) {
+      const purchases = dashboardData.packagePurchases.package_purchases;
+
+      if (timeframe === "Current") {
+        // Set current package as the most recent active purchase
+        const activePurchases = purchases.filter(
+          purchase => purchase.purchase_info?.status === 'active'
+        );
+
+        if (activePurchases.length > 0) {
+          const mostRecent = activePurchases.sort((a, b) =>
+            new Date(b.purchase_info.purchase_date) - new Date(a.purchase_info.purchase_date)
+          )[0];
+          setCurrentPackage(mostRecent);
+          const transformedDetails = dashboardService.transformPackageDetails(mostRecent);
+          setPackageDetails(transformedDetails);
         }
-      }, 150);
+      } else if (timeframe === "Previous" && purchases.length > 1) {
+        // Set previous package as the second most recent purchase
+        const sortedPurchases = purchases.sort((a, b) =>
+          new Date(b.purchase_info.purchase_date) - new Date(a.purchase_info.purchase_date)
+        );
+
+        if (sortedPurchases.length > 1) {
+          const previousPackage = sortedPurchases[1];
+          setCurrentPackage(previousPackage);
+          const transformedDetails = dashboardService.transformPackageDetails(previousPackage);
+          setPackageDetails(transformedDetails);
+        }
+      }
     }
   };
 
@@ -348,7 +259,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
       description: "Core Package - January 2024"
     },
     {
-      id: "INV-2024-002", 
+      id: "INV-2024-002",
       date: "2024-02-15",
       amount: "P10,999",
       status: "Paid",
@@ -356,7 +267,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
     },
     {
       id: "INV-2024-003",
-      date: "2024-03-15", 
+      date: "2024-03-15",
       amount: "P10,999",
       status: "Pending",
       description: "Core Package - March 2024"
@@ -404,108 +315,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
     setExpandedProjects(newExpanded);
   };
 
-  const addons = [
-    {
-      id: 1,
-      title: "60-DAY CONTENT CALENDAR",
-      description: "Pre-planned posts, Editable anytime",
-      price: "P1,999",
-      type: "one-time",
-      features: ["Pre-planned posts", "Editable anytime"],
-      inCart: false,
-      icon: <Calendar className="w-4 h-4 text-white" />
-    },
-    {
-      id: 2,
-      title: "90-DAY CONTENT CALENDAR",
-      description: "Pre-planned posts, Editable anytime",
-      price: "P2,999",
-      type: "one-time",
-      features: ["Pre-planned posts", "Editable anytime"],
-      inCart: false,
-      icon: <Calendar className="w-4 h-4 text-white" />
-    },
-    {
-      id: 3,
-      title: "CUSTOM STATIC GRAPHICS",
-      description: "Custom designs, Format-ready for posts",
-      price: "P500",
-      type: "per image",
-      features: ["Custom designs", "Format-ready for posts"],
-      inCart: false,
-      icon: <BarChart3 className="w-4 h-4 text-white" />
-    },
-    {
-      id: 4,
-      title: "REELS EDITING",
-      description: "Edited short-form videos, Great for Reels/Shorts",
-      price: "P500",
-      type: "per reel",
-      features: ["Edited short-form videos", "Great for Reels/Shorts"],
-      inCart: false,
-      icon: <Play className="w-4 h-4 text-white" />
-    },
-    {
-      id: 5,
-      title: "WEBSITE PACKAGE",
-      description: "Branded site + email, 1 year hosting",
-      price: "P5,000",
-      type: "one-time",
-      features: ["Branded site + email", "1 year hosting"],
-      inCart: false,
-      icon: <Globe className="w-4 h-4 text-white" />
-    },
-    {
-      id: 6,
-      title: "180-DAY CONTENT CALENDAR",
-      description: "Pre-planned posts, Editable anytime",
-      price: "P5,000",
-      type: "one-time",
-      features: ["Pre-planned posts", "Editable anytime"],
-      inCart: false,
-      icon: <Calendar className="w-4 h-4 text-white" />
-    },
-    {
-      id: 7,
-      title: "365-DAY CONTENT CALENDAR",
-      description: "Pre-planned posts, Editable anytime",
-      price: "P15,000",
-      type: "one-time",
-      features: ["Pre-planned posts", "Editable anytime"],
-      inCart: false,
-      icon: <Calendar className="w-4 h-4 text-white" />
-    },
-    {
-      id: 8,
-      title: "CUSTOM MOTION GRAPHICS",
-      description: "Short animated videos, For social & ads",
-      price: "P1,500",
-      type: "starts at",
-      features: ["Short animated videos", "For social & ads"],
-      inCart: false,
-      icon: <Play className="w-4 h-4 text-white" />
-    },
-    {
-      id: 9,
-      title: "E-COMMERCE SITE",
-      description: "Catalog, cart, checkout, Mobile-friendly layout",
-      price: "P15,000",
-      type: "one-time",
-      features: ["Catalog, cart, checkout", "Mobile-friendly layout"],
-      inCart: false,
-      icon: <Globe className="w-4 h-4 text-white" />
-    },
-    {
-      id: 10,
-      title: "PAYMENT GATEWAY SETUP",
-      description: "Stripe, GCash, PayMongo setup, EFuture-ready payment option",
-      price: "P3,000",
-      type: "one-time",
-      features: ["Stripe, GCash, PayMongo setup", "EFuture-ready payment option"],
-      inCart: false,
-      icon: <DollarSign className="w-4 h-4 text-white" />
-    }
-  ];
+  // Addons are now dynamically loaded from backend via availableAddons state
 
   const [showAllAddons, setShowAllAddons] = useState(false);
   const [expandedAddons, setExpandedAddons] = useState(new Set());
@@ -526,7 +336,13 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
       toast.error(`${addon.title} is already in your cart!`);
       return;
     }
-    
+
+    const existingPurchase = purchasedAddons.find(purchased => purchased.title === addon.title);
+    if (existingPurchase) {
+      toast.error(`${addon.title} is already purchased!`);
+      return;
+    }
+
     setCartItems([...cartItems, addon]);
     toast.success(`${addon.title} added to cart!`);
     setShowCartModal(true);
@@ -537,18 +353,38 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
     toast.success("Item removed from cart");
   };
 
-  const handleCheckout = () => {
-    // Add purchased addons to the core package
-    setPurchasedAddons([...purchasedAddons, ...cartItems]);
-    
-    // Clear cart
-    setCartItems([]);
-    
-    // Show success message
-    toast.success("Payment successful! Addons have been added to your package.");
-    
-    // Close cart modal
-    setShowCartModal(false);
+  const handleCheckout = async () => {
+    try {
+      setLoading(true);
+
+      // Purchase each addon in the cart
+      const purchasePromises = cartItems.map(async (addon) => {
+        const response = await apiService.createAddonPurchase(addon.id);
+        if (!response.success) {
+          throw new Error(`Failed to purchase ${addon.title}`);
+        }
+        return response;
+      });
+
+      await Promise.all(purchasePromises);
+
+      // Refresh dashboard data to get updated purchases
+      await fetchDashboardData();
+
+      // Clear cart
+      setCartItems([]);
+
+      // Show success message
+      toast.success("Payment successful! Addons have been added to your account.");
+
+      // Close cart modal
+      setShowCartModal(false);
+    } catch (error) {
+      console.error('Checkout failed:', error);
+      toast.error(error.message || "Checkout failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleViewAllAddons = () => {
@@ -557,28 +393,40 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
 
   const handleRefundAddon = (addonIndex) => {
     const addonToRefund = purchasedAddons[addonIndex];
-    
+
     // Set the refund data and show custom notification
     setRefundAddonData({ addon: addonToRefund, index: addonIndex });
     setShowRefundNotification(true);
   };
 
-  const handleConfirmRefund = () => {
+  const handleConfirmRefund = async () => {
     if (refundAddonData) {
-      const { addon, index } = refundAddonData;
-      
-      // Remove the addon from purchased addons
-      const updatedPurchasedAddons = purchasedAddons.filter((_, i) => i !== index);
-      setPurchasedAddons(updatedPurchasedAddons);
-      
-      // Show success message
-      toast.success(`Refund processed for ${addon.title}. Amount: ${addon.price} will be credited to your account.`);
-      
-      // In a real application, you would also:
-      // 1. Update the billing/invoice records
-      // 2. Process the actual refund through payment gateway
-      // 3. Update the user's account balance
-      // 4. Send confirmation email
+      try {
+        setLoading(true);
+        const { addon } = refundAddonData;
+
+        // Cancel the addon purchase via API
+        const response = await apiService.cancelAddonPurchase(addon.id);
+
+        if (response.success) {
+          // Refresh dashboard data to get updated purchases
+          await fetchDashboardData();
+
+          // Show success message
+          toast.success(`Refund processed for ${addon.title}. Amount: ${addon.price} will be credited to your account.`);
+
+          // Close notification
+          setShowRefundNotification(false);
+          setRefundAddonData(null);
+        } else {
+          throw new Error(response.message || 'Failed to process refund');
+        }
+      } catch (error) {
+        console.error('Refund failed:', error);
+        toast.error(error.message || "Refund failed. Please contact support.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -600,19 +448,12 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
 
   // Calculate total package value including purchased addons
   const totalPurchasedAddonCost = purchasedAddons.reduce((sum, item) => {
-    const price = parseInt(item.price.replace(/[^\d]/g, ''));
+    const price = parseFloat(item.price.replace(/[^\d.]/g, '')) || 0;
     return sum + price;
   }, 0);
 
-  const updatedPackageDetails = {
-    ...packageDetails,
-    price: `P${(10999 + totalPurchasedAddonCost).toLocaleString()}`,
-    totalCost: `P${(14500 + totalPurchasedAddonCost).toLocaleString()}`,
-    savings: `P${(3501 + totalPurchasedAddonCost).toLocaleString()}`
-  };
-
   const updatedFeatures = [
-    ...packageDetails.features,
+    ...(packageDetails?.features || []),
     ...purchasedAddons.map(addon => ({
       name: addon.title,
       cost: addon.price,
@@ -621,13 +462,13 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
     }))
   ];
 
-  const displayedAddons = showAllAddons ? addons : addons.slice(0, 2);
+  const displayedAddons = showAllAddons ? availableAddons : availableAddons.slice(0, 2);
 
-    return (
+  return (
     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 w-full p-2 sm:p-4">
       {/* Forms Button */}
       <div className="mb-4 lg:mb-6 animate-bounce-in">
-        <Button 
+        <Button
           onClick={handleNavigateToForms}
           className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
         >
@@ -638,7 +479,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
           </div>
         </Button>
       </div>
-      
+
       {/* Left Column */}
       <div className="flex-1">
         {selectedFeature ? (
@@ -653,156 +494,225 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
         ) : (
           /* Current Package */
           <Card className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-gray-200 dark:border-gray-700">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                  <Package className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                </div>
-                <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">Current Package</CardTitle>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
-                    {selectedTimeframe} <ChevronDown className="w-4 h-4 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setSelectedTimeframe("Current")}>
-                    Current
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSelectedTimeframe("Previous")}>
-                    Previous
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Complete multimedia automation solution for your business
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Package Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                  {updatedPackageDetails.name}
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Complete multimedia automation solution for your business
-                </p>
-              </div>
-              <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-                {updatedPackageDetails.status}
-              </Badge>
-            </div>
-
-            {/* Price Display */}
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4">
+            <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Monthly Price
-                  </p>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {updatedPackageDetails.price}
-                  </p>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                    <Package className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">Current Package</CardTitle>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Original Value
-                  </p>
-                  <p className="text-base font-semibold line-through text-gray-400 dark:text-gray-500">
-                    {updatedPackageDetails.totalCost}
-                  </p>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">
-                    Save {updatedPackageDetails.savings}
-                  </p>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
+                      {selectedTimeframe} <ChevronDown className="w-4 h-4 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleTimeframeChange("Current")}>
+                      Current
+                    </DropdownMenuItem>
+                    {dashboardData?.packagePurchases?.package_purchases?.length > 1 && (
+                      <DropdownMenuItem onClick={() => handleTimeframeChange("Previous")}>
+                        Previous
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            </div>
-
-            {/* Core Features List */}
-            <div className="space-y-2">
-              <h4 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
-                Core Features
-              </h4>
-              <div className="space-y-1">
-                {packageDetails.features.map((feature, index) => (
-                  <div key={index} className="flex items-center justify-between py-2 px-2 rounded-md bg-gray-50 dark:bg-gray-700/50">
-                    <div className="flex items-center space-x-2">
-                      <div className="p-1 rounded-full bg-blue-100 dark:bg-blue-500/20">
-                        {getFeatureIcon(feature.name)}
-                      </div>
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
-                        {feature.name}
-                      </span>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {packageDetails?.description || "Complete multimedia automation solution for your business"}
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading dashboard data...</span>
+                </div>
+              ) : error ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                  <p className="text-red-600 dark:text-red-400 mb-2">{error}</p>
+                  <Button onClick={fetchDashboardData} variant="outline" size="sm">
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Retry
+                  </Button>
+                </div>
+              ) : hasActivePackage && packageDetails ? (
+                <>
+                  {/* Package Header */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                        {packageDetails.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {packageDetails.description}
+                      </p>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {feature.cost}
-                      </span>
-                      <CheckCircle className="w-3 h-3 text-green-500" />
+                    <Badge variant="default" className={`${packageDetails.status === 'active' ? 'bg-green-500 hover:bg-green-600' :
+                      packageDetails.status === 'expired' ? 'bg-red-500 hover:bg-red-600' :
+                        'bg-yellow-500 hover:bg-yellow-600'
+                      }`}>
+                      {packageDetails.status.charAt(0).toUpperCase() + packageDetails.status.slice(1)}
+                    </Badge>
+                  </div>
+
+                  {/* Purchase Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Purchase Date</p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                          {packageDetails.purchaseDate ? new Date(packageDetails.purchaseDate).toLocaleDateString() : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Expires</p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                          {packageDetails.expirationDate ? new Date(packageDetails.expirationDate).toLocaleDateString() : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <PhilippinePeso className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Total Amount</p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                          {packageDetails.price}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Purchased Addons List */}
-            {purchasedAddons.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
-                  Purchased Addons
-                </h4>
-                <div className="space-y-1">
-                  {purchasedAddons.map((addon, index) => (
-                    <div key={index} className="flex items-center justify-between py-2 px-2 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                      <div className="flex items-center space-x-2">
-                        <div className="p-1 rounded-full bg-green-100 dark:bg-green-500/20">
-                          {addon.icon}
-                        </div>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
-                          {addon.title}
-                        </span>
+                  {/* Price Display */}
+                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                          Package Price
+                        </p>
+                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                          {packageDetails.price}
+                        </p>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {addon.price}
-                        </span>
-                        <CheckCircle className="w-3 h-3 text-green-500" />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRefundAddon(index);
-                          }}
-                          className="w-6 h-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full"
-                          title="Refund this addon"
-                        >
-                          <RotateCcw className="w-3 h-3" />
-                        </Button>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Duration
+                        </p>
+                        <p className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                          {packageDetails.period}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                  </div>
 
-            {/* Action Buttons */}
-            <div className="flex space-x-2 pt-2">
-              <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm" onClick={handleManageBilling}>
-                <DollarSign className="w-3 h-3 mr-2" />
-                Manage Billing
-              </Button>
-              <Button variant="outline" className="flex-1 text-sm" onClick={handleViewDetails}>
-                <FileText className="w-3 h-3 mr-2" />
-                View Details
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                  {/* Core Features List */}
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
+                      Package Features
+                    </h4>
+                    <div className="space-y-1">
+                      {packageDetails.features.map((feature, index) => (
+                        <div key={index} className="flex items-center justify-between py-2 px-2 rounded-md bg-gray-50 dark:bg-gray-700/50">
+                          <div className="flex items-center space-x-2">
+                            <div className="p-1 rounded-full bg-blue-100 dark:bg-blue-500/20">
+                              {getFeatureIcon(feature.name)}
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
+                                {feature.name}
+                              </span>
+                              {feature.description && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  {feature.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {feature.cost}
+                            </span>
+                            <CheckCircle className="w-3 h-3 text-green-500" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">No Active Package</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    You don't have any active packages. Browse our available packages to get started.
+                  </p>
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    Browse Packages
+                  </Button>
+                </div>
+              )}
+
+              {/* Purchased Addons List */}
+              {purchasedAddons.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
+                    Purchased Addons
+                  </h4>
+                  <div className="space-y-1">
+                    {purchasedAddons.map((addon, index) => (
+                      <div key={index} className="flex items-center justify-between py-2 px-2 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                        <div className="flex items-center space-x-2">
+                          <div className="p-1 rounded-full bg-green-100 dark:bg-green-500/20">
+                            {typeof addon.icon === 'string' ? getIconComponent(addon.icon) : addon.icon}
+                          </div>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
+                            {addon.title}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {addon.price}
+                          </span>
+                          <CheckCircle className="w-3 h-3 text-green-500" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRefundAddon(index);
+                            }}
+                            className="w-6 h-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full"
+                            title="Refund this addon"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex space-x-2 pt-2">
+                <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm" onClick={handleManageBilling}>
+                  <PhilippinePeso className="w-3 h-3 mr-2" />
+                  Manage Billing
+                </Button>
+                <Button variant="outline" className="flex-1 text-sm" onClick={handleViewDetails}>
+                  <FileText className="w-3 h-3 mr-2" />
+                  View Details
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
 
@@ -812,111 +722,114 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Project Features</h2>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 text-sm transition-all duration-300 hover:scale-105"
-              onClick={handleSeeAllFeatures}
-            >
-              <span className="transition-all duration-300">
-                {showAllFeatures ? "Show Less" : "See all Features"}
-              </span>
-            </Button>
+            {projectFeatures.length > 4 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 text-sm transition-all duration-300 hover:scale-105"
+                onClick={handleSeeAllFeatures}
+              >
+                <span className="transition-all duration-300">
+                  {showAllFeatures ? "Show Less" : "See all Features"}
+                </span>
+              </Button>
+            )}
           </div>
-                    <div className={`space-y-2 transition-all duration-500 ease-out ${showAllFeatures ? 'animate-expand-height' : ''}`}>
-            {displayedFeatures.map((feature, index) => (
-              <div key={feature.id} className={`${index >= packageFeatures.length ? 'animate-slide-in-right' : ''}`} style={{ animationDelay: `${(index - packageFeatures.length) * 0.1}s` }}>
-                <Card 
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer min-h-[100px] hover:border-blue-300 dark:hover:border-blue-600"
-                  onClick={() => handleFeatureCardClick(feature)}
-                >
-                <CardContent className="p-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-3 flex-1">
-                      <div className="mt-0.5">
-                        <div className={`w-7 h-7 rounded flex items-center justify-center ${
-                          feature.status === "Completed" ? "bg-green-500" :
-                          feature.status === "In Progress" ? "bg-blue-500" :
-                          feature.status === "Pending" ? "bg-gray-500" :
-                          "bg-orange-500"
-                        }`}>
-                          {feature.icon}
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-start justify-between mb-1">
-                  <div className="flex items-start space-x-2 flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-800 dark:text-gray-100 text-sm leading-tight break-words">{feature.title}</h3>
-                  </div>
-                  <Badge 
-                    className={`text-xs whitespace-nowrap flex-shrink-0 ${getStatusColor(feature.status)}`}
+
+          {projectFeatures.length === 0 ? (
+            <Card className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border-gray-200 dark:border-gray-700">
+              <CardContent className="p-8 text-center">
+                <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">No Active Projects</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  You don't have any active package features. Purchase a package to see your project features here.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className={`space-y-2 transition-all duration-500 ease-out ${showAllFeatures ? 'animate-expand-height' : ''}`}>
+              {displayedFeatures.map((feature, index) => (
+                <div key={feature.id} className={`${index >= 4 ? 'animate-slide-in-right' : ''}`} style={{ animationDelay: `${(index - 4) * 0.1}s` }}>
+                  <Card
+                    className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer min-h-[100px] hover:border-blue-300 dark:hover:border-blue-600"
+                    onClick={() => handleFeatureCardClick(feature)}
                   >
-                    {feature.status}
-                  </Badge>
-                </div>
-                        
-                        {/* Progress Bar */}
-                        <div className="mb-2 pr-8">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Progress</span>
-                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{feature.progress}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                            <div 
-                              className={`h-1.5 rounded-full transition-all duration-300 ${getProgressColor(feature.progress)}`}
-                              style={{ width: `${feature.progress}%` }}
-                            ></div>
-                          </div>
-                        </div>
-
-                        {/* Output Status */}
-                        <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 mb-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600"></div>
-                          <span className="truncate">{feature.output}</span>
-                        </div>
-
-                        {/* Time */}
-                        <div className="flex items-center space-x-2 text-xs text-gray-400 dark:text-gray-500">
-                          <Clock className="w-3 h-3" />
-                          <span>{feature.time}</span>
-                        </div>
-
-                        {/* Expanded Details */}
-                        {expandedProjects.has(index) && (
-                          <div className="space-y-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 animate-fade-in transition-all duration-300">
-                            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">{feature.description}</p>
-                            <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-                              <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                              <span>Last updated: {feature.time}</span>
+                    <CardContent className="p-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-3 flex-1">
+                          <div className="mt-0.5">
+                            <div className={`w-7 h-7 rounded flex items-center justify-center ${feature.status === "Completed" ? "bg-green-500" :
+                              feature.status === "In Progress" ? "bg-blue-500" :
+                                feature.status === "Pending" ? "bg-gray-500" :
+                                  feature.status === "Active" ? "bg-green-500" :
+                                    "bg-orange-500"
+                              }`}>
+                              {typeof feature.icon === 'string' ? getIconComponent(feature.icon) : feature.icon}
                             </div>
                           </div>
-                        )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-1">
+                              <div className="flex items-start space-x-2 flex-1 min-w-0">
+                                <h3 className="font-medium text-gray-800 dark:text-gray-100 text-sm leading-tight break-words">{feature.title}</h3>
+                              </div>
+                              <Badge
+                                className={`text-xs whitespace-nowrap flex-shrink-0 ${getStatusColor(feature.status)}`}
+                              >
+                                {feature.status}
+                              </Badge>
+                            </div>
+
+
+
+                            {/* Output Status */}
+                            <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 mb-1">
+                              <div className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+                              <span className="truncate">{feature.output}</span>
+                            </div>
+
+                            {/* Time */}
+                            <div className="flex items-center space-x-2 text-xs text-gray-400 dark:text-gray-500">
+                              <Clock className="w-3 h-3" />
+                              <span>{feature.time}</span>
+                            </div>
+
+                            {/* Expanded Details */}
+                            {expandedProjects.has(index) && (
+                              <div className="space-y-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 animate-fade-in transition-all duration-300">
+                                <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">{feature.description}</p>
+                                <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                  <span>Last updated: {feature.time}</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Expand/Collapse Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFeatureExpansion(index);
+                          }}
+                          className="w-5 h-5 p-0 btn-primary ml-2 flex-shrink-0"
+                          title={expandedProjects.has(index) ? "Collapse feature" : "Expand feature"}
+                        >
+                          {expandedProjects.has(index) ? (
+                            <ChevronDown className="w-3 h-3 transition-transform duration-300" />
+                          ) : (
+                            <ChevronDown className="w-3 h-3 rotate-180 transition-transform duration-300" />
+                          )}
+                        </Button>
                       </div>
-                    </div>
-                    
-                    {/* Expand/Collapse Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFeatureExpansion(index);
-                      }}
-                      className="w-5 h-5 p-0 btn-primary ml-2 flex-shrink-0"
-                      title={expandedProjects.has(index) ? "Collapse feature" : "Expand feature"}
-                    >
-                      {expandedProjects.has(index) ? (
-                        <ChevronDown className="w-3 h-3 transition-transform duration-300" />
-                      ) : (
-                        <ChevronDown className="w-3 h-3 rotate-180 transition-transform duration-300" />
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
                 </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Addons Section */}
@@ -924,9 +837,9 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">Addons</CardTitle>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 text-sm transition-all duration-300 hover:scale-105"
                 onClick={handleViewAllAddons}
               >
@@ -939,8 +852,8 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
           <CardContent>
             <div className={`space-y-2 transition-all duration-500 ease-out ${showAllAddons ? 'animate-expand-height' : ''}`}>
               {displayedAddons.map((addon, index) => (
-                <div 
-                  key={addon.id} 
+                <div
+                  key={addon.id}
                   className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer min-h-[80px] ${index >= 2 ? 'animate-slide-in-right' : ''}`}
                   style={{ animationDelay: `${(index - 2) * 0.1}s` }}
                   onClick={() => toggleAddonExpansion(addon.id)}
@@ -949,7 +862,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-3 flex-1">
                         <div className="w-7 h-7 rounded bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          {addon.icon}
+                          {typeof addon.icon === 'string' ? getIconComponent(addon.icon) : addon.icon}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start space-x-2 mb-1">
@@ -961,12 +874,12 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center space-x-1 flex-shrink-0">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="w-6 h-6 p-0" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-6 h-6 p-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleAddToCart(addon);
@@ -978,7 +891,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
                             <Plus className="w-3 h-3 text-gray-600 dark:text-gray-300" />
                           )}
                         </Button>
-                        
+
                         <Button
                           variant="ghost"
                           size="sm"
@@ -991,7 +904,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
                         >
                           {expandedAddons.has(addon.id) ? (
                             <ChevronDown className="w-3 h-3 transition-transform duration-300" />
-                            ) : (
+                          ) : (
                             <ChevronDown className="w-3 h-3 rotate-180 transition-transform duration-300" />
                           )}
                         </Button>
@@ -1032,9 +945,17 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
                     </div>
                   ))}
                 </div>
-                <Button className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-sm py-1" onClick={handleCheckout}>
-                  <DollarSign className="w-3 h-3 mr-1" />
-                  Checkout
+                <Button
+                  className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-sm py-1"
+                  onClick={handleCheckout}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  ) : (
+                    <PhilippinePeso className="w-3 h-3 mr-1" />
+                  )}
+                  {loading ? "Processing..." : "Checkout"}
                 </Button>
               </div>
             )}
@@ -1043,7 +964,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
       </div>
 
       {/* Billing Management Modal */}
-      <BillingManagement 
+      <BillingManagement
         isOpen={showBillingManagement}
         onClose={() => setShowBillingManagement(false)}
         isDarkMode={effectiveDarkMode}
@@ -1051,17 +972,17 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
       />
 
       {/* Package Details Modal */}
-              <PackageDetails 
-          isOpen={showPackageDetails} 
-          onClose={() => setShowPackageDetails(false)} 
-          isDarkMode={effectiveDarkMode}
-          purchasedAddons={purchasedAddons}
-          onAddToCart={handleAddToCart}
-          onOpenMessages={handleOpenMessages}
-        />
+      <PackageDetails
+        isOpen={showPackageDetails}
+        onClose={() => setShowPackageDetails(false)}
+        isDarkMode={effectiveDarkMode}
+        purchasedAddons={purchasedAddons}
+        onAddToCart={handleAddToCart}
+        onOpenMessages={handleOpenMessages}
+      />
 
       {/* Cart Modal */}
-      <CartModal 
+      <CartModal
         isOpen={showCartModal}
         onClose={() => setShowCartModal(false)}
         cartItems={cartItems}
@@ -1084,7 +1005,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
       />
 
       {/* Messages Component */}
-      <Messages 
+      <Messages
         isOpen={showMessages}
         onClose={handleCloseMessages}
         chatType={chatType}

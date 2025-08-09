@@ -2,44 +2,62 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  ArrowLeft, 
-  ExternalLink, 
-  MessageSquare, 
-  Star, 
+import {
+  ArrowLeft,
+  ExternalLink,
+  MessageSquare,
+  Star,
   FileText,
   Eye,
-  ThumbsUp
+  ThumbsUp,
+  BarChart3,
+  Globe,
+  Calendar,
+  Play,
+  Zap,
+  Package,
+  PhilippinePeso,
+  CheckCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function FeatureDetails({ 
-  feature, 
-  onBack, 
+export default function FeatureDetails({
+  feature,
+  onBack,
   isDarkMode = false,
   onAddComment,
   newComment,
   setNewComment
 }) {
+  const getIconComponent = (iconName) => {
+    const iconMap = {
+      "BarChart3": <BarChart3 className="w-4 h-4 text-white" />,
+      "Globe": <Globe className="w-4 h-4 text-white" />,
+      "FileText": <FileText className="w-4 h-4 text-white" />,
+      "Calendar": <Calendar className="w-4 h-4 text-white" />,
+      "Play": <Play className="w-4 h-4 text-white" />,
+      "Zap": <Zap className="w-4 h-4 text-white" />,
+      "Package": <Package className="w-4 h-4 text-white" />,
+      "PhilippinePeso": <PhilippinePeso className="w-4 h-4 text-white" />
+    };
+    return iconMap[iconName] || <CheckCircle className="w-4 h-4 text-white" />;
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "Completed": return "bg-green-500 hover:bg-green-600";
       case "In Progress": return "bg-blue-500 hover:bg-blue-600";
       case "Pending": return "bg-gray-500 hover:bg-gray-600";
+      case "Active": return "bg-green-500 hover:bg-green-600";
       default: return "bg-yellow-500 hover:bg-yellow-600";
     }
   };
 
-  const getProgressColor = (progress) => {
-    if (progress >= 80) return "bg-green-500";
-    if (progress >= 50) return "bg-blue-500";
-    if (progress >= 20) return "bg-yellow-500";
-    return "bg-gray-400";
-  };
+
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;
-    
+
     const comment = {
       id: Date.now(),
       user: "You",
@@ -73,13 +91,13 @@ export default function FeatureDetails({
           </Badge>
         </div>
         <div className="flex items-center space-x-3 mt-2">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-            feature.status === "Completed" ? "bg-green-500" :
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${feature.status === "Completed" ? "bg-green-500" :
             feature.status === "In Progress" ? "bg-blue-500" :
-            feature.status === "Pending" ? "bg-gray-500" :
-            "bg-yellow-500"
-          }`}>
-            {feature.icon}
+              feature.status === "Pending" ? "bg-gray-500" :
+                feature.status === "Active" ? "bg-green-500" :
+                  "bg-yellow-500"
+            }`}>
+            {typeof feature.icon === 'string' ? getIconComponent(feature.icon) : feature.icon}
           </div>
           <div>
             <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
@@ -92,19 +110,15 @@ export default function FeatureDetails({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Progress Section */}
+        {/* Status Section */}
         <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Progress</span>
-            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{feature.progress}%</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</span>
+            <Badge className={`${getStatusColor(feature.status)}`}>
+              {feature.status}
+            </Badge>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div 
-              className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(feature.progress)}`}
-              style={{ width: `${feature.progress}%` }}
-            ></div>
-          </div>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             {feature.output}
           </p>
         </div>
@@ -118,12 +132,11 @@ export default function FeatureDetails({
                 <div key={output.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
                   <div className="flex items-center justify-between mb-2">
                     <h5 className="font-medium text-gray-800 dark:text-gray-100">{output.title}</h5>
-                    <Badge className={`text-xs ${
-                      output.status === "Live" ? "bg-green-500" :
+                    <Badge className={`text-xs ${output.status === "Live" ? "bg-green-500" :
                       output.status === "Scheduled" ? "bg-blue-500" :
-                      output.status === "In Development" ? "bg-yellow-500" :
-                      "bg-gray-500"
-                    }`}>
+                        output.status === "In Development" ? "bg-yellow-500" :
+                          "bg-gray-500"
+                      }`}>
                       {output.status}
                     </Badge>
                   </div>

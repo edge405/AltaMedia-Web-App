@@ -723,8 +723,8 @@ const KnowingYouForm = () => {
           />
           <AISuggestion
             fieldName="businessDescription"
-            currentValue={formData.businessDescription}
             onApplySuggestion={(suggestion) => updateFormData('businessDescription', suggestion)}
+            formData={formData}
           />
         </div>
       </FormField>
@@ -740,8 +740,8 @@ const KnowingYouForm = () => {
           />
           <AISuggestion
             fieldName="inspiration"
-            currentValue={formData.inspiration}
             onApplySuggestion={(suggestion) => updateFormData('inspiration', suggestion)}
+            formData={formData}
           />
         </div>
       </FormField>
@@ -756,8 +756,8 @@ const KnowingYouForm = () => {
           />
           <AISuggestion
             fieldName="targetInterests"
-            currentValue={formData.targetInterests?.join(', ')}
             onApplySuggestion={(suggestion) => updateFormData('targetInterests', suggestion.split(', '))}
+            formData={formData}
           />
         </div>
       </FormField>
@@ -772,8 +772,8 @@ const KnowingYouForm = () => {
           />
           <AISuggestion
             fieldName="currentInterests"
-            currentValue={formData.currentInterests?.join(', ')}
             onApplySuggestion={(suggestion) => updateFormData('currentInterests', suggestion.split(', '))}
+            formData={formData}
           />
         </div>
       </FormField>
@@ -788,8 +788,8 @@ const KnowingYouForm = () => {
           />
           <AISuggestion
             fieldName="audienceBehavior"
-            currentValue={formData.audienceBehavior?.join(', ')}
             onApplySuggestion={(suggestion) => updateFormData('audienceBehavior', suggestion.split(', '))}
+            formData={formData}
           />
         </div>
       </FormField>
@@ -805,8 +805,8 @@ const KnowingYouForm = () => {
           />
           <AISuggestion
             fieldName="customerChoice"
-            currentValue={formData.customerChoice}
             onApplySuggestion={(suggestion) => updateFormData('customerChoice', suggestion)}
+            formData={formData}
           />
         </div>
       </FormField>
@@ -822,8 +822,8 @@ const KnowingYouForm = () => {
           />
           <AISuggestion
             fieldName="missionStatement"
-            currentValue={formData.missionStatement}
             onApplySuggestion={(suggestion) => updateFormData('missionStatement', suggestion)}
+            formData={formData}
           />
         </div>
       </FormField>
@@ -839,8 +839,8 @@ const KnowingYouForm = () => {
           />
           <AISuggestion
             fieldName="longTermVision"
-            currentValue={formData.longTermVision}
             onApplySuggestion={(suggestion) => updateFormData('longTermVision', suggestion)}
+            formData={formData}
           />
         </div>
       </FormField>
@@ -855,8 +855,8 @@ const KnowingYouForm = () => {
           />
           <AISuggestion
             fieldName="coreValues"
-            currentValue={formData.coreValues?.join(', ')}
             onApplySuggestion={(suggestion) => updateFormData('coreValues', suggestion.split(', '))}
+            formData={formData}
           />
         </div>
       </FormField>
@@ -871,8 +871,8 @@ const KnowingYouForm = () => {
           />
           <AISuggestion
             fieldName="brandPersonality"
-            currentValue={formData.brandPersonality?.join(', ')}
             onApplySuggestion={(suggestion) => updateFormData('brandPersonality', suggestion.split(', '))}
+            formData={formData}
           />
         </div>
       </FormField>
@@ -888,8 +888,8 @@ const KnowingYouForm = () => {
           />
           <AISuggestion
             fieldName="teamHighlights"
-            currentValue={formData.teamHighlights}
             onApplySuggestion={(suggestion) => updateFormData('teamHighlights', suggestion)}
+            formData={formData}
           />
         </div>
       </FormField>

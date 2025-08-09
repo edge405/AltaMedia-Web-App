@@ -62,5 +62,6 @@ const requireRole = (roles) => {
 
 module.exports = {
   authenticateToken,
+  protect: authenticateToken, // Alias for backward compatibility
   requireRole
 }; 
