@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = () => {
       const storedToken = localStorage.getItem('authToken');
       const storedUser = localStorage.getItem('user');
-      
+
       if (storedToken && storedUser) {
         try {
           const userData = JSON.parse(storedUser);
@@ -57,14 +57,14 @@ export const AuthProvider = ({ children }) => {
 
       if (data.success) {
         const { user: userData, token: authToken } = data.data;
-        
+
         // Store token and user data
         localStorage.setItem('authToken', authToken);
         localStorage.setItem('user', JSON.stringify(userData));
-        
+
         setToken(authToken);
         setUser(userData);
-        
+
         toast.success('Login successful! Welcome to Altamedia');
         return { success: true };
       } else {
@@ -95,14 +95,14 @@ export const AuthProvider = ({ children }) => {
 
       if (data.success) {
         const { user: newUser, token: authToken } = data.data;
-        
+
         // Store token and user data
         localStorage.setItem('authToken', authToken);
         localStorage.setItem('user', JSON.stringify(newUser));
-        
+
         setToken(authToken);
         setUser(newUser);
-        
+
         toast.success('Registration successful! Welcome to Altamedia');
         return { success: true };
       } else {
@@ -158,11 +158,11 @@ export const AuthProvider = ({ children }) => {
 
       if (data.success) {
         const updatedUser = data.data;
-        
+
         // Update stored user data
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setUser(updatedUser);
-        
+
         toast.success('Profile updated successfully');
         return { success: true };
       } else {

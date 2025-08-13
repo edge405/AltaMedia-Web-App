@@ -72,6 +72,7 @@ const getUserPurchases = async (req, res) => {
               package_price: purchase.packages.price,
               duration_days: purchase.packages.duration_days
             },
+            features: purchase.features || [], // Include features from JSON
             addons: []
           };
         }
@@ -111,6 +112,7 @@ const getUserPurchases = async (req, res) => {
             package_price: purchase.packages.price,
             duration_days: purchase.packages.duration_days
           },
+          features: purchase.features || [], // Include features from JSON
           addons: organizedAddons
         };
       })
@@ -265,6 +267,29 @@ const createPurchase = async (req, res) => {
       });
     }
 
+    // Fetch package features
+    const { data: packageFeatures, error: featuresError } = await supabase
+      .from('package_features')
+      .select('*')
+      .eq('package_id', package_id)
+      .eq('is_active', true);
+
+    if (featuresError) {
+      console.error('Error fetching package features:', featuresError);
+    }
+
+    // Transform features into JSON structure for storage
+    // Note: package_features table doesn't have status, so we add it here
+    const featuresJson = (packageFeatures || []).map(feature => ({
+      feature_id: feature.id,
+      feature_name: feature.feature_name,
+      feature_description: feature.feature_description,
+      status: 'In Progress', // Default status when feature is purchased
+      is_active: feature.is_active,
+      created_at: feature.created_at,
+      purchase_date: new Date().toISOString() // When this feature was purchased
+    }));
+
     // Calculate expiration date
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + package.duration_days);
@@ -272,7 +297,7 @@ const createPurchase = async (req, res) => {
     // Calculate total amount
     let totalAmount = package.price;
 
-    // Create purchase
+    // Create purchase with features JSON
     const { data: purchase, error: purchaseError } = await supabaseAdmin
       .from('package_purchases')
       .insert({
@@ -280,7 +305,8 @@ const createPurchase = async (req, res) => {
         package_id: package_id,
         expiration_date: expirationDate.toISOString().split('T')[0],
         total_amount: totalAmount,
-        status: 'active'
+        status: 'active',
+        features: featuresJson // Store features as JSON
       })
       .select()
       .single();
@@ -348,6 +374,7 @@ const createPurchase = async (req, res) => {
           package_price: package.price,
           duration_days: package.duration_days
         },
+        features: featuresJson, // Include features in response
         addons: addons ? addons.map(addonId => ({
           addon_id: addonId,
           status: 'active'
@@ -546,10 +573,101 @@ const getAllPurchases = async (req, res) => {
   }
 };
 
+/**
+ * Update feature status in a purchase
+ * PUT /api/purchases/:id/features/:featureId/status
+ */
+const updatePurchaseFeatureStatus = async (req, res) => {
+  try {
+    const { id: purchaseId, featureId } = req.params;
+    const { status } = req.body;
+    const userId = req.user.id;
+
+    // Validate status
+    const validStatuses = ['active', 'inactive', 'pending', 'deprecated'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be one of: active, inactive, pending, deprecated'
+      });
+    }
+
+    // Get the purchase to verify ownership and get current features
+    const { data: purchase, error: purchaseError } = await supabase
+      .from('package_purchases')
+      .select('*')
+      .eq('id', purchaseId)
+      .eq('user_id', userId)
+      .single();
+
+    if (purchaseError || !purchase) {
+      return res.status(404).json({
+        success: false,
+        message: 'Purchase not found or access denied'
+      });
+    }
+
+    // Get current features
+    const currentFeatures = purchase.features || [];
+    
+    // Find and update the specific feature
+    const featureIndex = currentFeatures.findIndex(feature => feature.feature_id === parseInt(featureId));
+    
+    if (featureIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Feature not found in this purchase'
+      });
+    }
+
+    // Update the feature status
+    currentFeatures[featureIndex].status = status;
+    currentFeatures[featureIndex].updated_at = new Date().toISOString();
+
+    // Update the purchase with the modified features
+    const { data: updatedPurchase, error: updateError } = await supabase
+      .from('package_purchases')
+      .update({ 
+        features: currentFeatures,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', purchaseId)
+      .select()
+      .single();
+
+    if (updateError) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update feature status',
+        error: updateError.message
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Feature status updated successfully',
+      data: {
+        purchase_id: purchaseId,
+        feature_id: featureId,
+        status: status,
+        updated_features: currentFeatures
+      }
+    });
+
+  } catch (error) {
+    console.error('Update feature status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   getUserPurchases,
   getPurchaseById,
   createPurchase,
   cancelPurchase,
-  getAllPurchases
+  getAllPurchases,
+  updatePurchaseFeatureStatus
 }; 

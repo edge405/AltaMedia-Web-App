@@ -6,6 +6,8 @@ import Profile from "./Profile";
 import Forms from "./Forms.jsx";
 import KnowingYouFormPage from "./KnowingYouFormPage.jsx";
 import BrandKitFormPage from "./BrandKitFormPage.jsx";
+import CompanySelectionPage from "./CompanySelectionPage.jsx";
+import CompanyPage from "./CompanyPage.jsx";
 import AdminLogin from "./AdminLogin.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
 import AdminTest from "./AdminTest.jsx";
@@ -21,6 +23,8 @@ const PAGES = {
     Forms: Forms,
     KnowYourForm: KnowingYouFormPage,
     BrandKitForm: BrandKitFormPage,
+    CompanySelection: CompanySelectionPage,
+    Company: CompanyPage,
 }
 
 function _getCurrentPage(url) {
@@ -60,7 +64,7 @@ function PagesContent() {
             <Route path="/" element={
                 <Layout currentPageName={currentPage}>
                     <ProtectedRoute>
-                        <Dashboard />
+                        <CompanySelectionPage />
                     </ProtectedRoute>
                 </Layout>
             } />
@@ -101,6 +105,24 @@ function PagesContent() {
                 <Layout currentPageName={currentPage}>
                     <ProtectedRoute>
                         <BrandKitFormPage />
+                    </ProtectedRoute>
+                </Layout>
+            } />
+
+            <Route path="/company-selection" element={
+                <Layout currentPageName={currentPage}>
+                    <ProtectedRoute>
+                        <CompanySelectionPage />
+                    </ProtectedRoute>
+                </Layout>
+            } />
+
+
+
+            <Route path="/company/:companyId" element={
+                <Layout currentPageName={currentPage}>
+                    <ProtectedRoute>
+                        <CompanyPage />
                     </ProtectedRoute>
                 </Layout>
             } />

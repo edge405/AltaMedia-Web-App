@@ -1093,8 +1093,8 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === tab
-                    ? `${isDarkMode ? 'text-blue-400 border-b-2 border-blue-400' : 'text-blue-600 border-b-2 border-blue-600'}`
-                    : `${isDarkMode ? 'text-gray-400 hover:text-blue-300' : 'text-gray-600 hover:text-blue-600'}`
+                  ? `${isDarkMode ? 'text-blue-400 border-b-2 border-blue-400' : 'text-blue-600 border-b-2 border-blue-600'}`
+                  : `${isDarkMode ? 'text-gray-400 hover:text-blue-300' : 'text-gray-600 hover:text-blue-600'}`
                   }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}

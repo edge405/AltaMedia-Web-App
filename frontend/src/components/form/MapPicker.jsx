@@ -2,20 +2,12 @@ import { useState, useEffect } from 'react';
 import { MapPin, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import MapLibreMap from './MapLibreMap';
 
 const MapPicker = ({ value, onChange, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [addressData, setAddressData] = useState({
-    country: '',
-    province: '',
-    city: '',
-    barangay: '',
-    street: '',
-    fullAddress: ''
-  });
+  const [placeName, setPlaceName] = useState('');
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   // Initialize with existing value if available
@@ -23,82 +15,74 @@ const MapPicker = ({ value, onChange, placeholder }) => {
     if (value) {
       try {
         const parsed = JSON.parse(value);
-        setAddressData(parsed);
+        setPlaceName(parsed.placeName || parsed.fullAddress || value);
+        if (parsed.coordinates) {
+          setSelectedLocation(parsed.coordinates);
+        }
       } catch {
-        // If not JSON, treat as full address
-        setAddressData({ ...addressData, fullAddress: value });
+        // If not JSON, treat as place name
+        setPlaceName(value);
       }
     }
   }, [value]);
 
-  const handleAddressChange = (field, newValue) => {
-    const updated = { ...addressData, [field]: newValue };
-    setAddressData(updated);
-    
-    // Update the full address
-    const fullAddress = [
-      updated.street,
-      updated.barangay,
-      updated.city,
-      updated.province,
-      updated.country
-    ].filter(Boolean).join(', ');
-    
-    updated.fullAddress = fullAddress;
-    setAddressData(updated);
-    
-    // Pass the structured data as JSON string
-    onChange(JSON.stringify(updated));
+  const handlePlaceNameChange = (newValue) => {
+    setPlaceName(newValue);
+    // Store as simple string for place name
+    onChange(newValue);
   };
 
   const handleLocationSelect = (location) => {
     setSelectedLocation(location);
   };
 
-  const handleMapSelection = () => {
+  const handleMapSelection = async () => {
     if (selectedLocation) {
-      // Use reverse geocoding to get address from coordinates
-      // For now, we'll use a mock address based on the location
-      const mockAddress = {
-        country: 'Philippines',
-        province: 'Metro Manila',
-        city: 'Makati City',
-        barangay: 'San Antonio',
-        street: '123 Sample Street',
-        fullAddress: '123 Sample Street, San Antonio, Makati City, Metro Manila, Philippines',
-        coordinates: selectedLocation
-      };
-      
-      setAddressData(mockAddress);
-      onChange(JSON.stringify(mockAddress));
+      try {
+        // Use reverse geocoding to get place name from coordinates
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedLocation.latitude}&lon=${selectedLocation.longitude}&zoom=18&addressdetails=1`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const placeName = data.display_name || 'Selected Location';
+
+          setPlaceName(placeName);
+          onChange(placeName);
+        } else {
+          // Fallback to a generic place name
+          setPlaceName('Selected Location');
+          onChange('Selected Location');
+        }
+      } catch (error) {
+        console.error('Error getting place name:', error);
+        // Fallback to a generic place name
+        setPlaceName('Selected Location');
+        onChange('Selected Location');
+      }
+
       setIsOpen(false);
     }
   };
 
-  const clearAddress = () => {
-    const empty = {
-      country: '',
-      province: '',
-      city: '',
-      barangay: '',
-      street: '',
-      fullAddress: ''
-    };
-    setAddressData(empty);
+  const clearLocation = () => {
+    setPlaceName('');
+    setSelectedLocation(null);
     onChange('');
   };
 
   return (
     <div className="space-y-3">
-      {/* Map Selection Button */}
+      {/* Location Input and Map Button */}
       <div className="flex gap-2">
         <Input
-          value={addressData.fullAddress || ''}
-          onChange={(e) => handleAddressChange('fullAddress', e.target.value)}
+          value={placeName}
+          onChange={(e) => handlePlaceNameChange(e.target.value)}
           placeholder={placeholder || "Enter your primary location"}
           className="flex-1"
         />
-        
+
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button
@@ -115,20 +99,21 @@ const MapPicker = ({ value, onChange, placeholder }) => {
             <DialogHeader>
               <DialogTitle>Select Location on Map</DialogTitle>
             </DialogHeader>
-            
+
             <div className="space-y-4">
               {/* Map Component */}
-              <MapLibreMap 
+              <MapLibreMap
                 onLocationSelect={handleLocationSelect}
-                initialLocation={addressData.coordinates}
+                initialLocation={selectedLocation}
+                useCurrentLocation={false}
               />
-              
+
               {/* Action Buttons */}
               <div className="flex gap-2 justify-end">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={clearAddress}
+                  onClick={clearLocation}
                   className="flex items-center gap-2"
                 >
                   <X className="w-4 h-4" />
@@ -148,17 +133,6 @@ const MapPicker = ({ value, onChange, placeholder }) => {
           </DialogContent>
         </Dialog>
       </div>
-      
-      {/* Display structured address if available */}
-      {addressData.country && (
-        <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-          <div><strong>Country:</strong> {addressData.country}</div>
-          <div><strong>Province:</strong> {addressData.province}</div>
-          <div><strong>City:</strong> {addressData.city}</div>
-          <div><strong>Barangay:</strong> {addressData.barangay}</div>
-          <div><strong>Street:</strong> {addressData.street}</div>
-        </div>
-      )}
     </div>
   );
 };

@@ -77,9 +77,6 @@ export default function FeatureDetails({
               Back to Package
             </Button>
           </div>
-          <Badge className={`${getStatusColor(feature.status)}`}>
-            {feature.status}
-          </Badge>
         </div>
         <div className="flex items-center space-x-3 mt-2">
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${feature.status === "Completed" ? "bg-green-500" :

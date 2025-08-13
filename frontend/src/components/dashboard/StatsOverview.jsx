@@ -53,7 +53,7 @@ export default function StatsOverview({ isDarkMode }) {
               Current Package
             </CardTitle>
           </div>
-          <DropdownMenu>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-8">
                 {selectedPeriod}
@@ -68,7 +68,7 @@ export default function StatsOverview({ isDarkMode }) {
                 Previous
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

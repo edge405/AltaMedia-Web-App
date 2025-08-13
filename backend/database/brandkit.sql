@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS brand_kit_forms (
+CREATE TABLE IF NOT EXISTS company_brand_kit_forms (
     id SERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 
@@ -88,12 +88,12 @@ CREATE TABLE IF NOT EXISTS brand_kit_forms (
 );
 
 -- Trigger for updated_at
-CREATE TRIGGER update_brand_kit_forms_updated_at 
-    BEFORE UPDATE ON brand_kit_forms 
+CREATE TRIGGER update_company_brand_kit_forms_updated_at 
+    BEFORE UPDATE ON company_brand_kit_forms 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
 -- Indexes for performance
-CREATE INDEX IF NOT EXISTS idx_brand_kit_forms_user_id ON brand_kit_forms(user_id);
-CREATE INDEX IF NOT EXISTS idx_brand_kit_forms_email ON brand_kit_forms(business_email);
-CREATE INDEX IF NOT EXISTS idx_brand_kit_forms_is_completed ON brand_kit_forms(is_completed);
+CREATE INDEX IF NOT EXISTS idx_company_brand_kit_forms_user_id ON company_brand_kit_forms(user_id);
+CREATE INDEX IF NOT EXISTS idx_company_brand_kit_forms_email ON company_brand_kit_forms(business_email);
+CREATE INDEX IF NOT EXISTS idx_company_brand_kit_forms_is_completed ON company_brand_kit_forms(is_completed);

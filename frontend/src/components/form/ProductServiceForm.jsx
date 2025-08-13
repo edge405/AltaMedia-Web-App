@@ -15,6 +15,7 @@ import FileUpload from './FileUpload';
 import AISuggestion from './AISuggestion';
 import CheckboxGroup from './CheckboxGroup';
 import { saveFormData, getFormData } from '@/utils/productServiceApi';
+import OrganizationForm from './OrganizationForm';
 
 const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
     const navigate = useNavigate();
@@ -97,10 +98,14 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
     const updateFormData = (field, value) => {
         console.log(`Field change: ${field} =`, value);
 
+        setFormData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+
         // If building type is changing, notify parent component
-        if (field === 'buildingType' && value === 'business' && onFormTypeChange) {
-            onFormTypeChange('business');
-            return;
+        if (field === 'buildingType' && onFormTypeChange) {
+            onFormTypeChange(value);
         }
 
         setFormData(prev => ({
@@ -211,6 +216,14 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
         navigate('/dashboard');
     };
 
+    // If building type is "organization", render the OrganizationForm component
+    if (formData.buildingType === 'organization') {
+        return <OrganizationForm onFormTypeChange={(type) => {
+            updateFormData('buildingType', type);
+            setCurrentStep(1); // Reset to first step
+        }} />;
+    }
+
     const renderStep1 = () => (
         <div className="space-y-8">
             <FormField label="What are you building?" type="Dropdown" required>
@@ -221,6 +234,7 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
                     <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                         <SelectItem value="business">Business/Company</SelectItem>
                         <SelectItem value="product">Specific Product/Service</SelectItem>
+                        <SelectItem value="organization">Organization/Brand/Page</SelectItem>
                     </SelectContent>
                 </Select>
             </FormField>
@@ -345,7 +359,7 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
 
     const renderStep3 = () => (
         <div className="space-y-8">
-            <FormField label="What 3 words best describe your product's personality?" type="Tags" aiSuggestions>
+            <FormField label="What 3 words best describe your product's personality?" type="Tags">
                 <div className="space-y-4">
                     <TagInput
                         value={formData.brandPersonality || []}
@@ -356,15 +370,15 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
                             "Trustworthy", "Bold", "Elegant", "Friendly", "Modern"
                         ]}
                     />
-                    <AISuggestion
+                    {/* <AISuggestion
                         fieldName="brandPersonality"
                         onApplySuggestion={(suggestion) => updateFormData('brandPersonality', suggestion.split(', '))}
                         formData={formData}
-                    />
+                    /> */}
                 </div>
             </FormField>
 
-            <FormField label="Describe your preferred visual direction." type="Tags" aiSuggestions>
+            <FormField label="Describe your preferred visual direction." type="Tags">
                 <div className="space-y-4">
                     <TagInput
                         value={formData.designStyle || []}
@@ -375,11 +389,11 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
                             "Playful", "Professional", "Creative", "Clean", "Dynamic"
                         ]}
                     />
-                    <AISuggestion
+                    {/* <AISuggestion
                         fieldName="designStyle"
                         onApplySuggestion={(suggestion) => updateFormData('designStyle', suggestion.split(', '))}
                         formData={formData}
-                    />
+                    /> */}
                 </div>
             </FormField>
 
@@ -559,13 +573,14 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
                                 ))}
                             </div>
                         </div>
-                        <Button
-                            onClick={handleBackToDashboard}
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 px-8 py-3 text-lg"
-                        >
-                            <ArrowLeft className="w-5 h-5" />
-                            Return to Dashboard
-                        </Button>
+                        <div className="flex justify-center">
+                            <Button
+                                onClick={handleBackToDashboard}
+                                className="flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 px-8 py-3 text-lg"
+                            >
+                                Return to Dashboard
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -621,15 +636,6 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
 
             <div className="flex flex-col sm:flex-row items-center justify-between mt-6 sm:mt-8 gap-4">
                 <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
-                    <Button
-                        variant="outline"
-                        onClick={handleBackToDashboard}
-                        className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 w-full sm:w-auto"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span className="hidden sm:inline">Back to Dashboard</span>
-                        <span className="sm:hidden">Dashboard</span>
-                    </Button>
 
                     {currentStep > 1 && (
                         <Button

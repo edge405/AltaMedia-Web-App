@@ -14,7 +14,7 @@ This guide documents the complete implementation of a 12-step BrandKit form with
 
 ## Database Schema
 
-### Table: `brand_kit_forms`
+### Table: `company_brand_kit_forms`
 The main table stores all form data with proper data types and indexing:
 
 ```sql
@@ -225,7 +225,7 @@ const getRequiredFieldsForStep = (step) => {
 Run the migration script to create the table and indexes:
 
 ```bash
-psql -d your_database -f brand_kit_forms_schema.sql
+psql -d your_database -f company_brand_kit_forms_schema.sql
 ```
 
 ## Environment Variables
@@ -277,7 +277,7 @@ node check-database-schema.js
 │   │   │   └── brandKitRoutes.js
 │   │   └── utils/
 │   │       └── cloudinary.js
-│   └── brand_kit_forms_schema.sql
+│   └── company_brand_kit_forms_schema.sql
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
@@ -288,7 +288,7 @@ node check-database-schema.js
 │   │   └── utils/
 │   │       └── api.js
 │   └── src/pages/index.jsx
-└── brand_kit_forms_migration.sql
+└── company_brand_kit_forms_migration.sql
 ```
 
 ## Troubleshooting

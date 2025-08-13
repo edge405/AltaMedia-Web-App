@@ -38,11 +38,13 @@ const getAllPackages = async (req, res) => {
       const packageFeatures = allFeatures ? allFeatures.filter(feature => feature.package_id === package.id) : [];
       
       // Organize features with clear labeling
+      // Note: package_features table doesn't have status, so we use a default
       const labeledFeatures = packageFeatures.map(feature => ({
         feature_id: feature.id,
         feature_info: {
           feature_name: feature.feature_name,
           feature_description: feature.feature_description,
+          status: 'active', // Default status for package features (no status column in table)
           is_active: feature.is_active,
           created_at: feature.created_at
         }
@@ -124,6 +126,7 @@ const getPackageById = async (req, res) => {
       feature_info: {
         feature_name: feature.feature_name,
         feature_description: feature.feature_description,
+        status: 'active', // Default status for package features (no status column in table)
         is_active: feature.is_active,
         created_at: feature.created_at
       }
@@ -191,6 +194,7 @@ const createPackage = async (req, res) => {
         package_id: package.id,
         feature_name: feature.name,
         feature_description: feature.description,
+        // Note: package_features table doesn't have status column, so we don't include it
         is_active: true
       }));
 
@@ -220,7 +224,7 @@ const createPackage = async (req, res) => {
         features: features ? features.map(feature => ({
           feature_name: feature.name,
           feature_description: feature.description,
-          status: 'active'
+          status: feature.status || 'active'
         })) : []
       }
     });

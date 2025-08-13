@@ -28,7 +28,7 @@ CREATE TYPE key_metric_enum AS ENUM ('Revenue Growth', 'Customer Satisfaction', 
 CREATE TYPE timeline_enum AS ENUM ('Within 1 month', '1–2 months', '2–3 months', 'Flexible');
 
 -- Main brand kit forms table
-CREATE TABLE brand_kit_forms (
+CREATE TABLE company_brand_kit_forms (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     
@@ -140,10 +140,10 @@ CREATE TABLE brand_kit_forms (
 );
 
 -- Create indexes for better performance
-CREATE INDEX idx_brand_kit_forms_user_id ON brand_kit_forms(user_id);
-CREATE INDEX idx_brand_kit_forms_created_at ON brand_kit_forms(created_at);
-CREATE INDEX idx_brand_kit_forms_is_completed ON brand_kit_forms(is_completed);
-CREATE INDEX idx_brand_kit_forms_business_email ON brand_kit_forms(business_email);
+CREATE INDEX idx_company_brand_kit_forms_user_id ON company_brand_kit_forms(user_id);
+CREATE INDEX idx_company_brand_kit_forms_created_at ON company_brand_kit_forms(created_at);
+CREATE INDEX idx_company_brand_kit_forms_is_completed ON company_brand_kit_forms(is_completed);
+CREATE INDEX idx_company_brand_kit_forms_business_email ON company_brand_kit_forms(business_email);
 
 -- Create a function to update the updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -155,8 +155,8 @@ END;
 $$ language 'plpgsql';
 
 -- Create trigger to automatically update updated_at
-CREATE TRIGGER update_brand_kit_forms_updated_at 
-    BEFORE UPDATE ON brand_kit_forms 
+CREATE TRIGGER update_company_brand_kit_forms_updated_at 
+    BEFORE UPDATE ON company_brand_kit_forms 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
@@ -171,83 +171,83 @@ $$ language 'plpgsql';
 
 -- Create trigger to automatically calculate progress
 CREATE TRIGGER update_progress_percentage 
-    BEFORE INSERT OR UPDATE ON brand_kit_forms 
+    BEFORE INSERT OR UPDATE ON company_brand_kit_forms 
     FOR EACH ROW 
     EXECUTE FUNCTION calculate_progress_percentage();
 
 -- Grant necessary permissions
-GRANT SELECT, INSERT, UPDATE, DELETE ON brand_kit_forms TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON company_brand_kit_forms TO authenticated;
 
 -- Comments for documentation
-COMMENT ON TABLE brand_kit_forms IS 'Main table for storing Brand Kit Form submissions';
-COMMENT ON COLUMN brand_kit_forms.what_building IS 'Type of business: business/company or specific product/service';
-COMMENT ON COLUMN brand_kit_forms.business_email IS 'Primary business email address';
-COMMENT ON COLUMN brand_kit_forms.has_proventous_id IS 'Whether the business has a Proventous ID';
-COMMENT ON COLUMN brand_kit_forms.proventous_id IS 'Proventous ID number (conditional field)';
-COMMENT ON COLUMN brand_kit_forms.full_business_name IS 'Full name of the business or organization';
-COMMENT ON COLUMN brand_kit_forms.contact_number IS 'Contact number with country code';
-COMMENT ON COLUMN brand_kit_forms.preferred_communication IS 'Preferred method of contact';
-COMMENT ON COLUMN brand_kit_forms.industry_niche IS 'Array of industry/niche tags';
-COMMENT ON COLUMN brand_kit_forms.year_started IS 'Year the business officially started';
-COMMENT ON COLUMN brand_kit_forms.primary_location IS 'Primary business location';
-COMMENT ON COLUMN brand_kit_forms.whos_behind_brand IS 'Description of people behind the brand';
-COMMENT ON COLUMN brand_kit_forms.business_description IS 'One-sentence business description';
-COMMENT ON COLUMN brand_kit_forms.current_customers IS 'Array of current buyer types';
-COMMENT ON COLUMN brand_kit_forms.target_attraction IS 'Description of target audience';
-COMMENT ON COLUMN brand_kit_forms.team_description IS 'Description of team/work environment';
-COMMENT ON COLUMN brand_kit_forms.inspiration_for_starting IS 'Inspiration for starting the business';
-COMMENT ON COLUMN brand_kit_forms.desired_feeling IS 'Desired emotional response from brand';
-COMMENT ON COLUMN brand_kit_forms.target_interests IS 'Array of audience interests/lifestyle';
-COMMENT ON COLUMN brand_kit_forms.target_professions IS 'Array of target professions/roles';
-COMMENT ON COLUMN brand_kit_forms.target_reach_locations IS 'Array of preferred platforms/locations';
-COMMENT ON COLUMN brand_kit_forms.target_age_groups IS 'Array of target age groups';
-COMMENT ON COLUMN brand_kit_forms.current_customer_interests IS 'Array of current customer interests';
-COMMENT ON COLUMN brand_kit_forms.current_spending_habits IS 'Array of current customer spending habits';
-COMMENT ON COLUMN brand_kit_forms.current_audience_behavior IS 'Array of current audience behaviors';
-COMMENT ON COLUMN brand_kit_forms.interaction_methods IS 'Array of current interaction methods';
-COMMENT ON COLUMN brand_kit_forms.customer_challenges IS 'Customer challenges addressed';
-COMMENT ON COLUMN brand_kit_forms.customer_motivation IS 'Competitive advantages';
-COMMENT ON COLUMN brand_kit_forms.current_brand_feeling IS 'Current brand emotional response';
-COMMENT ON COLUMN brand_kit_forms.culture_words IS 'Array of company culture words';
-COMMENT ON COLUMN brand_kit_forms.team_traditions IS 'Team traditions and rituals';
-COMMENT ON COLUMN brand_kit_forms.reason1 IS 'First reason for starting';
-COMMENT ON COLUMN brand_kit_forms.reason2 IS 'Second reason for starting';
-COMMENT ON COLUMN brand_kit_forms.reason3 IS 'Third reason for starting';
-COMMENT ON COLUMN brand_kit_forms.brand_soul IS 'Description of brand soul';
-COMMENT ON COLUMN brand_kit_forms.personality_words IS 'Array of brand personality traits';
-COMMENT ON COLUMN brand_kit_forms.brand_voice IS 'Array of brand voice characteristics';
-COMMENT ON COLUMN brand_kit_forms.brand1 IS 'First admired brand and why';
-COMMENT ON COLUMN brand_kit_forms.brand2 IS 'Second admired brand and why';
-COMMENT ON COLUMN brand_kit_forms.brand3 IS 'Third admired brand and why';
-COMMENT ON COLUMN brand_kit_forms.brand_avoid_associations IS 'Brand associations to avoid';
-COMMENT ON COLUMN brand_kit_forms.has_logo IS 'Whether business has existing logo';
-COMMENT ON COLUMN brand_kit_forms.logo_action IS 'Array of logo action preferences';
-COMMENT ON COLUMN brand_kit_forms.preferred_colors IS 'Array of preferred brand colors';
-COMMENT ON COLUMN brand_kit_forms.colors_to_avoid IS 'Array of colors to avoid';
-COMMENT ON COLUMN brand_kit_forms.font_styles IS 'Array of preferred font styles';
-COMMENT ON COLUMN brand_kit_forms.design_style IS 'Array of design style preferences';
-COMMENT ON COLUMN brand_kit_forms.logo_type IS 'Array of logo type preferences';
-COMMENT ON COLUMN brand_kit_forms.visual_imagery_style IS 'Array of visual imagery preferences';
-COMMENT ON COLUMN brand_kit_forms.design_inspiration_links IS 'Design inspiration files/links';
-COMMENT ON COLUMN brand_kit_forms.brand_kit_usage IS 'Array of brand kit usage channels';
-COMMENT ON COLUMN brand_kit_forms.brand_elements_needed IS 'Array of needed brand elements';
-COMMENT ON COLUMN brand_kit_forms.file_format_preferences IS 'Array of preferred file formats';
-COMMENT ON COLUMN brand_kit_forms.primary_goal_this_year IS 'Primary goal for this year';
-COMMENT ON COLUMN brand_kit_forms.short_term_goals IS 'Additional short-term goals';
-COMMENT ON COLUMN brand_kit_forms.three_to_five_year_goal IS '3-5 year business vision';
-COMMENT ON COLUMN brand_kit_forms.mid_term_goals IS 'Additional mid-term goals';
-COMMENT ON COLUMN brand_kit_forms.long_term_vision IS 'Long-term brand vision';
-COMMENT ON COLUMN brand_kit_forms.success_metrics IS 'Array of key success metrics';
-COMMENT ON COLUMN brand_kit_forms.business_mission IS 'Business mission statement';
-COMMENT ON COLUMN brand_kit_forms.long_term_vision_ai IS 'Long-term vision statement (AI)';
-COMMENT ON COLUMN brand_kit_forms.business_values IS 'Array of core business values';
-COMMENT ON COLUMN brand_kit_forms.business_journey_stage IS 'Current stage of the business';
-COMMENT ON COLUMN brand_kit_forms.spending_type IS 'Target audience spending type';
-COMMENT ON COLUMN brand_kit_forms.other_audiences IS 'Additional target groups';
-COMMENT ON COLUMN brand_kit_forms.special_requirements IS 'Additional information/requirements';
-COMMENT ON COLUMN brand_kit_forms.brand_kit_timeline IS 'Required completion timeline';
-COMMENT ON COLUMN brand_kit_forms.review_approval_person IS 'Name of decision maker';
-COMMENT ON COLUMN brand_kit_forms.reference_materials IS 'Reference files/links';
-COMMENT ON COLUMN brand_kit_forms.current_step IS 'Current form step (1-12)';
-COMMENT ON COLUMN brand_kit_forms.progress_percentage IS 'Form completion percentage';
-COMMENT ON COLUMN brand_kit_forms.is_completed IS 'Whether form is fully completed'; 
+COMMENT ON TABLE company_brand_kit_forms IS 'Main table for storing Brand Kit Form submissions';
+COMMENT ON COLUMN company_brand_kit_forms.what_building IS 'Type of business: business/company or specific product/service';
+COMMENT ON COLUMN company_brand_kit_forms.business_email IS 'Primary business email address';
+COMMENT ON COLUMN company_brand_kit_forms.has_proventous_id IS 'Whether the business has a Proventous ID';
+COMMENT ON COLUMN company_brand_kit_forms.proventous_id IS 'Proventous ID number (conditional field)';
+COMMENT ON COLUMN company_brand_kit_forms.full_business_name IS 'Full name of the business or organization';
+COMMENT ON COLUMN company_brand_kit_forms.contact_number IS 'Contact number with country code';
+COMMENT ON COLUMN company_brand_kit_forms.preferred_communication IS 'Preferred method of contact';
+COMMENT ON COLUMN company_brand_kit_forms.industry_niche IS 'Array of industry/niche tags';
+COMMENT ON COLUMN company_brand_kit_forms.year_started IS 'Year the business officially started';
+COMMENT ON COLUMN company_brand_kit_forms.primary_location IS 'Primary business location';
+COMMENT ON COLUMN company_brand_kit_forms.whos_behind_brand IS 'Description of people behind the brand';
+COMMENT ON COLUMN company_brand_kit_forms.business_description IS 'One-sentence business description';
+COMMENT ON COLUMN company_brand_kit_forms.current_customers IS 'Array of current buyer types';
+COMMENT ON COLUMN company_brand_kit_forms.target_attraction IS 'Description of target audience';
+COMMENT ON COLUMN company_brand_kit_forms.team_description IS 'Description of team/work environment';
+COMMENT ON COLUMN company_brand_kit_forms.inspiration_for_starting IS 'Inspiration for starting the business';
+COMMENT ON COLUMN company_brand_kit_forms.desired_feeling IS 'Desired emotional response from brand';
+COMMENT ON COLUMN company_brand_kit_forms.target_interests IS 'Array of audience interests/lifestyle';
+COMMENT ON COLUMN company_brand_kit_forms.target_professions IS 'Array of target professions/roles';
+COMMENT ON COLUMN company_brand_kit_forms.target_reach_locations IS 'Array of preferred platforms/locations';
+COMMENT ON COLUMN company_brand_kit_forms.target_age_groups IS 'Array of target age groups';
+COMMENT ON COLUMN company_brand_kit_forms.current_customer_interests IS 'Array of current customer interests';
+COMMENT ON COLUMN company_brand_kit_forms.current_spending_habits IS 'Array of current customer spending habits';
+COMMENT ON COLUMN company_brand_kit_forms.current_audience_behavior IS 'Array of current audience behaviors';
+COMMENT ON COLUMN company_brand_kit_forms.interaction_methods IS 'Array of current interaction methods';
+COMMENT ON COLUMN company_brand_kit_forms.customer_challenges IS 'Customer challenges addressed';
+COMMENT ON COLUMN company_brand_kit_forms.customer_motivation IS 'Competitive advantages';
+COMMENT ON COLUMN company_brand_kit_forms.current_brand_feeling IS 'Current brand emotional response';
+COMMENT ON COLUMN company_brand_kit_forms.culture_words IS 'Array of company culture words';
+COMMENT ON COLUMN company_brand_kit_forms.team_traditions IS 'Team traditions and rituals';
+COMMENT ON COLUMN company_brand_kit_forms.reason1 IS 'First reason for starting';
+COMMENT ON COLUMN company_brand_kit_forms.reason2 IS 'Second reason for starting';
+COMMENT ON COLUMN company_brand_kit_forms.reason3 IS 'Third reason for starting';
+COMMENT ON COLUMN company_brand_kit_forms.brand_soul IS 'Description of brand soul';
+COMMENT ON COLUMN company_brand_kit_forms.personality_words IS 'Array of brand personality traits';
+COMMENT ON COLUMN company_brand_kit_forms.brand_voice IS 'Array of brand voice characteristics';
+COMMENT ON COLUMN company_brand_kit_forms.brand1 IS 'First admired brand and why';
+COMMENT ON COLUMN company_brand_kit_forms.brand2 IS 'Second admired brand and why';
+COMMENT ON COLUMN company_brand_kit_forms.brand3 IS 'Third admired brand and why';
+COMMENT ON COLUMN company_brand_kit_forms.brand_avoid_associations IS 'Brand associations to avoid';
+COMMENT ON COLUMN company_brand_kit_forms.has_logo IS 'Whether business has existing logo';
+COMMENT ON COLUMN company_brand_kit_forms.logo_action IS 'Array of logo action preferences';
+COMMENT ON COLUMN company_brand_kit_forms.preferred_colors IS 'Array of preferred brand colors';
+COMMENT ON COLUMN company_brand_kit_forms.colors_to_avoid IS 'Array of colors to avoid';
+COMMENT ON COLUMN company_brand_kit_forms.font_styles IS 'Array of preferred font styles';
+COMMENT ON COLUMN company_brand_kit_forms.design_style IS 'Array of design style preferences';
+COMMENT ON COLUMN company_brand_kit_forms.logo_type IS 'Array of logo type preferences';
+COMMENT ON COLUMN company_brand_kit_forms.visual_imagery_style IS 'Array of visual imagery preferences';
+COMMENT ON COLUMN company_brand_kit_forms.design_inspiration_links IS 'Design inspiration files/links';
+COMMENT ON COLUMN company_brand_kit_forms.brand_kit_usage IS 'Array of brand kit usage channels';
+COMMENT ON COLUMN company_brand_kit_forms.brand_elements_needed IS 'Array of needed brand elements';
+COMMENT ON COLUMN company_brand_kit_forms.file_format_preferences IS 'Array of preferred file formats';
+COMMENT ON COLUMN company_brand_kit_forms.primary_goal_this_year IS 'Primary goal for this year';
+COMMENT ON COLUMN company_brand_kit_forms.short_term_goals IS 'Additional short-term goals';
+COMMENT ON COLUMN company_brand_kit_forms.three_to_five_year_goal IS '3-5 year business vision';
+COMMENT ON COLUMN company_brand_kit_forms.mid_term_goals IS 'Additional mid-term goals';
+COMMENT ON COLUMN company_brand_kit_forms.long_term_vision IS 'Long-term brand vision';
+COMMENT ON COLUMN company_brand_kit_forms.success_metrics IS 'Array of key success metrics';
+COMMENT ON COLUMN company_brand_kit_forms.business_mission IS 'Business mission statement';
+COMMENT ON COLUMN company_brand_kit_forms.long_term_vision_ai IS 'Long-term vision statement (AI)';
+COMMENT ON COLUMN company_brand_kit_forms.business_values IS 'Array of core business values';
+COMMENT ON COLUMN company_brand_kit_forms.business_journey_stage IS 'Current stage of the business';
+COMMENT ON COLUMN company_brand_kit_forms.spending_type IS 'Target audience spending type';
+COMMENT ON COLUMN company_brand_kit_forms.other_audiences IS 'Additional target groups';
+COMMENT ON COLUMN company_brand_kit_forms.special_requirements IS 'Additional information/requirements';
+COMMENT ON COLUMN company_brand_kit_forms.brand_kit_timeline IS 'Required completion timeline';
+COMMENT ON COLUMN company_brand_kit_forms.review_approval_person IS 'Name of decision maker';
+COMMENT ON COLUMN company_brand_kit_forms.reference_materials IS 'Reference files/links';
+COMMENT ON COLUMN company_brand_kit_forms.current_step IS 'Current form step (1-12)';
+COMMENT ON COLUMN company_brand_kit_forms.progress_percentage IS 'Form completion percentage';
+COMMENT ON COLUMN company_brand_kit_forms.is_completed IS 'Whether form is fully completed'; 

@@ -65,6 +65,13 @@ export const transformToDatabaseFormat = (frontendData) => {
     currentCustomers: 'current_customers',
     wantToAttract: 'want_to_attract',
     teamDescription: 'team_description',
+    spendingType: 'spending_type',
+    secondaryAudience: 'secondary_audience',
+    businessStage: 'business_stage',
+    missionStatement: 'mission_statement',
+    visionStatement: 'long_term_vision',
+    coreValues: 'core_values',
+    brandDescription: 'business_description',
 
     // Step 3: Audience Clarity
     desiredEmotion: 'desired_emotion',
@@ -74,14 +81,16 @@ export const transformToDatabaseFormat = (frontendData) => {
     spendingHabits: 'spending_habits',
     interactionMethods: 'interaction_methods',
     customerChallenges: 'customer_challenges',
-    customerMotivation: 'customer_motivation',
     audienceBehavior: 'audience_behavior',
     customerChoice: 'customer_choice',
+    emotionalGoal: 'emotional_goal',
+    purchaseMotivators: 'customer_motivation',
 
     // Step 4: Team & Culture
     cultureWords: 'culture_words',
     teamTraditions: 'team_traditions',
     teamHighlights: 'team_highlights',
+    cultureDescription: 'culture_description',
 
     // Step 5: Brand Identity
     reason1: 'reason1',
@@ -123,7 +132,6 @@ export const transformToDatabaseFormat = (frontendData) => {
     successMetrics: 'success_metrics',
 
     // Step 9: AI-Powered Insights
-    businessDescription: 'business_description',
     inspiration: 'inspiration',
     targetInterests: 'target_interests',
     currentInterests: 'current_interests',
@@ -189,6 +197,13 @@ export const transformToFrontendFormat = (dbData) => {
     current_customers: 'currentCustomers',
     want_to_attract: 'wantToAttract',
     team_description: 'teamDescription',
+    spending_type: 'spendingType',
+    secondary_audience: 'secondaryAudience',
+    business_stage: 'businessStage',
+    mission_statement: 'missionStatement',
+    long_term_vision: 'visionStatement',
+    core_values: 'coreValues',
+    business_description: 'brandDescription',
 
     // Step 3: Audience Clarity
     desired_emotion: 'desiredEmotion',
@@ -198,14 +213,17 @@ export const transformToFrontendFormat = (dbData) => {
     spending_habits: 'spendingHabits',
     interaction_methods: 'interactionMethods',
     customer_challenges: 'customerChallenges',
-    customer_motivation: 'customerMotivation',
+    customer_motivation: 'purchaseMotivators',
     audience_behavior: 'audienceBehavior',
     customer_choice: 'customerChoice',
+    emotional_goal: 'emotionalGoal',
+    purchaseMotivators: 'customerMotivation',
 
     // Step 4: Team & Culture
     culture_words: 'cultureWords',
     team_traditions: 'teamTraditions',
     team_highlights: 'teamHighlights',
+    culture_description: 'cultureDescription',
 
     // Step 5: Brand Identity
     reason1: 'reason1',
@@ -218,7 +236,7 @@ export const transformToFrontendFormat = (dbData) => {
     brand3: 'brand3',
     brand_avoid: 'brandAvoid',
     mission_statement: 'missionStatement',
-    long_term_vision: 'longTermVision',
+    long_term_vision: 'visionStatement',
     core_values: 'coreValues',
     brand_personality: 'brandPersonality',
 
@@ -247,7 +265,6 @@ export const transformToFrontendFormat = (dbData) => {
     success_metrics: 'successMetrics',
 
     // Step 9: AI-Powered Insights
-    business_description: 'businessDescription',
     inspiration: 'inspiration',
     target_interests: 'targetInterests',
     current_interests: 'currentInterests',

@@ -78,7 +78,7 @@ END;
 $$;
 
 -- Main brand kit forms table
-CREATE TABLE brand_kit_forms (
+CREATE TABLE company_brand_kit_forms (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     
@@ -182,42 +182,42 @@ CREATE TABLE brand_kit_forms (
 );
 
 -- Create indexes for better performance
-CREATE INDEX idx_brand_kit_forms_user_id ON brand_kit_forms(user_id);
-CREATE INDEX idx_brand_kit_forms_created_at ON brand_kit_forms(created_at);
-CREATE INDEX idx_brand_kit_forms_is_completed ON brand_kit_forms(is_completed);
-CREATE INDEX idx_brand_kit_forms_business_email ON brand_kit_forms(business_email);
-CREATE INDEX idx_brand_kit_forms_current_step ON brand_kit_forms(current_step);
-CREATE INDEX idx_brand_kit_forms_progress_percentage ON brand_kit_forms(progress_percentage);
+CREATE INDEX idx_company_brand_kit_forms_user_id ON company_brand_kit_forms(user_id);
+CREATE INDEX idx_company_brand_kit_forms_created_at ON company_brand_kit_forms(created_at);
+CREATE INDEX idx_company_brand_kit_forms_is_completed ON company_brand_kit_forms(is_completed);
+CREATE INDEX idx_company_brand_kit_forms_business_email ON company_brand_kit_forms(business_email);
+CREATE INDEX idx_company_brand_kit_forms_current_step ON company_brand_kit_forms(current_step);
+CREATE INDEX idx_company_brand_kit_forms_progress_percentage ON company_brand_kit_forms(progress_percentage);
 
 -- Create GIN indexes for array columns
-CREATE INDEX idx_brand_kit_forms_industry ON brand_kit_forms USING GIN (industry);
-CREATE INDEX idx_brand_kit_forms_current_customers ON brand_kit_forms USING GIN (current_customers);
-CREATE INDEX idx_brand_kit_forms_target_professions ON brand_kit_forms USING GIN (target_professions);
-CREATE INDEX idx_brand_kit_forms_reach_locations ON brand_kit_forms USING GIN (reach_locations);
-CREATE INDEX idx_brand_kit_forms_age_groups ON brand_kit_forms USING GIN (age_groups);
-CREATE INDEX idx_brand_kit_forms_spending_habits ON brand_kit_forms USING GIN (spending_habits);
-CREATE INDEX idx_brand_kit_forms_interaction_methods ON brand_kit_forms USING GIN (interaction_methods);
-CREATE INDEX idx_brand_kit_forms_audience_behavior ON brand_kit_forms USING GIN (audience_behavior);
-CREATE INDEX idx_brand_kit_forms_culture_words ON brand_kit_forms USING GIN (culture_words);
-CREATE INDEX idx_brand_kit_forms_brand_tone ON brand_kit_forms USING GIN (brand_tone);
-CREATE INDEX idx_brand_kit_forms_core_values ON brand_kit_forms USING GIN (core_values);
-CREATE INDEX idx_brand_kit_forms_brand_personality ON brand_kit_forms USING GIN (brand_personality);
-CREATE INDEX idx_brand_kit_forms_logo_action ON brand_kit_forms USING GIN (logo_action);
-CREATE INDEX idx_brand_kit_forms_preferred_colors ON brand_kit_forms USING GIN (preferred_colors);
-CREATE INDEX idx_brand_kit_forms_colors_to_avoid ON brand_kit_forms USING GIN (colors_to_avoid);
-CREATE INDEX idx_brand_kit_forms_font_styles ON brand_kit_forms USING GIN (font_styles);
-CREATE INDEX idx_brand_kit_forms_design_style ON brand_kit_forms USING GIN (design_style);
-CREATE INDEX idx_brand_kit_forms_logo_type ON brand_kit_forms USING GIN (logo_type);
-CREATE INDEX idx_brand_kit_forms_imagery_style ON brand_kit_forms USING GIN (imagery_style);
-CREATE INDEX idx_brand_kit_forms_brand_kit_use ON brand_kit_forms USING GIN (brand_kit_use);
-CREATE INDEX idx_brand_kit_forms_brand_elements ON brand_kit_forms USING GIN (brand_elements);
-CREATE INDEX idx_brand_kit_forms_file_formats ON brand_kit_forms USING GIN (file_formats);
-CREATE INDEX idx_brand_kit_forms_success_metrics ON brand_kit_forms USING GIN (success_metrics);
-CREATE INDEX idx_brand_kit_forms_target_interests ON brand_kit_forms USING GIN (target_interests);
-CREATE INDEX idx_brand_kit_forms_current_interests ON brand_kit_forms USING GIN (current_interests);
+CREATE INDEX idx_company_brand_kit_forms_industry ON company_brand_kit_forms USING GIN (industry);
+CREATE INDEX idx_company_brand_kit_forms_current_customers ON company_brand_kit_forms USING GIN (current_customers);
+CREATE INDEX idx_company_brand_kit_forms_target_professions ON company_brand_kit_forms USING GIN (target_professions);
+CREATE INDEX idx_company_brand_kit_forms_reach_locations ON company_brand_kit_forms USING GIN (reach_locations);
+CREATE INDEX idx_company_brand_kit_forms_age_groups ON company_brand_kit_forms USING GIN (age_groups);
+CREATE INDEX idx_company_brand_kit_forms_spending_habits ON company_brand_kit_forms USING GIN (spending_habits);
+CREATE INDEX idx_company_brand_kit_forms_interaction_methods ON company_brand_kit_forms USING GIN (interaction_methods);
+CREATE INDEX idx_company_brand_kit_forms_audience_behavior ON company_brand_kit_forms USING GIN (audience_behavior);
+CREATE INDEX idx_company_brand_kit_forms_culture_words ON company_brand_kit_forms USING GIN (culture_words);
+CREATE INDEX idx_company_brand_kit_forms_brand_tone ON company_brand_kit_forms USING GIN (brand_tone);
+CREATE INDEX idx_company_brand_kit_forms_core_values ON company_brand_kit_forms USING GIN (core_values);
+CREATE INDEX idx_company_brand_kit_forms_brand_personality ON company_brand_kit_forms USING GIN (brand_personality);
+CREATE INDEX idx_company_brand_kit_forms_logo_action ON company_brand_kit_forms USING GIN (logo_action);
+CREATE INDEX idx_company_brand_kit_forms_preferred_colors ON company_brand_kit_forms USING GIN (preferred_colors);
+CREATE INDEX idx_company_brand_kit_forms_colors_to_avoid ON company_brand_kit_forms USING GIN (colors_to_avoid);
+CREATE INDEX idx_company_brand_kit_forms_font_styles ON company_brand_kit_forms USING GIN (font_styles);
+CREATE INDEX idx_company_brand_kit_forms_design_style ON company_brand_kit_forms USING GIN (design_style);
+CREATE INDEX idx_company_brand_kit_forms_logo_type ON company_brand_kit_forms USING GIN (logo_type);
+CREATE INDEX idx_company_brand_kit_forms_imagery_style ON company_brand_kit_forms USING GIN (imagery_style);
+CREATE INDEX idx_company_brand_kit_forms_brand_kit_use ON company_brand_kit_forms USING GIN (brand_kit_use);
+CREATE INDEX idx_company_brand_kit_forms_brand_elements ON company_brand_kit_forms USING GIN (brand_elements);
+CREATE INDEX idx_company_brand_kit_forms_file_formats ON company_brand_kit_forms USING GIN (file_formats);
+CREATE INDEX idx_company_brand_kit_forms_success_metrics ON company_brand_kit_forms USING GIN (success_metrics);
+CREATE INDEX idx_company_brand_kit_forms_target_interests ON company_brand_kit_forms USING GIN (target_interests);
+CREATE INDEX idx_company_brand_kit_forms_current_interests ON company_brand_kit_forms USING GIN (current_interests);
 
 -- Create GIN index for JSONB primary_location
-CREATE INDEX idx_brand_kit_forms_primary_location ON brand_kit_forms USING GIN (primary_location);
+CREATE INDEX idx_company_brand_kit_forms_primary_location ON company_brand_kit_forms USING GIN (primary_location);
 
 -- Function to update the updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -229,8 +229,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger to automatically update updated_at
-CREATE TRIGGER update_brand_kit_forms_updated_at 
-    BEFORE UPDATE ON brand_kit_forms 
+CREATE TRIGGER update_company_brand_kit_forms_updated_at 
+    BEFORE UPDATE ON company_brand_kit_forms 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
@@ -257,16 +257,16 @@ $$ LANGUAGE plpgsql;
 
 -- Trigger to automatically calculate progress
 CREATE TRIGGER update_progress_percentage 
-    BEFORE INSERT OR UPDATE ON brand_kit_forms 
+    BEFORE INSERT OR UPDATE ON company_brand_kit_forms 
     FOR EACH ROW 
     EXECUTE FUNCTION calculate_progress_percentage();
 
 -- Add comments to document the structure
-COMMENT ON TABLE brand_kit_forms IS 'Comprehensive BrandKit form data for 11-step brand identity process';
-COMMENT ON COLUMN brand_kit_forms.primary_location IS 'JSONB field storing location data with coordinates';
-COMMENT ON COLUMN brand_kit_forms.inspiration_links IS 'Cloudinary URL for uploaded inspiration materials';
-COMMENT ON COLUMN brand_kit_forms.reference_materials IS 'Cloudinary URL for uploaded reference materials';
-COMMENT ON COLUMN brand_kit_forms.current_step IS 'Current step in the 11-step form process (1-11)';
-COMMENT ON COLUMN brand_kit_forms.progress_percentage IS 'Calculated progress percentage (0-100)';
-COMMENT ON COLUMN brand_kit_forms.is_completed IS 'Whether the form has been completed';
-COMMENT ON COLUMN brand_kit_forms.completed_at IS 'Timestamp when the form was completed'; 
+COMMENT ON TABLE company_brand_kit_forms IS 'Comprehensive BrandKit form data for 11-step brand identity process';
+COMMENT ON COLUMN company_brand_kit_forms.primary_location IS 'JSONB field storing location data with coordinates';
+COMMENT ON COLUMN company_brand_kit_forms.inspiration_links IS 'Cloudinary URL for uploaded inspiration materials';
+COMMENT ON COLUMN company_brand_kit_forms.reference_materials IS 'Cloudinary URL for uploaded reference materials';
+COMMENT ON COLUMN company_brand_kit_forms.current_step IS 'Current step in the 11-step form process (1-11)';
+COMMENT ON COLUMN company_brand_kit_forms.progress_percentage IS 'Calculated progress percentage (0-100)';
+COMMENT ON COLUMN company_brand_kit_forms.is_completed IS 'Whether the form has been completed';
+COMMENT ON COLUMN company_brand_kit_forms.completed_at IS 'Timestamp when the form was completed'; 

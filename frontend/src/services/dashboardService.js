@@ -113,12 +113,15 @@ class DashboardService {
     }
 
     return features.map(feature => ({
-      feature_id: feature.feature_id, // Include the actual database feature_id
-      name: feature.feature_info?.feature_name || feature.feature_name || "Feature",
-      description: feature.feature_info?.feature_description || feature.feature_description || "",
+      feature_id: feature.feature_id,
+      name: feature.feature_info?.feature_name || "Feature",
+      description: feature.feature_info?.feature_description || "",
+      status: feature.feature_info?.status || "pending",
       cost: "Included",
       included: true,
-      isActive: feature.feature_info?.is_active !== false
+      isActive: feature.feature_info?.is_active !== false,
+      created_at: feature.feature_info?.created_at,
+      purchase_date: feature.feature_info?.purchase_date
     }));
   }
 
@@ -179,7 +182,7 @@ class DashboardService {
   }
 
   /**
-   * Generate et features based on package features
+   * Generate project features based on package features
    */
   generateProjectFeatures(packageDetails, purchasedAddons = []) {
     const features = [];
@@ -187,16 +190,25 @@ class DashboardService {
     // Only add package features if there's an active package
     if (packageDetails?.features?.length) {
       packageDetails.features.forEach((feature) => {
+        const featureName = feature.name;
+        const featureStatus = feature.status; // Use the status from the feature data
+        const featureId = feature.feature_id;
+        const featureDescription = feature.description;
+        
         features.push({
-          id: feature.feature_id || feature.id, // Use the actual database feature_id
-          title: feature.name,
-          status: this.getFeatureStatus(feature.name),
-          description: feature.description || `${feature.name} service`,
-          output: this.getFeatureOutput(feature.name),
-          time: this.getFeatureTime(feature.name),
-          icon: this.getFeatureIcon(feature.name),
+          id: featureId,
+          title: featureName,
+          status: this.getFeatureStatus(featureName, featureStatus),
+          description: featureDescription || `${featureName} service`,
+          output: this.getFeatureOutput(featureName),
+          time: this.getFeatureTime(featureName),
+          icon: this.getFeatureIcon(featureName),
           expanded: false,
-          packageFeatureId: feature.feature_id || feature.id // Explicit reference for comments API
+          packageFeatureId: featureId,
+          // Include additional feature data
+          feature_status: featureStatus,
+          created_at: feature.created_at,
+          purchase_date: feature.purchase_date
         });
       });
     }
@@ -271,10 +283,23 @@ class DashboardService {
   }
 
   /**
-   * Get feature status based on feature name (mock logic)
+   * Get feature status based on feature name and actual status from API
    */
-  getFeatureStatus(featureName) {
-    const statusMap = {
+  getFeatureStatus(featureName, actualStatus = null) {
+    // If we have an actual status from the API, use it
+    if (actualStatus) {
+      // Map API status values to display-friendly statuses
+      const statusMap = {
+        "active": "Active",
+        "inactive": "Inactive", 
+        "pending": "Pending",
+        "deprecated": "Deprecated"
+      };
+      return statusMap[actualStatus] || actualStatus;
+    }
+
+    // Fallback to mock logic if no actual status provided
+    const mockStatusMap = {
       "Website": "In Progress",
       "Logo Design": "Completed",
       "Brand Guidelines": "Completed",
@@ -282,7 +307,7 @@ class DashboardService {
       "Demo": "Scheduled"
     };
 
-    return statusMap[featureName] || "Pending";
+    return mockStatusMap[featureName] || "Pending";
   }
 
 

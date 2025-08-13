@@ -5,7 +5,8 @@ const {
   getPurchaseById, 
   createPurchase, 
   cancelPurchase,
-  getAllPurchases
+  getAllPurchases,
+  updatePurchaseFeatureStatus
 } = require('../controllers/purchaseController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
@@ -43,5 +44,12 @@ router.put('/:id/cancel', authenticateToken, cancelPurchase);
  * @access  Admin only
  */
 router.get('/admin/all', authenticateToken, requireRole(['admin']), getAllPurchases);
+
+/**
+ * @route   PUT /api/purchases/:id/features/:featureId/status
+ * @desc    Update feature status in a purchase
+ * @access  Private
+ */
+router.put('/:id/features/:featureId/status', authenticateToken, updatePurchaseFeatureStatus);
 
 module.exports = router; 

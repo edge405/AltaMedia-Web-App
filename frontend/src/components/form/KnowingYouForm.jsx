@@ -20,8 +20,9 @@ import AISuggestion from './AISuggestion';
 import CheckboxGroup from './CheckboxGroup';
 import MapPicker from './MapPicker';
 import ProductServiceForm from './ProductServiceForm';
+import OrganizationForm from './OrganizationForm';
 
-const KnowingYouForm = () => {
+const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
@@ -81,10 +82,20 @@ const KnowingYouForm = () => {
 
   const updateFormData = (field, value) => {
     console.log(`Field change: ${field} =`, value);
+
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+
+    // If building type is changing, notify parent component
+    if (field === 'buildingType' && onFormTypeChange) {
+      onFormTypeChange(value);
+    }
+  };
+
+  const handleFieldChange = (field, value) => {
+    updateFormData(field, value);
   };
 
   // Debug: Log when buildingType changes
@@ -183,10 +194,16 @@ const KnowingYouForm = () => {
   // If building type is "product", render the ProductServiceForm component
   if (formData.buildingType === 'product') {
     return <ProductServiceForm onFormTypeChange={(type) => {
-      if (type === 'business') {
-        updateFormData('buildingType', 'business');
-        setCurrentStep(1); // Reset to first step
-      }
+      updateFormData('buildingType', type);
+      setCurrentStep(1); // Reset to first step
+    }} />;
+  }
+
+  // If building type is "organization", render the OrganizationForm component
+  if (formData.buildingType === 'organization') {
+    return <OrganizationForm onFormTypeChange={(type) => {
+      updateFormData('buildingType', type);
+      setCurrentStep(1); // Reset to first step
     }} />;
   }
 
@@ -200,6 +217,7 @@ const KnowingYouForm = () => {
           <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
             <SelectItem value="business">Business/Company</SelectItem>
             <SelectItem value="product">Specific Product/Service</SelectItem>
+            <SelectItem value="organization">Organization/Brand/Page</SelectItem>
           </SelectContent>
         </Select>
       </FormField>
@@ -306,19 +324,81 @@ const KnowingYouForm = () => {
         />
       </FormField>
 
+      <FormField label="What's your mission as a business?" type="Long Text" aiSuggestions>
+        <Textarea
+          placeholder="Describe your business mission"
+          value={formData.missionStatement || ''}
+          onChange={(e) => updateFormData('missionStatement', e.target.value)}
+          rows={4}
+        />
+        <AISuggestion
+          fieldName="missionStatement"
+          currentValue={formData.missionStatement}
+          onApplySuggestion={(suggestion) => updateFormData('missionStatement', suggestion)}
+          formData={formData}
+        />
+      </FormField>
+
+      <FormField label="What's your long-term vision?" type="Long Text" aiSuggestions>
+        <Textarea
+          placeholder="Describe your long-term vision"
+          value={formData.visionStatement || ''}
+          onChange={(e) => updateFormData('visionStatement', e.target.value)}
+          rows={4}
+        />
+        <AISuggestion
+          fieldName="visionStatement"
+          currentValue={formData.visionStatement}
+          onApplySuggestion={(suggestion) => updateFormData('visionStatement', suggestion)}
+          formData={formData}
+        />
+      </FormField>
+
+      <FormField label="What values drive the way you do business?" type="Tags" aiSuggestions>
+        <TagInput
+          value={formData.coreValues || []}
+          onChange={(value) => updateFormData('coreValues', value)}
+          placeholder="Add your core values"
+        />
+        <AISuggestion
+          fieldName="coreValues"
+          currentValue={formData.coreValues?.join(', ')}
+          onApplySuggestion={(suggestion) => updateFormData('coreValues', suggestion.split(', '))}
+          formData={formData}
+        />
+      </FormField>
+
+      <FormField label="Where is your business currently in its journey?" type="Dropdown">
+        <Select value={formData.businessStage} onValueChange={(value) => updateFormData('businessStage', value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select business stage" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="startup">Startup/New</SelectItem>
+            <SelectItem value="growing">Growing</SelectItem>
+            <SelectItem value="established">Established</SelectItem>
+            <SelectItem value="mature">Mature</SelectItem>
+          </SelectContent>
+        </Select>
+      </FormField>
+
+      <FormField label="Describe what your business does in one powerful sentence" type="Short Text" aiSuggestions>
+        <Input
+          placeholder="A concise description of your business"
+          value={formData.brandDescription || ''}
+          onChange={(e) => updateFormData('brandDescription', e.target.value)}
+        />
+        <AISuggestion
+          fieldName="brandDescription"
+          currentValue={formData.brandDescription}
+          onApplySuggestion={(suggestion) => updateFormData('brandDescription', suggestion)}
+          formData={formData}
+        />
+      </FormField>
+
       {/* Business-specific fields */}
       {formData.buildingType === 'business' && (
         <>
-          <FormField label="Who's Behind the Brand?" type="Long Text">
-            <Textarea
-              value={formData.behindBrand || ''}
-              onChange={(e) => updateFormData('behindBrand', e.target.value)}
-              placeholder="Tell us about the people behind your brand"
-              rows={4}
-              className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-            />
-          </FormField>
-
           <FormField label="Who Typically Buys from You Now?" type="Checkbox">
             <CheckboxGroup
               options={['Male', 'Female', 'Everyone']}
@@ -337,7 +417,30 @@ const KnowingYouForm = () => {
             />
           </FormField>
 
-          <FormField label="How Would Your Team Describe Working at Your Business?" type="Long Text">
+          <FormField label="What's their spending type?" type="Dropdown" required>
+            <Select value={formData.spendingType} onValueChange={(value) => updateFormData('spendingType', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select spending type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="budget-conscious">Budget-conscious</SelectItem>
+                <SelectItem value="value-seeking">Value-seeking</SelectItem>
+                <SelectItem value="premium">Premium</SelectItem>
+              </SelectContent>
+            </Select>
+          </FormField>
+
+          <FormField label="Are there other groups you'd love to attract?" type="Long Text">
+            <Textarea
+              value={formData.secondaryAudience || ''}
+              onChange={(e) => updateFormData('secondaryAudience', e.target.value)}
+              placeholder="Describe additional target groups"
+              rows={4}
+              className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+            />
+          </FormField>
+
+          {/* <FormField label="How Would Your Team Describe Working at Your Business?" type="Long Text">
             <Textarea
               value={formData.teamDescription || ''}
               onChange={(e) => updateFormData('teamDescription', e.target.value)}
@@ -345,7 +448,7 @@ const KnowingYouForm = () => {
               rows={4}
               className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             />
-          </FormField>
+          </FormField> */}
         </>
       )}
     </div>
@@ -372,6 +475,21 @@ const KnowingYouForm = () => {
               </Select>
             </FormField>
 
+            <FormField label="What are their main interests or lifestyle?" type="Tags" aiSuggestions>
+              <TagInput
+                value={formData.targetInterests || []}
+                onChange={(value) => updateFormData('targetInterests', value)}
+                placeholder="Add interests or lifestyle traits"
+                suggestions={['Technology', 'Fitness', 'Travel', 'Food', 'Fashion', 'Business', 'Education', 'Entertainment']}
+              />
+              <AISuggestion
+                fieldName="targetInterests"
+                currentValue={formData.targetInterests?.join(', ')}
+                onApplySuggestion={(suggestion) => updateFormData('targetInterests', suggestion.split(', '))}
+                formData={formData}
+              />
+            </FormField>
+
             <FormField label="Professions or Roles to Attract" type="Tags">
               <TagInput
                 value={formData.targetProfessions || []}
@@ -392,7 +510,7 @@ const KnowingYouForm = () => {
 
             <FormField label="Age Groups" type="Checkbox">
               <CheckboxGroup
-                options={['Teens', 'Young Adults', 'Adults', 'Mature Adults', 'Seniors']}
+                options={['Teens (13–19)', 'Young Adults (20–29)', 'Adults (30–39)', 'Mature Adults (40–59)', 'Seniors (60+)']}
                 value={formData.ageGroups || []}
                 onChange={(value) => updateFormData('ageGroups', value)}
               />
@@ -401,6 +519,21 @@ const KnowingYouForm = () => {
 
           <div className="space-y-6">
             <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Current Market</h3>
+
+            <FormField label="What are your current customers' interests?" type="Tags" aiSuggestions>
+              <TagInput
+                value={formData.currentInterests || []}
+                onChange={(value) => updateFormData('currentInterests', value)}
+                placeholder="Add current customer interests"
+                suggestions={['Technology', 'Fitness', 'Travel', 'Food', 'Fashion', 'Business', 'Education', 'Entertainment']}
+              />
+              <AISuggestion
+                fieldName="currentInterests"
+                currentValue={formData.currentInterests?.join(', ')}
+                onApplySuggestion={(suggestion) => updateFormData('currentInterests', suggestion.split(', '))}
+                formData={formData}
+              />
+            </FormField>
 
             <FormField label="Describe Current Customers' Spending Habits" type="Tags">
               <TagInput
@@ -411,9 +544,24 @@ const KnowingYouForm = () => {
               />
             </FormField>
 
+            <FormField label="How would you describe your current audience's behavior?" type="Tags" aiSuggestions>
+              <TagInput
+                value={formData.audienceBehavior || []}
+                onChange={(value) => updateFormData('audienceBehavior', value)}
+                placeholder="Add audience behavior traits"
+                suggestions={['Online shopping', 'Social media active', 'Mobile-first', 'Research-oriented', 'Impulse buyers', 'Value-conscious']}
+              />
+              <AISuggestion
+                fieldName="audienceBehavior"
+                currentValue={formData.audienceBehavior?.join(', ')}
+                onApplySuggestion={(suggestion) => updateFormData('audienceBehavior', suggestion.split(', '))}
+                formData={formData}
+              />
+            </FormField>
+
             <FormField label="How Do People Interact With Your Business?" type="Checkbox">
               <CheckboxGroup
-                options={['Online', 'In-person', 'Phone', 'Email', 'Social Media', 'Mobile App']}
+                options={['Website', 'Social Media', 'Phone', 'Email', 'In-person', 'Mobile App']}
                 value={formData.interactionMethods || []}
                 onChange={(value) => updateFormData('interactionMethods', value)}
               />
@@ -426,6 +574,39 @@ const KnowingYouForm = () => {
                 placeholder="Describe the problems your customers face that your business solves"
                 rows={4}
               />
+            </FormField>
+
+            <FormField label="What motivates customers to choose you over competitors?" type="Long Text" aiSuggestions>
+              <Textarea
+                value={formData.purchaseMotivators || ''}
+                onChange={(e) => updateFormData('purchaseMotivators', e.target.value)}
+                placeholder="Describe your competitive advantages"
+                rows={4}
+              />
+              <AISuggestion
+                fieldName="purchaseMotivators"
+                currentValue={formData.purchaseMotivators}
+                onApplySuggestion={(suggestion) => updateFormData('purchaseMotivators', suggestion)}
+                formData={formData}
+              />
+            </FormField>
+
+            <FormField label="What feeling do people currently get from your brand?" type="Dropdown">
+              <Select value={formData.emotionalGoal} onValueChange={(value) => updateFormData('emotionalGoal', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select current brand feeling" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="happy">Happy</SelectItem>
+                  <SelectItem value="fulfilled">Fulfilled</SelectItem>
+                  <SelectItem value="inspired">Inspired</SelectItem>
+                  <SelectItem value="satisfied">Satisfied</SelectItem>
+                  <SelectItem value="energized">Energized</SelectItem>
+                  <SelectItem value="empowered">Empowered</SelectItem>
+                  <SelectItem value="safe-secure">Safe & Secure</SelectItem>
+                  <SelectItem value="confident">Confident</SelectItem>
+                </SelectContent>
+              </Select>
             </FormField>
           </div>
         </>
@@ -443,6 +624,14 @@ const KnowingYouForm = () => {
           suggestions={['Innovative', 'Collaborative', 'Professional', 'Fun', 'Fast-paced', 'Relaxed', 'Creative', 'Structured']}
         />
       </FormField>
+      <FormField label="How would your team typically describe working at your business?" type="Long Text">
+        <Textarea
+          placeholder="Describe the work environment"
+          value={formData.cultureDescription || ''}
+          onChange={(e) => handleFieldChange('cultureDescription', e.target.value)}
+          rows={4}
+        />
+      </FormField>
 
       <FormField label="Any Traditions, Rituals, or Fun Things Your Team Does?" type="Long Text">
         <Textarea
@@ -457,6 +646,31 @@ const KnowingYouForm = () => {
 
   const renderStep5 = () => (
     <div className="space-y-8">
+      <FormField label="Who's Behind the Brand?" type="Long Text">
+        <Textarea
+          value={formData.behindBrand || ''}
+          onChange={(e) => updateFormData('behindBrand', e.target.value)}
+          placeholder="Tell us about the people behind your brand"
+          rows={4}
+          className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+        />
+      </FormField>
+
+      <FormField label="What inspired you to start this business?" type="Long Text" aiSuggestions>
+        <Textarea
+          placeholder="Share your inspiration story"
+          value={formData.inspiration || ''}
+          onChange={(e) => updateFormData('inspiration', e.target.value)}
+          rows={4}
+        />
+        <AISuggestion
+          fieldName="inspiration"
+          currentValue={formData.inspiration}
+          onApplySuggestion={(suggestion) => updateFormData('inspiration', suggestion)}
+          formData={formData}
+        />
+      </FormField>
+
       <FormField label="Reason 1" type="Short Text">
         <Input
           value={formData.reason1 || ''}
@@ -484,7 +698,7 @@ const KnowingYouForm = () => {
         />
       </FormField>
 
-      <FormField label="If Your Brand Had a Soul" type="Short Text">
+      <FormField label="If Your Brand Had a Soul, Houw would you describe it?" type="Short Text">
         <Input
           value={formData.brandSoul || ''}
           onChange={(e) => updateFormData('brandSoul', e.target.value)}
@@ -493,9 +707,39 @@ const KnowingYouForm = () => {
         />
       </FormField>
 
+      <FormField
+        label="Which 3 to 5 words describe your brand's personality best?"
+        type="Tags"
+        aiSuggestions
+      >
+        <TagInput
+          value={formData.brandPersonality || []}
+          onChange={(value) => updateFormData('brandPersonality', value)}
+          placeholder="Add personality traits"
+          suggestions={[
+            'Friendly',
+            'Professional',
+            'Innovative',
+            'Playful',
+            'Trustworthy',
+            'Bold',
+            'Creative',
+            'Elegant'
+          ]}
+        />
+        <AISuggestion
+          fieldName="brandPersonality"
+          currentValue={formData.brandPersonality?.join(', ')}
+          onApplySuggestion={(suggestion) =>
+            updateFormData('brandPersonality', suggestion.split(', '))
+          }
+          formData={formData}
+        />
+      </FormField>
+
       <FormField label="If Your Brand Spoke Like a Person" type="Checkbox">
         <CheckboxGroup
-          options={['Friendly', 'Professional', 'Casual', 'Formal', 'Humorous', 'Serious', 'Inspirational', 'Direct']}
+          options={['Professional', 'Casual', 'Friendly', 'Authoritative', 'Playful', 'Sophisticated']}
           value={formData.brandTone || []}
           onChange={(value) => updateFormData('brandTone', value)}
         />
@@ -585,7 +829,7 @@ const KnowingYouForm = () => {
 
       <FormField label="Preferred Font Styles" type="Checkbox">
         <CheckboxGroup
-          options={['Serif', 'Sans-serif', 'Script', 'Display', 'Modern', 'Classic', 'Bold', 'Light']}
+          options={['Serif', 'Sans-serif', 'Script', 'Display', 'Monospace']}
           value={formData.fontStyles || []}
           onChange={(value) => updateFormData('fontStyles', value)}
         />
@@ -593,7 +837,7 @@ const KnowingYouForm = () => {
 
       <FormField label="Design Style" type="Checkbox">
         <CheckboxGroup
-          options={['Minimalist', 'Bold', 'Playful', 'Professional', 'Creative', 'Traditional', 'Modern', 'Vintage']}
+          options={['Minimalist', 'Modern', 'Vintage', 'Bold', 'Elegant', 'Playful', 'Professional']}
           value={formData.designStyle || []}
           onChange={(value) => updateFormData('designStyle', value)}
         />
@@ -601,7 +845,7 @@ const KnowingYouForm = () => {
 
       <FormField label="Logo Type" type="Checkbox">
         <CheckboxGroup
-          options={['Wordmark', 'Symbol', 'Combination', 'Lettermark', 'Emblem', 'Abstract']}
+          options={['Wordmark', 'Symbol', 'Combination', 'Emblem', 'Lettermark']}
           value={formData.logoType || []}
           onChange={(value) => updateFormData('logoType', value)}
         />
@@ -609,7 +853,7 @@ const KnowingYouForm = () => {
 
       <FormField label="Visual Imagery Style" type="Checkbox">
         <CheckboxGroup
-          options={['Photography', 'Illustration', 'Abstract', 'Geometric', 'Nature', 'Urban', 'Hand-drawn', 'Digital']}
+          options={['Photography', 'Illustration', 'Abstract', 'Geometric', 'Organic', 'Mixed Media']}
           value={formData.imageryStyle || []}
           onChange={(value) => updateFormData('imageryStyle', value)}
         />
@@ -629,7 +873,7 @@ const KnowingYouForm = () => {
     <div className="space-y-8">
       <FormField label="Where Will the Brand Kit Be Used?" type="Checkbox" required>
         <CheckboxGroup
-          options={['Website', 'Social Media', 'Business Cards', 'Letterhead', 'Packaging', 'Signage', 'Apparel', 'Digital Ads', 'Print Materials']}
+          options={['Website', 'Social Media', 'Print Materials', 'Business Cards', 'Email Marketing', 'Packaging', 'Signage', 'Apparel']}
           value={formData.brandKitUse || []}
           onChange={(value) => updateFormData('brandKitUse', value)}
         />
@@ -637,7 +881,7 @@ const KnowingYouForm = () => {
 
       <FormField label="Brand Elements Needed" type="Checkbox" required>
         <CheckboxGroup
-          options={['Logo', 'Color Palette', 'Typography', 'Icon Set', 'Patterns', 'Photography Style', 'Illustration Style', 'Brand Guidelines']}
+          options={['Logo', 'Color Palette', 'Typography', 'Business Cards', 'Letterhead', 'Social Media Templates', 'Email Signature', 'Brand Guidelines']}
           value={formData.brandElements || []}
           onChange={(value) => updateFormData('brandElements', value)}
         />
@@ -645,7 +889,7 @@ const KnowingYouForm = () => {
 
       <FormField label="File Format Preferences" type="Checkbox" required>
         <CheckboxGroup
-          options={['PNG', 'SVG', 'PDF', 'AI', 'EPS', 'JPG', 'TIFF']}
+          options={['PNG', 'JPG', 'PDF', 'AI', 'EPS', 'SVG']}
           value={formData.fileFormats || []}
           onChange={(value) => updateFormData('fileFormats', value)}
         />
@@ -664,46 +908,46 @@ const KnowingYouForm = () => {
         />
       </FormField>
 
-      <FormField label="Other Short-Term Goals" type="Long Text">
+      <FormField label="Are there any other short-term goals you'd like to achieve in the next year?" type="Long Text">
         <Textarea
           value={formData.shortTermGoals || ''}
           onChange={(e) => updateFormData('shortTermGoals', e.target.value)}
-          placeholder="List your other short-term goals"
+          placeholder="Additional goals for the next 12 months"
           rows={4}
           className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
       </FormField>
 
-      <FormField label="Main 3–5 Year Goal" type="Short Text">
+      <FormField label="What's the main thing you want your business to achieve in the next 3–5 years?" type="Short Text">
         <Input
           value={formData.longTermGoal || ''}
           onChange={(e) => updateFormData('longTermGoal', e.target.value)}
-          placeholder="What's your main 3-5 year goal?"
+          placeholder="Your 3-5 year vision"
           className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
       </FormField>
 
-      <FormField label="Additional Mid-Term Goals" type="Long Text">
+      <FormField label="Are there additional mid-term goals you're aiming for?" type="Long Text">
         <Textarea
           value={formData.midTermGoals || ''}
           onChange={(e) => updateFormData('midTermGoals', e.target.value)}
-          placeholder="Describe your additional mid-term goals"
+          placeholder="Additional mid-term goals"
           rows={4}
         />
       </FormField>
 
-      <FormField label="Big-Picture Vision" type="Long Text">
+      <FormField label="What's your big-picture vision for your brand in the long run?" type="Long Text">
         <Textarea
           value={formData.bigPictureVision || ''}
           onChange={(e) => updateFormData('bigPictureVision', e.target.value)}
-          placeholder="Describe your big-picture vision for the future"
+          placeholder="Your long-term brand vision"
           rows={4}
         />
       </FormField>
 
-      <FormField label="Key Metrics for Success" type="Checkbox">
+      <FormField label="Which key indicators or metrics matter most when measuring your brand's success?" type="Checkbox">
         <CheckboxGroup
-          options={['Revenue Growth', 'Customer Acquisition', 'Brand Recognition', 'Market Share', 'Customer Satisfaction', 'Employee Retention', 'Operational Efficiency', 'Innovation']}
+          options={['Revenue Growth', 'Customer Satisfaction', 'Brand Recognition', 'Market Share', 'Social Media Engagement', 'Website Traffic', 'Customer Retention', 'Employee Satisfaction']}
           value={formData.successMetrics || []}
           onChange={(value) => updateFormData('successMetrics', value)}
         />
@@ -713,7 +957,7 @@ const KnowingYouForm = () => {
 
   const renderStep9 = () => (
     <div className="space-y-8">
-      <FormField label="Describe Business in One Powerful Sentence" type="Short Text" aiSuggestions>
+      {/* <FormField label="Describe Business in One Powerful Sentence" type="Short Text" aiSuggestions>
         <div className="space-y-4">
           <Input
             value={formData.businessDescription || ''}
@@ -727,7 +971,7 @@ const KnowingYouForm = () => {
             formData={formData}
           />
         </div>
-      </FormField>
+      </FormField> */}
 
       <FormField label="What Inspired You to Start?" type="Long Text" aiSuggestions>
         <div className="space-y-4">
@@ -804,42 +1048,8 @@ const KnowingYouForm = () => {
             className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
           />
           <AISuggestion
-            fieldName="customerChoice"
+            fieldName="Why Customers Choose You"
             onApplySuggestion={(suggestion) => updateFormData('customerChoice', suggestion)}
-            formData={formData}
-          />
-        </div>
-      </FormField>
-
-      <FormField label="Mission Statement" type="Long Text" aiSuggestions>
-        <div className="space-y-4">
-          <Textarea
-            value={formData.missionStatement || ''}
-            onChange={(e) => updateFormData('missionStatement', e.target.value)}
-            placeholder="What is your company's mission statement?"
-            rows={4}
-            className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-          />
-          <AISuggestion
-            fieldName="missionStatement"
-            onApplySuggestion={(suggestion) => updateFormData('missionStatement', suggestion)}
-            formData={formData}
-          />
-        </div>
-      </FormField>
-
-      <FormField label="Long-Term Vision" type="Long Text" aiSuggestions>
-        <div className="space-y-4">
-          <Textarea
-            value={formData.longTermVision || ''}
-            onChange={(e) => updateFormData('longTermVision', e.target.value)}
-            placeholder="What is your long-term vision for the company?"
-            rows={4}
-            className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-          />
-          <AISuggestion
-            fieldName="longTermVision"
-            onApplySuggestion={(suggestion) => updateFormData('longTermVision', suggestion)}
             formData={formData}
           />
         </div>
@@ -898,35 +1108,35 @@ const KnowingYouForm = () => {
 
   const renderStep10 = () => (
     <div className="space-y-8">
-      <FormField label="Anything Special Not Covered?" type="Long Text">
+      <FormField label="Is there anything special or important about your business or preferences we haven't covered yet?" type="Long Text">
         <Textarea
           value={formData.specialNotes || ''}
           onChange={(e) => updateFormData('specialNotes', e.target.value)}
-          placeholder="Is there anything special about your business that we haven't covered?"
+          placeholder="Any additional information or special requirements"
           rows={4}
           className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
       </FormField>
 
-      <FormField label="How Soon Do You Need the Brand Kit?" type="Dropdown">
+      <FormField label="How soon do you need your brand kit completed?" type="Dropdown">
         <Select value={formData.timeline} onValueChange={(value) => updateFormData('timeline', value)}>
           <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
             <SelectValue placeholder="Select timeline" />
           </SelectTrigger>
           <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
-            <SelectItem value="1-month">Within 1 month</SelectItem>
-            <SelectItem value="1-2-months">1–2 months</SelectItem>
-            <SelectItem value="2-3-months">2–3 months</SelectItem>
-            <SelectItem value="flexible">Flexible</SelectItem>
+            <SelectItem value="Within 1 month">⏰ Within 1 month</SelectItem>
+            <SelectItem value="1–2 months">📅 1–2 months</SelectItem>
+            <SelectItem value="2–3 months">📆 2–3 months</SelectItem>
+            <SelectItem value="Flexible">🔄 Flexible (no strict deadline)</SelectItem>
           </SelectContent>
         </Select>
       </FormField>
 
-      <FormField label="Who Will Review/Approve the Brand Kit?" type="Short Text">
+      <FormField label="Who will be reviewing and approving your brand kit?" type="Short Text">
         <Input
           value={formData.approver || ''}
           onChange={(e) => updateFormData('approver', e.target.value)}
-          placeholder="Who will review and approve the brand kit?"
+          placeholder="Name of the decision maker"
           className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
       </FormField>
@@ -935,13 +1145,27 @@ const KnowingYouForm = () => {
 
   const renderStep11 = () => (
     <div className="space-y-8">
-      <FormField label="Upload Any Reference Materials" type="Upload">
+      <FormField label="Reference Materials" type="Upload">
         <FileUpload
           value={formData.referenceMaterials || ''}
           onChange={(value) => updateFormData('referenceMaterials', value)}
-          placeholder="Upload any reference materials, inspiration, or existing assets"
+          placeholder="Upload reference files or paste links"
         />
       </FormField>
+
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
+          What to upload:
+        </h3>
+        <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+          <li>• Current logo files (if any)</li>
+          <li>• Brand inspiration images</li>
+          <li>• Competitor examples you like</li>
+          <li>• Existing marketing materials</li>
+          <li>• Color swatches or preferences</li>
+          <li>• Any other reference materials</li>
+        </ul>
+      </div>
     </div>
   );
 
@@ -1060,15 +1284,6 @@ const KnowingYouForm = () => {
 
       <div className="flex flex-col sm:flex-row items-center justify-between mt-6 sm:mt-8 gap-4">
         <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            onClick={handleBackToDashboard}
-            className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 w-full sm:w-auto"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Back to Dashboard</span>
-            <span className="sm:hidden">Dashboard</span>
-          </Button>
 
           {currentStep > 1 && (
             <Button

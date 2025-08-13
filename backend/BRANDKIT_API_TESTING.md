@@ -305,7 +305,7 @@ npm start
 
 ### 4. Verify Database
 ```sql
-SELECT * FROM brand_kit_forms WHERE user_id = 1;
+SELECT * FROM company_brand_kit_forms WHERE user_id = 1;
 ```
 
 ## ✅ Success Criteria

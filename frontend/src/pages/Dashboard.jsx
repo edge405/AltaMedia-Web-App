@@ -32,7 +32,8 @@ import {
   FileEdit,
   Palette,
   AlertCircle,
-  Loader2
+  Loader2,
+  Building2
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -58,6 +59,8 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [showPackageDetails, setShowPackageDetails] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [allCompanies, setAllCompanies] = useState([]);
 
   // Use parent's dark mode state if provided, otherwise use local state
   const effectiveDarkMode = parentIsDarkMode !== undefined ? parentIsDarkMode : isDarkMode;
@@ -76,10 +79,26 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
   const [error, setError] = useState(null);
   const [hasActivePackage, setHasActivePackage] = useState(false);
 
-  // Fetch dashboard data on component mount
+  // Load selected company and fetch dashboard data on component mount
   useEffect(() => {
+    const savedCompany = localStorage.getItem('selectedCompany');
+    const savedCompanies = localStorage.getItem('userCompanies');
+
+    if (savedCompanies) {
+      const parsedCompanies = JSON.parse(savedCompanies);
+      setAllCompanies(parsedCompanies);
+    }
+
+    if (savedCompany) {
+      setSelectedCompany(JSON.parse(savedCompany));
+    } else {
+      // If no company selected, redirect to company selection
+      navigate('/company-selection');
+      return;
+    }
+
     fetchDashboardData();
-  }, []);
+  }, [navigate]);
 
   const fetchDashboardData = async () => {
     try {
@@ -507,26 +526,20 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
     navigate('/know-your-form');
   };
 
+  const handleCompanySwitch = (company) => {
+    setSelectedCompany(company);
+    localStorage.setItem('selectedCompany', JSON.stringify(company));
+    // Refresh dashboard data for the new company
+    fetchDashboardData();
+    toast.success(`Switched to ${company.name}`);
+  };
+
   const updatedFeatures = packageDetails?.features || [];
 
   const displayedAddons = showAllAddons ? availableAddons : availableAddons.slice(0, 2);
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 w-full p-2 sm:p-4">
-      {/* Forms Button */}
-      <div className="mb-4 lg:mb-6 animate-bounce-in">
-        <Button
-          onClick={handleNavigateToForms}
-          className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-        >
-          <FileText className="w-5 h-5" />
-          <span className="text-lg">Brand Kit Forms</span>
-          <div className="w-5 h-5 rounded-full bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 flex items-center justify-center">
-            <Palette className="w-3 h-3 text-white" />
-          </div>
-        </Button>
-      </div>
-
       {/* Left Column */}
       <div className="flex-1">
         {selectedFeature ? (
@@ -542,185 +555,234 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
             setNewComment={setNewComment}
           />
         ) : (
-          /* Current Package */
-          <Card className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-gray-200 dark:border-gray-700">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                    <Package className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">Current Package</CardTitle>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
-                      {selectedTimeframe} <ChevronDown className="w-4 h-4 ml-1" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleTimeframeChange("Current")}>
-                      Current
-                    </DropdownMenuItem>
-                    {dashboardData?.packagePurchases?.package_purchases?.length > 1 && (
-                      <DropdownMenuItem onClick={() => handleTimeframeChange("Previous")}>
-                        Previous
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading dashboard data...</span>
-                </div>
-              ) : error ? (
-                <div className="text-center py-8">
-                  <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                  <p className="text-red-600 dark:text-red-400 mb-2">{error}</p>
-                  <Button onClick={fetchDashboardData} variant="outline" size="sm">
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Retry
-                  </Button>
-                </div>
-              ) : hasActivePackage && packageDetails ? (
-                <>
-                  {/* Package Header */}
+          <>
+            {/* Company Switcher Dropdown */}
+            {selectedCompany && allCompanies.length > 0 && (
+              <Card className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-gray-200 dark:border-gray-700 mb-4">
+                <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                        {packageDetails.name}
-                      </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {packageDetails.description}
-                      </p>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                        <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                          {selectedCompany.name}
+                        </h2>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {selectedCompany.industry || 'Company Dashboard'}
+                        </p>
+                      </div>
                     </div>
-                    <Badge variant="default" className={`${packageDetails.status === 'active' ? 'bg-green-500 hover:bg-green-600' :
-                      packageDetails.status === 'expired' ? 'bg-red-500 hover:bg-red-600' :
-                        'bg-yellow-500 hover:bg-yellow-600'
-                      }`}>
-                      {packageDetails.status.charAt(0).toUpperCase() + packageDetails.status.slice(1)}
-                    </Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                          <Building2 className="w-4 h-4 mr-2" />
+                          Switch Company
+                          <ChevronDown className="w-4 h-4 ml-2" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        {allCompanies.map((company) => (
+                          <DropdownMenuItem
+                            key={company.id}
+                            onClick={() => handleCompanySwitch(company)}
+                            className={`flex items-center space-x-3 ${company.id === selectedCompany.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                              }`}
+                          >
+                            <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded flex items-center justify-center">
+                              <Building2 className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <div className="font-medium text-gray-900 dark:text-gray-100">
+                                {company.name}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {company.industry || 'No industry'}
+                              </div>
+                            </div>
+                            {company.id === selectedCompany.id && (
+                              <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            )}
+                          </DropdownMenuItem>
+                        ))}
+                        <DropdownMenuItem
+                          onClick={() => navigate('/company-selection')}
+                          className="border-t border-gray-200 dark:border-gray-700 mt-1 pt-1"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add New Company
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
+                </CardContent>
+              </Card>
+            )}
 
-                  {/* Purchase Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Purchase Date</p>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                          {packageDetails.purchaseDate ? new Date(packageDetails.purchaseDate).toLocaleDateString() : 'N/A'}
-                        </p>
-                      </div>
+            {/* Current Package */}
+            <Card className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-gray-200 dark:border-gray-700">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                      <Package className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Expires</p>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                          {packageDetails.expirationDate ? new Date(packageDetails.expirationDate).toLocaleDateString() : 'N/A'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <PhilippinePeso className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Total Amount</p>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                          {packageDetails.price}
-                        </p>
-                      </div>
-                    </div>
+                    <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">Current Package</CardTitle>
                   </div>
-
-                  {/* Price Display */}
-                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4">
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                    <span className="ml-2 text-gray-600 dark:text-gray-400">Loading dashboard data...</span>
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-8">
+                    <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                    <p className="text-red-600 dark:text-red-400 mb-2">{error}</p>
+                    <Button onClick={fetchDashboardData} variant="outline" size="sm">
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Retry
+                    </Button>
+                  </div>
+                ) : hasActivePackage && packageDetails ? (
+                  <>
+                    {/* Package Header */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                          Package Price
-                        </p>
-                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                          {packageDetails.price}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Duration
-                        </p>
-                        <p className="text-base font-semibold text-gray-800 dark:text-gray-200">
-                          {packageDetails.period}
+                        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                          {packageDetails.name}
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {packageDetails.description}
                         </p>
                       </div>
+                      <Badge variant="default" className={`${packageDetails.status === 'active' ? 'bg-green-500 hover:bg-green-600' :
+                        packageDetails.status === 'expired' ? 'bg-red-500 hover:bg-red-600' :
+                          'bg-yellow-500 hover:bg-yellow-600'
+                        }`}>
+                        {packageDetails.status.charAt(0).toUpperCase() + packageDetails.status.slice(1)}
+                      </Badge>
                     </div>
-                  </div>
 
-                  {/* Core Features List */}
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
-                      Package Features
-                    </h4>
-                    <div className="space-y-1">
-                      {packageDetails.features.map((feature, index) => (
-                        <div key={index} className="flex items-center justify-between py-2 px-2 rounded-md bg-gray-50 dark:bg-gray-700/50">
-                          <div className="flex items-center space-x-2">
-                            <div className="p-1 rounded-full bg-blue-100 dark:bg-blue-500/20">
-                              {getFeatureIcon(feature.name)}
-                            </div>
-                            <div className="flex-1">
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
-                                {feature.name}
-                              </span>
-                              {feature.description && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  {feature.description}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {feature.cost}
-                            </span>
-                            <CheckCircle className="w-3 h-3 text-green-500" />
-                          </div>
+                    {/* Purchase Info */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Purchase Date</p>
+                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                            {packageDetails.purchaseDate ? new Date(packageDetails.purchaseDate).toLocaleDateString() : 'N/A'}
+                          </p>
                         </div>
-                      ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Expires</p>
+                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                            {packageDetails.expirationDate ? new Date(packageDetails.expirationDate).toLocaleDateString() : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <PhilippinePeso className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Total Amount</p>
+                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                            {packageDetails.price}
+                          </p>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Price Display */}
+                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                            Package Price
+                          </p>
+                          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                            {packageDetails.price}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Duration
+                          </p>
+                          <p className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                            {packageDetails.period}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Core Features List */}
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
+                        Package Features
+                      </h4>
+                      <div className="space-y-1">
+                        {packageDetails.features.map((feature, index) => (
+                          <div key={index} className="flex items-center justify-between py-2 px-2 rounded-md bg-gray-50 dark:bg-gray-700/50">
+                            <div className="flex items-center space-x-2">
+                              <div className="p-1 rounded-full bg-blue-100 dark:bg-blue-500/20">
+                                {getFeatureIcon(feature.name)}
+                              </div>
+                              <div className="flex-1">
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
+                                  {feature.name}
+                                </span>
+                                {feature.description && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {feature.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {feature.cost}
+                              </span>
+                              <CheckCircle className="w-3 h-3 text-green-500" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">No Active Package</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      You don't have any active packages. Browse our available packages to get started.
+                    </p>
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      Browse Packages
+                    </Button>
                   </div>
-                </>
-              ) : (
-                <div className="text-center py-8">
-                  <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">No Active Package</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    You don't have any active packages. Browse our available packages to get started.
-                  </p>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    Browse Packages
+                )}
+
+
+
+                {/* Action Buttons */}
+                <div className="flex space-x-2 pt-2">
+                  <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm" onClick={handleContactSupport}>
+                    <MessageSquare className="w-3 h-3 mr-2" />
+                    Contact Support
+                  </Button>
+                  <Button variant="outline" className="flex-1 text-sm" onClick={handleViewDetails}>
+                    <FileText className="w-3 h-3 mr-2" />
+                    View Details
                   </Button>
                 </div>
-              )}
-
-
-
-              {/* Action Buttons */}
-              <div className="flex space-x-2 pt-2">
-                <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm" onClick={handleContactSupport}>
-                  <MessageSquare className="w-3 h-3 mr-2" />
-                  Contact Support
-                </Button>
-                <Button variant="outline" className="flex-1 text-sm" onClick={handleViewDetails}>
-                  <FileText className="w-3 h-3 mr-2" />
-                  View Details
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </>
         )}
       </div>
 

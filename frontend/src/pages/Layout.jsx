@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Bell, MessageSquare, ChevronDown, User, Settings, LogOut, Moon, Sun, Bot, Users, Inbox } from "lucide-react";
+import { Bell, MessageSquare, ChevronDown, User, Settings, LogOut, Moon, Sun, Bot, Users, Inbox, BarChart3, Building2, Package, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,7 +29,7 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
     return saved ? JSON.parse(saved) : false;
   });
   const darkModeIconRef = useRef(null);
-  
+
   // Use parent's dark mode state if provided, otherwise use local state
   const effectiveDarkMode = parentIsDarkMode !== undefined ? parentIsDarkMode : isDarkMode;
   const [showMessages, setShowMessages] = useState(false);
@@ -54,12 +54,8 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
   }, [effectiveDarkMode]);
 
   const handleNavigation = (path) => {
-    if (path === "/") {
-      navigate("/");
-      toast.success("Navigated to Home");
-    } else {
-      toast.info(`Navigating to ${path} - Page under development`);
-    }
+    navigate(path);
+    toast.success(`Navigated to ${path.split('/').pop() || 'Home'}`);
   };
 
   const handleDarkModeToggle = () => {
@@ -82,7 +78,7 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
         }, 300);
       }
     }
-    
+
     const newDarkMode = !isDarkMode;
     setIsDarkMode(newDarkMode);
     localStorage.setItem('darkMode', JSON.stringify(newDarkMode));
@@ -150,6 +146,28 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
               </div>
             </div>
 
+            {/* Center - Navigation Menu */}
+            <nav className="hidden md:flex items-center space-x-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleNavigation("/dashboard")}
+                className={`${currentPageName === 'Dashboard' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : ''} hover:bg-blue-50 dark:hover:bg-blue-900/10`}
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleNavigation("/company-selection")}
+                className={`${currentPageName === 'CompanySelection' ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''} hover:bg-purple-50 dark:hover:bg-purple-900/10`}
+              >
+                <Building2 className="w-4 h-4 mr-2" />
+                Companies
+              </Button>
+            </nav>
+
             {/* Right side - Notifications, Profile */}
             <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Dark Mode Toggle */}
@@ -181,8 +199,8 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
                   </div>
                   <div className="max-h-64 overflow-y-auto">
                     {notifications.map((notification) => (
-                      <DropdownMenuItem 
-                        key={notification.id} 
+                      <DropdownMenuItem
+                        key={notification.id}
                         className={`p-3 cursor-pointer ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                         onClick={() => handleNotificationClick(notification)}
                       >
@@ -205,7 +223,7 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
-              
+
               {/* Profile */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -220,14 +238,14 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
                       {user?.email || 'user@example.com'}
                     </p>
                   </div>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => handleProfileAction('profile')}
                     className={isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}
                   >
                     <User className="w-4 h-4 mr-2" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => handleProfileAction('settings')}
                     className={isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}
                   >
@@ -235,7 +253,7 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
                     Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className={isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="text-red-600 hover:bg-red-50"
                     onClick={() => handleProfileAction('logout')}
                   >
@@ -277,7 +295,7 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
             </p>
           </div>
           <div className="p-2">
-            <div 
+            <div
               className="chat-option"
               onClick={() => handleInboxClick()}
             >
@@ -293,7 +311,7 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
                 </p>
               </div>
             </div>
-            <div 
+            <div
               className="chat-option"
               onClick={() => handleChatOption('ai')}
             >
@@ -309,7 +327,7 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
                 </p>
               </div>
             </div>
-            <div 
+            <div
               className="chat-option"
               onClick={() => handleChatOption('human')}
             >
@@ -330,7 +348,7 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
       )}
 
       {/* Chat Interface */}
-      <Messages 
+      <Messages
         isOpen={showChat}
         onClose={handleCloseChat}
         chatType={chatType}
@@ -338,7 +356,7 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
       />
 
       {/* Inbox Interface */}
-      <InboxComponent 
+      <InboxComponent
         isOpen={showInbox}
         onClose={handleCloseInbox}
         isDarkMode={isDarkMode}

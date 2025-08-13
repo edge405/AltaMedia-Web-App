@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { 
   saveFormData, 
-  getFormData
+  getFormData,
+  getAllFormDataFromMariaDB
 } = require('../controllers/brandKitController');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -41,6 +42,18 @@ router.put('/save',
 router.get('/data/:userId', 
   // authenticateToken, // Temporarily disabled for testing
   getFormData
+);
+
+
+
+/**
+ * @route   GET /api/brandkit/all/mariadb
+ * @desc    Get all BrandKit form data from MariaDB (for admin purposes)
+ * @access  Private
+ */
+router.get('/all/mariadb', 
+  // authenticateToken, // Temporarily disabled for testing
+  getAllFormDataFromMariaDB
 );
 
 module.exports = router; 

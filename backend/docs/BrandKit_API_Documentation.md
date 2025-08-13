@@ -6,10 +6,10 @@ The BrandKit API provides a comprehensive 11-step brand identity form system tha
 
 ## 🗄️ Database Schema
 
-### Table: `brand_kit_forms`
+### Table: `company_brand_kit_forms`
 
 ```sql
-CREATE TABLE brand_kit_forms (
+CREATE TABLE company_brand_kit_forms (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     
@@ -267,7 +267,7 @@ backend/
 │   └── server.js
 ├── docs/
 │   └── BrandKit_API_Documentation.md
-├── brand_kit_forms_schema.sql
+├── company_brand_kit_forms_schema.sql
 ├── BRANDKIT_API_TESTING.md
 └── BrandKit_Forms_Postman_Collection.json
 

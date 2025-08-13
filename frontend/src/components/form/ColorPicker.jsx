@@ -7,10 +7,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 const ColorPicker = ({ value, onChange, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  
+
   // Handle value as array of colors or single color
   const colors = Array.isArray(value) ? value : (value ? [value] : []);
-  
+
   const presetColors = [
     "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7",
     "#DDA0DD", "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E9",
@@ -68,7 +68,7 @@ const ColorPicker = ({ value, onChange, placeholder }) => {
           ))}
         </div>
       )}
-      
+
       {/* Color input and picker */}
       <div className="flex gap-2">
         <Input
@@ -78,7 +78,7 @@ const ColorPicker = ({ value, onChange, placeholder }) => {
           placeholder={placeholder || "Enter hex color (e.g., #FF6B6B) or press Enter"}
           className="flex-1"
         />
-        
+
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger asChild>
             <Button

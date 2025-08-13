@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Package,
   Calendar,
@@ -14,9 +15,11 @@ import {
   Trash2,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Settings
 } from "lucide-react";
 import apiService from "@/utils/api";
+import PackagePurchaseForm from "@/components/PackagePurchaseForm";
 
 export default function PackagePurchases({ client }) {
   const [packagePurchases, setPackagePurchases] = useState([]);
@@ -26,6 +29,7 @@ export default function PackagePurchases({ client }) {
   const [newComment, setNewComment] = useState("");
   const [comments, setComments] = useState([]);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
     fetchPackagePurchases();
@@ -35,7 +39,7 @@ export default function PackagePurchases({ client }) {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiService.getUserPackagePurchases();
+      const response = await apiService.getUserPackagePurchases(); // Use /api/package-purchases
 
       if (response.success && response.data?.package_purchases) {
         setPackagePurchases(response.data.package_purchases);
@@ -94,6 +98,22 @@ export default function PackagePurchases({ client }) {
     }
   };
 
+  const handleUpdateFeatureStatus = async (purchaseId, featureId, newStatus) => {
+    try {
+      setUpdatingStatus(true);
+      const response = await apiService.updatePurchaseFeatureStatus(purchaseId, featureId, newStatus);
+
+      if (response.success) {
+        // Refresh package purchases to get updated data
+        await fetchPackagePurchases();
+      }
+    } catch (err) {
+      console.error('Error updating feature status:', err);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'active':
@@ -115,6 +135,21 @@ export default function PackagePurchases({ client }) {
         return 'bg-red-100 text-red-800';
       case 'cancelled':
         return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-yellow-100 text-yellow-800';
+    }
+  };
+
+  const getFeatureStatusColor = (status) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800';
+      case 'pending':
+        return 'bg-orange-100 text-orange-800';
+      case 'deprecated':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-yellow-100 text-yellow-800';
     }
@@ -183,6 +218,7 @@ export default function PackagePurchases({ client }) {
             Manage your purchased packages and their features
           </p>
         </div>
+        <PackagePurchaseForm onPurchaseCreated={fetchPackagePurchases} />
       </div>
 
       {packagePurchases.map((purchase) => (
@@ -235,13 +271,37 @@ export default function PackagePurchases({ client }) {
             <div>
               <h4 className="font-medium text-slate-800 mb-3">Package Features</h4>
               <div className="space-y-3">
-                {purchase.package_details.features.map((feature) => (
+                {purchase.package_details?.features?.map((feature) => (
                   <div key={feature.feature_id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
                     <div className="flex-1">
-                      <h5 className="font-medium text-slate-800">{feature.feature_info.feature_name}</h5>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h5 className="font-medium text-slate-800">{feature.feature_info.feature_name}</h5>
+                        <Badge className={getFeatureStatusColor(feature.feature_info.status)}>
+                          {feature.feature_info.status}
+                        </Badge>
+                      </div>
                       <p className="text-sm text-slate-600">{feature.feature_info.feature_description}</p>
                     </div>
                     <div className="flex items-center gap-2">
+                      {/* Feature Status Management */}
+                      <Select
+                        value={feature.feature_info.status}
+                        onValueChange={(newStatus) =>
+                          handleUpdateFeatureStatus(purchase.package_purchase_id, feature.feature_id, newStatus)
+                        }
+                        disabled={updatingStatus}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="deprecated">Deprecated</SelectItem>
+                        </SelectContent>
+                      </Select>
+
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
@@ -258,7 +318,7 @@ export default function PackagePurchases({ client }) {
                         </DialogTrigger>
                         <DialogContent className="max-w-md">
                           <DialogHeader>
-                            <DialogTitle>Comments for {feature.feature_info.feature_name}</DialogTitle>
+                            <DialogTitle>Comments for {feature.feature_name}</DialogTitle>
                           </DialogHeader>
                           <div className="space-y-4">
                             {/* Comments List */}

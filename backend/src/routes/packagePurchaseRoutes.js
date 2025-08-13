@@ -3,7 +3,9 @@ const router = express.Router();
 const { 
   getUserPackagePurchases, 
   getPackagePurchaseById, 
-  getAllPackagePurchases
+  getAllPackagePurchases,
+  createPackagePurchase,
+  updatePurchaseFeatureStatus
 } = require('../controllers/packagePurchaseController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
@@ -27,5 +29,19 @@ router.get('/:id', authenticateToken, getPackagePurchaseById);
  * @access  Admin only
  */
 router.get('/admin/all', authenticateToken, requireRole(['admin']), getAllPackagePurchases);
+
+/**
+ * @route   POST /api/package-purchases
+ * @desc    Create a new package purchase with features
+ * @access  Private
+ */
+router.post('/', authenticateToken, createPackagePurchase);
+
+/**
+ * @route   PUT /api/package-purchases/:id/features/:featureId/status
+ * @desc    Update feature status in a package purchase
+ * @access  Private
+ */
+router.put('/:id/features/:featureId/status', authenticateToken, updatePurchaseFeatureStatus);
 
 module.exports = router; 

@@ -3,11 +3,11 @@ require('dotenv').config();
 
 // MariaDB connection configuration
 const dbConfig = {
-  host: process.env.MARIADB_HOST || 'localhost',
-  port: process.env.MARIADB_PORT || 3306,
-  user: process.env.MARIADB_USER || 'root',
-  password: process.env.MARIADB_PASSWORD || 'password',
-  database: process.env.MARIADB_DATABASE || 'alta_media',
+  host: process.env.MARIADB_HOST,
+  port: process.env.MARIADB_PORT,
+  user: process.env.MARIADB_USER,
+  password: process.env.MARIADB_PASSWORD,
+  database: process.env.MARIADB_DATABASE,
   charset: 'utf8mb4',
   timezone: '+00:00',
   // Connection pool settings
