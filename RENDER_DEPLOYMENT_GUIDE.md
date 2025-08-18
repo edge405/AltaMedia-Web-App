@@ -1,14 +1,15 @@
 # Render Deployment Guide - Fixed Version
 
-## ✅ Issue Fixed
-The build was failing because Vite was in `devDependencies`. I've moved Vite and build tools to `dependencies` so they're available during production builds.
+## ✅ Issues Fixed
+1. **Build failing:** Vite was in `devDependencies` - moved to `dependencies`
+2. **Server crashing:** Express 5.x compatibility issue - downgraded to Express 4.18.2
 
 ## 🚀 Deploy to Render
 
 ### 1. Push Your Changes
 ```bash
 git add .
-git commit -m "Fix build dependencies for Render deployment"
+git commit -m "Fix Express version and build dependencies for Render deployment"
 git push origin main
 ```
 
@@ -57,22 +58,29 @@ ALLOWED_ORIGINS = https://your-app-name.onrender.com
 
 ## 🔧 What Was Fixed
 
-1. **Moved build tools to dependencies:**
-   - `vite`
-   - `@vitejs/plugin-react`
-   - `autoprefixer`
-   - `postcss`
-   - `tailwindcss`
+### 1. Build Dependencies
+- **Moved build tools to dependencies:**
+  - `vite`
+  - `@vitejs/plugin-react`
+  - `autoprefixer`
+  - `postcss`
+  - `tailwindcss`
 
-2. **Updated build script:**
-   - Uses `npm install --production=false` to ensure dev dependencies are installed
+- **Updated build script:**
+  - Uses `npm install --production=false` to ensure dev dependencies are installed
 
-3. **Simplified backend scripts:**
-   - Removed conflicting build scripts
+### 2. Express Version Fix
+- **Downgraded Express:** From `^5.1.0` to `^4.18.2`
+- **Why:** Express 5.x has breaking changes that cause `path-to-regexp` errors
+- **Result:** Server now starts successfully without crashes
+
+### 3. Simplified Backend Scripts
+- Removed conflicting build scripts from backend package.json
 
 ## ✅ Test Your Deployment
 
 1. **Health Check:** `https://your-app.onrender.com/health`
+   - Should return: `{"success":true,"message":"AltaMedia Client Dashboard Backend is running"}`
 2. **Frontend:** `https://your-app.onrender.com`
 3. **API:** `https://your-app.onrender.com/api/auth`
 
@@ -83,4 +91,12 @@ Check Render logs for:
 - Database connection issues
 - Port conflicts
 
-The build should now work correctly! 🎉
+## 🎉 Success Indicators
+
+- ✅ Build completes without errors
+- ✅ Server starts successfully
+- ✅ Health endpoint responds
+- ✅ Frontend loads correctly
+- ✅ API endpoints work
+
+The deployment should now work perfectly! 🚀
