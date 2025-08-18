@@ -6,11 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest",
-    "build": "npm run build:frontend && npm run build:backend",
-    "build:frontend": "cd ../frontend && npm install && npm run build",
-    "build:backend": "npm install",
-    "postinstall": "npm run build:frontend"
+    "test": "jest"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.53.0",

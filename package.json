@@ -7,7 +7,7 @@
         "start": "cd backend && npm start",
         "dev": "concurrently \"cd frontend && npm run dev\" \"cd backend && npm run dev\"",
         "build": "npm run build:frontend && npm run build:backend",
-        "build:frontend": "cd frontend && npm install && npm run build",
+        "build:frontend": "cd frontend && npm install --production=false && npm run build",
         "build:backend": "cd backend && npm install",
         "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
         "test": "cd backend && npm test"
