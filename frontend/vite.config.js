@@ -8,6 +8,11 @@ export default defineConfig({
   server: {
     allowedHosts: true
   },
+  build: {
+    outDir: '../backend/public',
+    emptyOutDir: true,
+    sourcemap: false
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

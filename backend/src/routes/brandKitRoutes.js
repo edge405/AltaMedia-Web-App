@@ -6,6 +6,7 @@ const {
   getAllFormDataFromMariaDB
 } = require('../controllers/brandKitController');
 const { authenticateToken } = require('../middleware/auth');
+const { handleMultipleFileUploads, handleFileUploadError } = require('../middleware/fileUpload');
 
 // Simple validation middleware
 const validateRequest = (schema) => {
@@ -31,6 +32,11 @@ router.get('/test', (req, res) => {
  */
 router.put('/save', 
   // authenticateToken, // Temporarily disabled for testing
+  handleMultipleFileUploads([
+    { name: 'reference_materials', maxCount: 10 },
+    { name: 'inspiration_links', maxCount: 10 }
+  ]),
+  handleFileUploadError,
   saveFormData
 );
 

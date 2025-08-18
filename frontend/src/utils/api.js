@@ -1,13 +1,24 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
-
 class ApiService {
   constructor() {
-    this.baseURL = API_BASE_URL;
+    console.log('Environment variables:', import.meta.env);
+    console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+    
+    // In production, API calls should be relative to the same domain
+    // In development, use the environment variable
+    if (import.meta.env.PROD) {
+      this.baseURL = '/api';
+    } else {
+      this.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+    }
+    
+    console.log('Final baseURL:', this.baseURL);
   }
+  
 
   // Get auth headers for authenticated requests
   getAuthHeaders() {
     const token = localStorage.getItem('authToken');
+    console.log("API_BASE_URL: ", this.baseURL);
     return {
       'Content-Type': 'application/json',
       ...(token && { 'Authorization': `Bearer ${token}` }),
@@ -56,6 +67,35 @@ class ApiService {
       method: 'PUT',
       body: JSON.stringify(body),
     });
+  }
+
+  // PUT request with FormData (for file uploads)
+  async putFormData(endpoint, formData) {
+    const url = `${this.baseURL}${endpoint}`;
+    const token = localStorage.getItem('authToken');
+    
+    const config = {
+      method: 'PUT',
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+        // Don't set Content-Type for FormData - browser will set it automatically with boundary
+      },
+      body: formData,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
   }
 
   // DELETE request

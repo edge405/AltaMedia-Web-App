@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Package, DollarSign, Calendar, CheckCircle, Clock, AlertCircle, TrendingUp, Users, Globe, FileText, Play, Zap, BarChart3, Settings, Download, Share2, Star, MessageSquare, Eye, Trash2, Plus, Phone, FileText as FileTextIcon, Image, FileSpreadsheet } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Package, DollarSign, Calendar, CheckCircle, Clock, AlertCircle, TrendingUp, Users, Globe, FileText, Play, Zap, BarChart3, Settings, Download, Share2, Star, MessageSquare, Eye, Trash2, Plus, Phone, FileText as FileTextIcon, Image, FileSpreadsheet, Mail, Search, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,162 +11,170 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import apiService from '@/utils/api';
 
-export default function PackageDetails({ isOpen, onClose, isDarkMode = false, onOpenMessages }) {
+export default function PackageDetails({ isOpen, onClose, isDarkMode = false, onOpenMessages, packageData = null }) {
   const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(false);
+  const [selectedAddon, setSelectedAddon] = useState(null);
+  const [showAddonDetails, setShowAddonDetails] = useState(false);
+  const [showManageAddons, setShowManageAddons] = useState(false);
+  const [addons, setAddons] = useState([]);
+  const [addonsLoading, setAddonsLoading] = useState(false);
 
-  // No purchase functionality - contact for pricing
+  // Fetch addons when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchAddons();
+    }
+  }, [isOpen]);
 
-  // Mock package data
-  const packageData = {
-    name: "Core Package",
-    description: "Complete multimedia automation solution for your business",
-    price: "Contact for Pricing",
-    originalPrice: "Custom Quote",
-    savings: "Contact Us",
-    status: "Active",
-    nextBilling: "2024-04-15",
-    features: [
-      {
-        name: "Dashboard",
-        icon: <BarChart3 className="w-4 h-4" />,
-        cost: "Free",
-        status: "Active",
-        description: "Analytics and reporting tools",
-        usage: 100
-      },
-      {
-        name: "Website",
-        icon: <Globe className="w-4 h-4" />,
-        cost: "P5,000",
-        status: "In Progress",
-        description: "Custom website development",
-        usage: 75
-      },
-      {
-        name: "Content/Ad Management",
-        icon: <FileText className="w-4 h-4" />,
-        cost: "P4,000",
-        status: "Pending",
-        description: "Content creation and ad management",
-        usage: 0
-      },
-      {
-        name: "Content Calendar/Creation (30 days)",
-        icon: <Calendar className="w-4 h-4" />,
-        cost: "P4,000",
-        status: "In Progress",
-        description: "30 days of content creation",
-        usage: 50
-      },
-      {
-        name: "Demo",
-        icon: <Play className="w-4 h-4" />,
-        cost: "P500",
-        status: "Active",
-        description: "Product demonstrations",
-        usage: 100
-      },
-      {
-        name: "Pin4MS",
-        icon: <Zap className="w-4 h-4" />,
-        cost: "P1,000",
-        status: "Active",
-        description: "Social media management",
-        usage: 100
-      },
-
-    ],
-    analytics: {
-      totalValue: "P14,500",
-      monthlySavings: "P3,501",
-      servicesUsed: 4,
-      totalServices: 6,
-      satisfaction: 4.8
-    },
-    addons: [
-      {
-        id: "premium-support",
-        name: "Premium Support",
-        price: "P2,000",
-        description: "24/7 priority support with dedicated account manager",
-        status: "Available",
-        details: "Get priority support with dedicated account manager, faster response times, and extended support hours."
-      },
-      {
-        id: "advanced-analytics",
-        name: "Advanced Analytics",
-        price: "P1,500",
-        description: "Enhanced reporting and insights",
-        status: "Available",
-        details: "Advanced analytics dashboard with custom reports, data export, and predictive insights."
-      },
-      {
-        id: "custom-branding",
-        name: "Custom Branding",
-        price: "P3,000",
-        description: "Custom branding and design",
-        status: "Available",
-        details: "Custom logo design, brand guidelines, and personalized marketing materials."
-      },
-      {
-        id: "content-creation",
-        name: "Content Creation",
-        price: "P2,500",
-        description: "Professional content creation services including blog posts, social media content, and video scripts",
-        status: "Available",
-        details: "Get professionally written content for your blog, social media, and marketing campaigns."
-      },
-      {
-        id: "seo-optimization",
-        name: "SEO Optimization",
-        price: "P1,800",
-        description: "Search engine optimization services to improve your website's visibility",
-        status: "Available",
-        details: "Comprehensive SEO services including keyword research, on-page optimization, and performance tracking."
-      },
-      {
-        id: "social-media-management",
-        name: "Social Media Management",
-        price: "P3,500",
-        description: "Complete social media management including content planning, posting, and community engagement",
-        status: "Available",
-        details: "Full social media management across all platforms with content creation and community management."
-      },
-      {
-        id: "email-marketing",
-        name: "Email Marketing",
-        price: "P1,200",
-        description: "Email marketing campaigns and automation setup",
-        status: "Available",
-        details: "Professional email marketing campaigns with automation, templates, and analytics tracking."
-      },
-      {
-        id: "video-production",
-        name: "Video Production",
-        price: "P4,500",
-        description: "Professional video production services for marketing and promotional content",
-        status: "Available",
-        details: "High-quality video production including scripting, filming, editing, and post-production."
-      },
-      {
-        id: "web-design",
-        name: "Web Design",
-        price: "P5,000",
-        description: "Custom website design and development with responsive layouts",
-        status: "Available",
-        details: "Custom website design with modern layouts, responsive design, and content management system."
-      },
-      {
-        id: "consultation",
-        name: "Strategy Consultation",
-        price: "P1,500",
-        description: "One-on-one consultation sessions for digital marketing strategy and business growth",
-        status: "Available",
-        details: "Personalized consultation sessions to develop your digital marketing strategy and business growth plan."
+  const fetchAddons = async () => {
+    try {
+      setAddonsLoading(true);
+      const response = await apiService.getAddons();
+      if (response.success && response.data?.addons) {
+        setAddons(response.data.addons);
+      } else {
+        setAddons([]);
       }
-    ]
+    } catch (error) {
+      console.error('Error fetching addons:', error);
+      setAddons([]);
+      toast.error('Failed to load addons');
+    } finally {
+      setAddonsLoading(false);
+    }
   };
+
+  // No default data - component relies entirely on backend data
+  const currentPackageData = packageData;
+
+  // Transform data to match frontend format if needed
+  const transformBackendData = (data) => {
+    if (!data) return null;
+
+    // Handle both raw backend data and transformed dashboard data
+    let features = [];
+    let activeFeatures = [];
+
+    if (data.package_details?.features) {
+      // Raw backend data structure
+      features = data.package_details.features;
+      activeFeatures = features.filter(f =>
+        f.feature_info?.status === 'Active' || f.feature_info?.status === 'active'
+      );
+    } else if (data.features) {
+      // Transformed dashboard data structure
+      features = data.features;
+      activeFeatures = features.filter(f => f.status === 'Active' || f.status === 'active');
+    }
+
+    const analytics = {
+      totalValue: data.totalCost || (data.purchase_info?.total_amount ? `₱${data.purchase_info.total_amount}` : "₱0"),
+      monthlySavings: "Contact for pricing", // This would need to be calculated from backend
+      servicesUsed: activeFeatures.length,
+      totalServices: features.length,
+      satisfaction: 4.5 // Default rating
+    };
+
+    return {
+      name: data.name || data.package_details?.package_name || "Package",
+      description: data.description || data.package_details?.package_description || "Package description",
+      price: data.price || (data.purchase_info?.total_amount ? `₱${data.purchase_info.total_amount}` : "Contact for pricing"),
+      originalPrice: data.originalPrice || (data.package_details?.package_price ? `₱${data.package_details.package_price}` : "Custom quote"),
+      savings: data.savings || "Contact us",
+      status: data.status || data.purchase_info?.status || "Active",
+      nextBilling: data.nextBilling || (data.expirationDate ? new Date(data.expirationDate).toLocaleDateString() : "N/A"),
+      features: features,
+      analytics: analytics,
+      addons: addons // Use the fetched addons from state
+    };
+  };
+
+  // Transform features to include icons
+  const transformFeatures = (features) => {
+    if (!features || !Array.isArray(features)) return [];
+
+    const iconMap = {
+      'Dashboard': <BarChart3 className="w-4 h-4" />,
+      'Website': <Globe className="w-4 h-4" />,
+      'Content/Ad Management': <FileText className="w-4 h-4" />,
+      'Content Calendar/Creation (30days)': <Calendar className="w-4 h-4" />,
+      'Demo': <Play className="w-4 h-4" />,
+      'Pin4ms': <Zap className="w-4 h-4" />,
+      'Pin4MS': <Zap className="w-4 h-4" />,
+      'Logo Design': <Image className="w-4 h-4" />,
+      'Brand Guidelines': <FileText className="w-4 h-4" />,
+      'Basic Logo': <Image className="w-4 h-4" />,
+      'Analytics': <BarChart3 className="w-4 h-4" />,
+      'Social Media Management': <Share2 className="w-4 h-4" />,
+      'Email Marketing': <Mail className="w-4 h-4" />,
+      'SEO Optimization': <Search className="w-4 h-4" />,
+      'Content Creation': <FileText className="w-4 h-4" />,
+      'Video Production': <Video className="w-4 h-4" />,
+      'Web Design': <Globe className="w-4 h-4" />,
+      'Consultation': <Users className="w-4 h-4" />
+    };
+
+    return features.map(feature => {
+      // Handle the nested feature_info structure from the backend
+      const featureInfo = feature.feature_info || feature;
+      const featureName = featureInfo.feature_name || featureInfo.name || "Feature";
+      const featureDescription = featureInfo.feature_description || featureInfo.description || "Feature description";
+      const featureStatus = featureInfo.status || "Pending";
+
+      return {
+        name: featureName,
+        icon: iconMap[featureName] || <Settings className="w-4 h-4" />,
+        cost: "Included",
+        status: featureStatus,
+        description: featureDescription
+      };
+    });
+  };
+
+  // Final package data with transformations
+  const finalPackageData = transformBackendData(currentPackageData);
+
+  // Early return if modal is not open
+  if (!isOpen) return null;
+
+  // If no data is available, show empty state
+  if (!finalPackageData) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className={`w-full max-w-6xl h-[90vh] ${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-lg shadow-xl flex flex-col`}>
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Package Details
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <Package className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+                No Package Data Available
+              </h3>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Package information could not be loaded. Please try again later.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  finalPackageData.features = transformFeatures(finalPackageData.features);
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
@@ -213,17 +221,16 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
       customer: "John Smith",
       customerAddress: "456 Customer Street, Quezon City, Metro Manila, Philippines",
       items: [
-        { description: "Core Package - Monthly", qty: 1, unitPrice: 10999, amount: 10999 },
-        ...purchasedAddons.map(addon => ({
-          description: `${addon.title} Addon`,
+        {
+          description: `${finalPackageData.name} - Monthly`,
           qty: 1,
-          unitPrice: parseFloat(addon.price.replace(/[^\d.]/g, '')),
-          amount: parseFloat(addon.price.replace(/[^\d.]/g, ''))
-        }))
+          unitPrice: parseFloat(finalPackageData.price.replace(/[^\d.]/g, '')) || 10999,
+          amount: parseFloat(finalPackageData.price.replace(/[^\d.]/g, '')) || 10999
+        }
       ],
-      subtotal: 10999 + totalAddonCost,
-      tax: (10999 + totalAddonCost) * 0.12,
-      total: (10999 + totalAddonCost) * 1.12
+      subtotal: parseFloat(finalPackageData.price.replace(/[^\d.]/g, '')) || 10999,
+      tax: (parseFloat(finalPackageData.price.replace(/[^\d.]/g, '')) || 10999) * 0.12,
+      total: (parseFloat(finalPackageData.price.replace(/[^\d.]/g, '')) || 10999) * 1.12
     };
 
     const downloadFile = (content, filename, mimeType) => {
@@ -747,7 +754,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
     // Generate shareable link or copy to clipboard
     const shareData = {
       title: 'Package Details - Alta Media',
-      text: `Check out my package: ${packageData.name} - ${packageData.description}`,
+      text: `Check out my package: ${finalPackageData.name} - ${finalPackageData.description}`,
       url: window.location.href
     };
 
@@ -769,10 +776,6 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
     }
   };
 
-  const [selectedAddon, setSelectedAddon] = useState(null);
-  const [showAddonDetails, setShowAddonDetails] = useState(false);
-  const [showManageAddons, setShowManageAddons] = useState(false);
-
   const handleAddonAction = (addon, action) => {
     switch (action) {
       case 'view':
@@ -780,12 +783,12 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
         setShowAddonDetails(true);
         break;
       case 'contact':
-        toast.info(`Interested in ${addon.name}? Please contact us for pricing and availability.`);
+        toast.info(`Interested in ${addon.addon_info.name}? Please contact us for pricing and availability.`);
         // Open contact information
         window.open('tel:+639171234567', '_blank');
         break;
       case 'info':
-        toast.info(`${addon.name} - Contact us for custom pricing and implementation details.`);
+        toast.info(`${addon.addon_info.name} - Contact us for custom pricing and implementation details.`);
         break;
     }
   };
@@ -794,8 +797,6 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
     setShowManageAddons(true);
     toast.info("Opening Addon Management...");
   };
-
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -807,7 +808,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
             <div className={`w-full max-w-2xl ${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-lg shadow-xl p-6`}>
               <div className="flex items-center justify-between mb-6">
                 <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {selectedAddon.name} Details
+                  {selectedAddon.addon_info.name} Details
                 </h3>
                 <Button
                   variant="ghost"
@@ -823,28 +824,28 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                 <div className="flex items-center justify-between">
                   <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Price</span>
                   <span className={`font-bold text-lg ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                    {selectedAddon.price}
+                    ₱{selectedAddon.addon_info.base_price}
                   </span>
+                </div>
+
+                <div>
+                  <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Price Type</span>
+                  <Badge className={`mt-1 ${selectedAddon.addon_info.price_type === 'one-time' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'}`}>
+                    {selectedAddon.addon_info.price_type}
+                  </Badge>
                 </div>
 
                 <div>
                   <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Description</span>
                   <p className={`mt-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {selectedAddon.description}
-                  </p>
-                </div>
-
-                <div>
-                  <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Details</span>
-                  <p className={`mt-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {selectedAddon.details}
+                    {selectedAddon.addon_info.description}
                   </p>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Status</span>
-                  <Badge className={getStatusColor(selectedAddon.status)}>
-                    {selectedAddon.status}
+                  <Badge className={selectedAddon.addon_info.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'}>
+                    {selectedAddon.addon_info.is_active ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
               </div>
@@ -911,7 +912,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="text-center">
                           <div className={`text-2xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                            {packageData.addons.length}
+                            {finalPackageData.addons.length}
                           </div>
                           <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                             Total Addons
@@ -919,7 +920,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                         </div>
                         <div className="text-center">
                           <div className={`text-2xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                            {packageData.addons.filter(a => a.status === 'Available').length}
+                            {finalPackageData.addons.filter(a => a.status === 'Available').length}
                           </div>
                           <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                             Available
@@ -927,7 +928,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                         </div>
                         <div className="text-center">
                           <div className={`text-2xl font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                            {packageData.addons.filter(a => a.status === 'Removed').length}
+                            {finalPackageData.addons.filter(a => a.status === 'Removed').length}
                           </div>
                           <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                             Removed
@@ -943,7 +944,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                       All Addons
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {packageData.addons.map((addon, index) => (
+                      {finalPackageData.addons.map((addon, index) => (
                         <Card key={index} className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} flex flex-col h-full`}>
                           <CardContent className="p-4 flex flex-col h-full">
                             <div className="flex items-start justify-between mb-3 flex-shrink-0">
@@ -1011,7 +1012,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
               Package Details
             </h2>
             <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
-              {packageData.description}
+              {finalPackageData.description}
             </p>
           </div>
           <div className="flex items-center space-x-2">
@@ -1119,14 +1120,14 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                            {packageData.name}
+                            {finalPackageData.name}
                           </h3>
                           <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
-                            {packageData.description}
+                            {finalPackageData.description}
                           </p>
                           <div className="flex items-center mt-3">
-                            <Badge className={getStatusColor(packageData.status)}>
-                              {packageData.status}
+                            <Badge className={getStatusColor(finalPackageData.status)}>
+                              {finalPackageData.status}
                             </Badge>
                           </div>
                         </div>
@@ -1136,7 +1137,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                               Monthly Price
                             </span>
                             <span className={`font-semibold text-blue-600 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                              {packageData.price}
+                              {finalPackageData.price}
                             </span>
                           </div>
                           <div className="flex justify-between">
@@ -1144,7 +1145,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                               Original Value
                             </span>
                             <span className={`text-sm line-through ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                              {packageData.originalPrice}
+                              {finalPackageData.originalPrice}
                             </span>
                           </div>
                           <div className="flex justify-between">
@@ -1152,7 +1153,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                               You Save
                             </span>
                             <span className={`font-semibold text-green-600 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                              {packageData.savings}
+                              {finalPackageData.savings}
                             </span>
                           </div>
                           <div className="flex justify-between">
@@ -1160,7 +1161,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                               Next Billing
                             </span>
                             <span className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                              {packageData.nextBilling}
+                              {finalPackageData.nextBilling}
                             </span>
                           </div>
                         </div>
@@ -1202,7 +1203,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                           Total Value
                         </span>
                         <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {packageData.analytics.totalValue}
+                          {finalPackageData.analytics.totalValue}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -1210,7 +1211,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                           Monthly Savings
                         </span>
                         <span className={`font-semibold text-green-600 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                          {packageData.analytics.monthlySavings}
+                          {finalPackageData.analytics.monthlySavings}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -1218,7 +1219,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                           Services Used
                         </span>
                         <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {packageData.analytics.servicesUsed}/{packageData.analytics.totalServices}
+                          {finalPackageData.analytics.servicesUsed}/{finalPackageData.analytics.totalServices}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -1228,7 +1229,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                         <div className="flex items-center">
                           <Star className="w-4 h-4 text-yellow-500 fill-current" />
                           <span className={`ml-1 font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                            {packageData.analytics.satisfaction}
+                            {finalPackageData.analytics.satisfaction}
                           </span>
                         </div>
                       </div>
@@ -1245,12 +1246,12 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                     Package Features
                   </h3>
                   <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                    {packageData.features.length} Features
+                    {finalPackageData.features.length} Features
                   </Badge>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {packageData.features.map((feature, index) => (
+                  {finalPackageData.features.map((feature, index) => (
                     <Card key={index} className={isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
@@ -1279,15 +1280,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                             </Badge>
                           </div>
                         </div>
-                        {feature.usage !== undefined && (
-                          <div className="mt-3">
-                            <div className="flex justify-between text-sm mb-1">
-                              <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Progress</span>
-                              <span className={isDarkMode ? 'text-white' : 'text-gray-900'}>{feature.usage}%</span>
-                            </div>
-                            <Progress value={feature.usage} className="h-2" />
-                          </div>
-                        )}
+
                       </CardContent>
                     </Card>
                   ))}
@@ -1307,7 +1300,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                         <div>
                           <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Value</p>
                           <p className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                            {packageData.analytics.totalValue}
+                            {finalPackageData.analytics.totalValue}
                           </p>
                         </div>
                       </div>
@@ -1323,7 +1316,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                         <div>
                           <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Monthly Savings</p>
                           <p className={`text-xl font-bold text-green-600 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                            {packageData.analytics.monthlySavings}
+                            {finalPackageData.analytics.monthlySavings}
                           </p>
                         </div>
                       </div>
@@ -1339,7 +1332,7 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                         <div>
                           <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Services Used</p>
                           <p className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                            {packageData.analytics.servicesUsed}/{packageData.analytics.totalServices}
+                            {finalPackageData.analytics.servicesUsed}/{finalPackageData.analytics.totalServices}
                           </p>
                         </div>
                       </div>
@@ -1383,61 +1376,88 @@ export default function PackageDetails({ isOpen, onClose, isDarkMode = false, on
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {packageData.addons.map((addon, index) => (
-                    <Card key={index} className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} flex flex-col h-full`}>
-                      <CardContent className="p-4 flex flex-col h-full">
-                        <div className="flex items-start justify-between mb-3 flex-shrink-0">
-                          <div className="flex-1 min-w-0 pr-3">
-                            <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} text-sm leading-tight`}>
-                              {addon.name}
-                            </h4>
-                            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1 leading-relaxed`}>
-                              {addon.description}
-                            </p>
+                {addonsLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3, 4, 5, 6].map((index) => (
+                      <Card key={index} className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} flex flex-col h-full`}>
+                        <CardContent className="p-4 flex flex-col h-full">
+                          <div className="animate-pulse">
+                            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
+                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
+                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+                            <div className="flex space-x-2">
+                              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded flex-1"></div>
+                              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded flex-1"></div>
+                              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded flex-1"></div>
+                            </div>
                           </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} text-sm`}>
-                              {addon.price}
-                            </p>
-                            <Badge className={`mt-1 ${getStatusColor(addon.status)} text-xs`}>
-                              {addon.status}
-                            </Badge>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : addons.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {addons.map((addon, index) => (
+                      <Card key={addon.addon_id || index} className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} flex flex-col h-full`}>
+                        <CardContent className="p-4 flex flex-col h-full">
+                          <div className="flex items-start justify-between mb-3 flex-shrink-0">
+                            <div className="flex-1 min-w-0 pr-3">
+                              <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} text-sm leading-tight`}>
+                                {addon.addon_info.name}
+                              </h4>
+                              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1 leading-relaxed`}>
+                                {addon.addon_info.description}
+                              </p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} text-sm`}>
+                                ₱{addon.addon_info.base_price}
+                              </p>
+                              <Badge className={`mt-1 ${addon.addon_info.price_type === 'one-time' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'} text-xs`}>
+                                {addon.addon_info.price_type}
+                              </Badge>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="flex space-x-2 mt-auto pt-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleAddonAction(addon, 'view')}
-                            className="flex-1 h-8 text-xs border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
-                          >
-                            <Eye className="w-3 h-3 mr-1" />
-                            View
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleAddonAction(addon, 'info')}
-                            className="flex-1 h-8 text-xs border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
-                          >
-                            <MessageSquare className="w-3 h-3 mr-1" />
-                            Info
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleAddonAction(addon, 'contact')}
-                            className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
-                          >
-                            <Phone className="w-3 h-3 mr-1" />
-                            Contact
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                          <div className="flex space-x-2 mt-auto pt-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAddonAction(addon, 'view')}
+                              className="flex-1 h-8 text-xs border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              View
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAddonAction(addon, 'info')}
+                              className="flex-1 h-8 text-xs border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                            >
+                              <MessageSquare className="w-3 h-3 mr-1" />
+                              Info
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleAddonAction(addon, 'contact')}
+                              className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              <Phone className="w-3 h-3 mr-1" />
+                              Contact
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={`text-center py-12 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No addons available at the moment</p>
+                    <p className="text-sm mt-1">Check back later for new addon services</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 require('dotenv').config();
 
 // Import routes
@@ -13,8 +14,10 @@ const addonPurchaseRoutes = require('./routes/addonPurchaseRoutes');
 const packagePurchaseRoutes = require('./routes/packagePurchaseRoutes');
 const brandKitRoutes = require('./routes/brandKitRoutes');
 const productServiceRoutes = require('./routes/productServiceRoutes');
+const organizationRoutes = require('./routes/organizationRoutes');
 const packageFeatureCommentRoutes = require('./routes/packageFeatureCommentRoutes');
 const aiSuggestionsRoutes = require('./routes/aiSuggestionsRoutes');
+const emailRoutes = require('./routes/emailRoutes');
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -23,30 +26,40 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for development
+}));
 
 // CORS configuration
 const corsOptions = {
-  origin: true, // Allow all origins for development
+  origin: process.env.NODE_ENV === 'production' 
+    ? [process.env.FRONTEND_URL, process.env.ALLOWED_ORIGINS] 
+    : true, // Allow all origins for development
   credentials: true,
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 
 // Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: {
-    success: false,
-    message: 'Too many requests from this IP, please try again later.'
-  }
-});
-app.use('/api/', limiter);
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 100, // limit each IP to 100 requests per windowMs
+//   message: {
+//     success: false,
+//     message: 'Too many requests from this IP, please try again later.'
+//   }
+// });
+// app.use('/api/', limiter);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Static file serving for uploads
+app.use('/uploads', express.static('uploads'));
+
+// Serve static files from the React app build directory
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -67,8 +80,15 @@ app.use('/api/addon-purchases', addonPurchaseRoutes);
 app.use('/api/package-purchases', packagePurchaseRoutes);
 app.use('/api/brandkit', brandKitRoutes);
 app.use('/api/productservice', productServiceRoutes);
+app.use('/api/organization', organizationRoutes);
 app.use('/api/package-feature-comments', packageFeatureCommentRoutes);
 app.use('/api/ai-suggestions', aiSuggestionsRoutes);
+app.use('/api/email', emailRoutes);
+
+// Handle React routing, return all requests to React app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public', 'index.html'));
+});
 
 // 404 handler
 app.use(notFound);

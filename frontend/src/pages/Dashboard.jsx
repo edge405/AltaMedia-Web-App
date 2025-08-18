@@ -32,8 +32,7 @@ import {
   FileEdit,
   Palette,
   AlertCircle,
-  Loader2,
-  Building2
+  Loader2
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -46,6 +45,7 @@ import PackageDetails from "@/components/PackageDetails";
 import CustomNotification from "@/components/CustomNotification";
 import FeatureDetails from "@/components/FeatureDetails";
 import Messages from "@/components/Messages";
+import FormStatusIndicator from "@/components/FormStatusIndicator";
 import apiService from "@/utils/api";
 import dashboardService from "@/services/dashboardService";
 
@@ -59,8 +59,6 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [showPackageDetails, setShowPackageDetails] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState(null);
-  const [allCompanies, setAllCompanies] = useState([]);
 
   // Use parent's dark mode state if provided, otherwise use local state
   const effectiveDarkMode = parentIsDarkMode !== undefined ? parentIsDarkMode : isDarkMode;
@@ -79,26 +77,10 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
   const [error, setError] = useState(null);
   const [hasActivePackage, setHasActivePackage] = useState(false);
 
-  // Load selected company and fetch dashboard data on component mount
+  // Load dashboard data on component mount
   useEffect(() => {
-    const savedCompany = localStorage.getItem('selectedCompany');
-    const savedCompanies = localStorage.getItem('userCompanies');
-
-    if (savedCompanies) {
-      const parsedCompanies = JSON.parse(savedCompanies);
-      setAllCompanies(parsedCompanies);
-    }
-
-    if (savedCompany) {
-      setSelectedCompany(JSON.parse(savedCompany));
-    } else {
-      // If no company selected, redirect to company selection
-      navigate('/company-selection');
-      return;
-    }
-
     fetchDashboardData();
-  }, [navigate]);
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -526,13 +508,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
     navigate('/know-your-form');
   };
 
-  const handleCompanySwitch = (company) => {
-    setSelectedCompany(company);
-    localStorage.setItem('selectedCompany', JSON.stringify(company));
-    // Refresh dashboard data for the new company
-    fetchDashboardData();
-    toast.success(`Switched to ${company.name}`);
-  };
+
 
   const updatedFeatures = packageDetails?.features || [];
 
@@ -542,6 +518,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 w-full p-2 sm:p-4">
       {/* Left Column */}
       <div className="flex-1">
+
         {selectedFeature ? (
           <FeatureDetails
             feature={{
@@ -556,80 +533,11 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
           />
         ) : (
           <>
-            {/* Company Switcher Dropdown */}
-            {selectedCompany && allCompanies.length > 0 && (
-              <Card className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-gray-200 dark:border-gray-700 mb-4">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                        <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                          {selectedCompany.name}
-                        </h2>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {selectedCompany.industry || 'Company Dashboard'}
-                        </p>
-                      </div>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                          <Building2 className="w-4 h-4 mr-2" />
-                          Switch Company
-                          <ChevronDown className="w-4 h-4 ml-2" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        {allCompanies.map((company) => (
-                          <DropdownMenuItem
-                            key={company.id}
-                            onClick={() => handleCompanySwitch(company)}
-                            className={`flex items-center space-x-3 ${company.id === selectedCompany.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                              }`}
-                          >
-                            <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded flex items-center justify-center">
-                              <Building2 className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div className="flex-1 text-left">
-                              <div className="font-medium text-gray-900 dark:text-gray-100">
-                                {company.name}
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {company.industry || 'No industry'}
-                              </div>
-                            </div>
-                            {company.id === selectedCompany.id && (
-                              <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                            )}
-                          </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuItem
-                          onClick={() => navigate('/company-selection')}
-                          className="border-t border-gray-200 dark:border-gray-700 mt-1 pt-1"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add New Company
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Current Package */}
             <Card className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                      <Package className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">Current Package</CardTitle>
-                  </div>
+                  <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">Current Package</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -761,7 +669,7 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
                     <p className="text-gray-600 dark:text-gray-400 mb-4">
                       You don't have any active packages. Browse our available packages to get started.
                     </p>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => window.location.href = 'https://store.altamedia.ai/'}>
                       Browse Packages
                     </Button>
                   </div>
@@ -1006,12 +914,12 @@ export default function Dashboard({ isDarkMode: parentIsDarkMode }) {
         </Card>
       </div>
 
-      {/* Package Details Modal */}
       <PackageDetails
         isOpen={showPackageDetails}
         onClose={() => setShowPackageDetails(false)}
         isDarkMode={effectiveDarkMode}
         onOpenMessages={handleOpenMessages}
+        packageData={packageDetails}
       />
 
       {/* Messages Component */}

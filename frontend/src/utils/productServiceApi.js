@@ -53,7 +53,7 @@ const transformToDatabaseFormat = (formData) => {
 const transformToFrontendFormat = (dbData) => {
   const transformed = {};
 
-  // Map database column names to frontend field names
+  // Map database field names to frontend field names
   const fieldMappings = {
     building_type: 'buildingType',
     product_name: 'productName',
@@ -84,7 +84,13 @@ const transformToFrontendFormat = (dbData) => {
   // Transform each field
   Object.keys(dbData).forEach(key => {
     const frontendKey = fieldMappings[key] || key;
-    transformed[frontendKey] = dbData[key];
+    
+    // Special handling for reference_materials (convert comma-separated string to array)
+    if (key === 'reference_materials' && typeof dbData[key] === 'string') {
+      transformed[frontendKey] = dbData[key] ? dbData[key].split(',').filter(path => path.trim()) : [];
+    } else {
+      transformed[frontendKey] = dbData[key];
+    }
   });
 
   return transformed;
@@ -101,13 +107,36 @@ export const saveFormData = async (userId, stepData, currentStep) => {
   try {
     const transformedData = transformToDatabaseFormat(stepData);
     
-    const response = await apiService.put('/productservice/save', {
-      userId,
-      stepData: transformedData,
-      currentStep
-    });
-
-    return response;
+    // Check if there are files to upload (ensure they are arrays and have files)
+    const hasFiles = Array.isArray(transformedData.reference_materials) && transformedData.reference_materials.length > 0;
+    
+    if (hasFiles) {
+      // Use FormData for file uploads
+      const formData = new FormData();
+      formData.append('userId', userId);
+      formData.append('currentStep', currentStep);
+      
+      // Add non-file data as JSON string
+      const nonFileData = { ...transformedData };
+      delete nonFileData.reference_materials;
+      formData.append('stepData', JSON.stringify(nonFileData));
+      
+      // Add files
+      transformedData.reference_materials.forEach(file => {
+        formData.append('reference_materials', file);
+      });
+      
+      const response = await apiService.putFormData('/productservice/save', formData);
+      return response;
+    } else {
+      // Use regular JSON for non-file data
+      const response = await apiService.put('/productservice/save', {
+        userId,
+        stepData: transformedData,
+        currentStep
+      });
+      return response;
+    }
   } catch (error) {
     console.error('Error saving ProductService form data:', error);
     throw error;

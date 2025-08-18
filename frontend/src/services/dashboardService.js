@@ -208,7 +208,9 @@ class DashboardService {
           // Include additional feature data
           feature_status: featureStatus,
           created_at: feature.created_at,
-          purchase_date: feature.purchase_date
+          purchase_date: feature.purchase_date,
+          // Add outputs array for confirmation system
+          outputs: this.generateFeatureOutputs(featureName, featureStatus)
         });
       });
     }
@@ -325,6 +327,109 @@ class DashboardService {
     };
 
     return outputMap[featureName] || "In development";
+  }
+
+  /**
+   * Generate feature outputs with confirmation system
+   */
+  generateFeatureOutputs(featureName, featureStatus) {
+    const outputs = [];
+    
+    // Generate different outputs based on feature name
+    switch (featureName) {
+      case "Website":
+        outputs.push({
+          id: 1,
+          title: "Homepage Design",
+          description: "Modern, responsive homepage design with hero section and key features",
+          status: "Pending Approval",
+          lastUpdated: "2 hours ago",
+          url: "https://example.com/homepage-preview",
+          approvedDate: null,
+          rejectedDate: null,
+          rejectionReason: null
+        });
+        outputs.push({
+          id: 2,
+          title: "About Page Content",
+          description: "Company story and team information with professional copywriting",
+          status: "Approved",
+          lastUpdated: "1 day ago",
+          url: "https://example.com/about-preview",
+          approvedDate: "2024-01-15",
+          rejectedDate: null,
+          rejectionReason: null
+        });
+        break;
+        
+      case "Logo Design":
+        outputs.push({
+          id: 3,
+          title: "Primary Logo Design",
+          description: "Main logo in vector format with multiple color variations",
+          status: "Pending Approval",
+          lastUpdated: "4 hours ago",
+          url: "https://example.com/logo-preview",
+          approvedDate: null,
+          rejectedDate: null,
+          rejectionReason: null
+        });
+        outputs.push({
+          id: 4,
+          title: "Logo Usage Guidelines",
+          description: "Documentation for proper logo usage and brand standards",
+          status: "In Development",
+          lastUpdated: "1 week ago",
+          url: null,
+          approvedDate: null,
+          rejectedDate: null,
+          rejectionReason: null
+        });
+        break;
+        
+      case "Brand Guidelines":
+        outputs.push({
+          id: 5,
+          title: "Brand Style Guide",
+          description: "Complete brand guidelines including colors, typography, and usage examples",
+          status: "Rejected",
+          lastUpdated: "3 days ago",
+          url: "https://example.com/brand-guide-preview",
+          approvedDate: null,
+          rejectedDate: "2024-01-12",
+          rejectionReason: "Color palette needs adjustment to match brand vision"
+        });
+        break;
+        
+      case "Content Calendar":
+        outputs.push({
+          id: 6,
+          title: "January Content Plan",
+          description: "30 days of social media content with captions and hashtags",
+          status: "Live",
+          lastUpdated: "2 weeks ago",
+          url: "https://example.com/content-calendar",
+          approvedDate: "2024-01-01",
+          rejectedDate: null,
+          rejectionReason: null
+        });
+        break;
+        
+      default:
+        outputs.push({
+          id: 7,
+          title: `${featureName} Deliverable`,
+          description: `Main deliverable for ${featureName} feature`,
+          status: "In Development",
+          lastUpdated: "Recently",
+          url: null,
+          approvedDate: null,
+          rejectedDate: null,
+          rejectionReason: null
+        });
+    }
+    
+    return outputs;
   }
 
   /**

@@ -13,12 +13,47 @@ export const brandKitApi = {
    */
   saveFormData: async (userId, stepData, currentStep) => {
     try {
-      const response = await apiService.put('/brandkit/save', {
-        userId,
-        stepData,
-        currentStep
-      });
-      return response;
+      // Check if there are files to upload (ensure they are arrays and have files)
+      const hasReferenceFiles = Array.isArray(stepData.reference_materials) && stepData.reference_materials.length > 0;
+      const hasInspirationFiles = Array.isArray(stepData.inspiration_links) && stepData.inspiration_links.length > 0;
+      const hasFiles = hasReferenceFiles || hasInspirationFiles;
+      
+      if (hasFiles) {
+        // Use FormData for file uploads
+        const formData = new FormData();
+        formData.append('userId', userId);
+        formData.append('currentStep', currentStep);
+        
+        // Add non-file data as JSON string
+        const nonFileData = { ...stepData };
+        delete nonFileData.reference_materials;
+        delete nonFileData.inspiration_links;
+        formData.append('stepData', JSON.stringify(nonFileData));
+        
+        // Add files
+        if (hasReferenceFiles) {
+          stepData.reference_materials.forEach(file => {
+            formData.append('reference_materials', file);
+          });
+        }
+        
+        if (hasInspirationFiles) {
+          stepData.inspiration_links.forEach(file => {
+            formData.append('inspiration_links', file);
+          });
+        }
+        
+        const response = await apiService.putFormData('/brandkit/save', formData);
+        return response;
+      } else {
+        // Use regular JSON for non-file data
+        const response = await apiService.put('/brandkit/save', {
+          userId,
+          stepData,
+          currentStep
+        });
+        return response;
+      }
     } catch (error) {
       console.error('Error saving form data:', error);
       throw new Error(error.message || 'Failed to save form data');
@@ -38,6 +73,24 @@ export const brandKitApi = {
       console.error('Error fetching form data:', error);
       throw new Error(error.message || 'Failed to fetch form data');
     }
+  },
+
+  /**
+   * Check if user has completed the form
+   * @param {number} userId - User ID
+   * @returns {Promise<boolean>} True if form is completed (step 11), false otherwise
+   */
+  isFormCompleted: async (userId) => {
+    try {
+      const response = await apiService.get(`/brandkit/data/${userId}`);
+      if (response.success && response.data?.currentStep) {
+        return response.data.currentStep === 11;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking form completion:', error);
+      return false;
+    }
   }
 };
 
@@ -47,33 +100,23 @@ export const brandKitApi = {
  * @returns {Object} Database format data (snake_case)
  */
 export const transformToDatabaseFormat = (frontendData) => {
+  const transformed = {};
+  
+  // Map frontend field names to database field names
   const fieldMappings = {
-    // Step 1: Business Basics
     buildingType: 'building_type',
     businessEmail: 'business_email',
     hasProventousId: 'has_proventous_id',
     proventousId: 'proventous_id',
     businessName: 'business_name',
-
-    // Step 2: About Your Business
     contactNumber: 'contact_number',
     preferredContact: 'preferred_contact',
-    industry: 'industry',
     yearStarted: 'year_started',
     primaryLocation: 'primary_location',
     behindBrand: 'behind_brand',
     currentCustomers: 'current_customers',
     wantToAttract: 'want_to_attract',
     teamDescription: 'team_description',
-    spendingType: 'spending_type',
-    secondaryAudience: 'secondary_audience',
-    businessStage: 'business_stage',
-    missionStatement: 'mission_statement',
-    visionStatement: 'long_term_vision',
-    coreValues: 'core_values',
-    brandDescription: 'business_description',
-
-    // Step 3: Audience Clarity
     desiredEmotion: 'desired_emotion',
     targetProfessions: 'target_professions',
     reachLocations: 'reach_locations',
@@ -81,33 +124,19 @@ export const transformToDatabaseFormat = (frontendData) => {
     spendingHabits: 'spending_habits',
     interactionMethods: 'interaction_methods',
     customerChallenges: 'customer_challenges',
+    customerMotivation: 'customer_motivation',
     audienceBehavior: 'audience_behavior',
     customerChoice: 'customer_choice',
-    emotionalGoal: 'emotional_goal',
-    purchaseMotivators: 'customer_motivation',
-
-    // Step 4: Team & Culture
     cultureWords: 'culture_words',
     teamTraditions: 'team_traditions',
     teamHighlights: 'team_highlights',
-    cultureDescription: 'culture_description',
-
-    // Step 5: Brand Identity
-    reason1: 'reason1',
-    reason2: 'reason2',
-    reason3: 'reason3',
     brandSoul: 'brand_soul',
     brandTone: 'brand_tone',
-    brand1: 'brand1',
-    brand2: 'brand2',
-    brand3: 'brand3',
     brandAvoid: 'brand_avoid',
     missionStatement: 'mission_statement',
     longTermVision: 'long_term_vision',
     coreValues: 'core_values',
     brandPersonality: 'brand_personality',
-
-    // Step 6: Visual Direction
     hasLogo: 'has_logo',
     logoAction: 'logo_action',
     preferredColors: 'preferred_colors',
@@ -117,95 +146,76 @@ export const transformToDatabaseFormat = (frontendData) => {
     logoType: 'logo_type',
     imageryStyle: 'imagery_style',
     inspirationLinks: 'inspiration_links',
-
-    // Step 7: Collateral Needs
     brandKitUse: 'brand_kit_use',
     brandElements: 'brand_elements',
     fileFormats: 'file_formats',
-
-    // Step 8: Business Goals
     primaryGoal: 'primary_goal',
     shortTermGoals: 'short_term_goals',
     midTermGoals: 'mid_term_goals',
     longTermGoal: 'long_term_goal',
     bigPictureVision: 'big_picture_vision',
     successMetrics: 'success_metrics',
-
-    // Step 9: AI-Powered Insights
+    businessDescription: 'business_description',
     inspiration: 'inspiration',
     targetInterests: 'target_interests',
     currentInterests: 'current_interests',
-
-    // Step 10: Wrap-Up
     specialNotes: 'special_notes',
-    timeline: 'timeline',
     approver: 'approver',
-
-    // Step 11: Upload References
-    referenceMaterials: 'reference_materials'
+    referenceMaterials: 'reference_materials',
+    spendingType: 'spending_type',
+    secondaryAudience: 'secondary_audience',
+    emotionalGoal: 'emotional_goal',
+    cultureDescription: 'culture_description',
+    businessStage: 'business_stage'
   };
 
-  const transformed = {};
-  
-  Object.keys(frontendData).forEach(key => {
-    if (fieldMappings[key] && frontendData[key] !== undefined && frontendData[key] !== null) {
-      const dbField = fieldMappings[key];
-      let value = frontendData[key];
-
+  for (const [frontendKey, value] of Object.entries(frontendData)) {
+    const dbKey = fieldMappings[frontendKey] || frontendKey;
+    
+    if (value !== undefined && value !== null) {
       // Handle special cases
-      if (key === 'primaryLocation' && typeof value === 'string') {
+      if (dbKey === 'primary_location' && typeof value === 'string') {
         try {
-          value = JSON.parse(value);
+          transformed[dbKey] = JSON.parse(value);
         } catch (e) {
-          console.warn('Failed to parse primaryLocation JSON:', e);
+          transformed[dbKey] = value;
         }
+      } else if (dbKey === 'year_started' && typeof value === 'string') {
+        transformed[dbKey] = parseInt(value) || null;
+      } else if (Array.isArray(value) && value.length === 0) {
+        transformed[dbKey] = null;
+      } else {
+        transformed[dbKey] = value;
       }
-
-      // Handle year conversion
-      if (key === 'yearStarted' && typeof value === 'string') {
-        value = parseInt(value) || null;
-      }
-
-      transformed[dbField] = value;
     }
-  });
+  }
 
   return transformed;
 };
 
 /**
- * Transform database data to frontend format
- * @param {Object} dbData - Database data (snake_case)
+ * Transform database format data to frontend format
+ * @param {Object} dbData - Database format data (snake_case)
  * @returns {Object} Frontend format data (camelCase)
  */
 export const transformToFrontendFormat = (dbData) => {
+  const transformed = {};
+  
+  // Map database field names to frontend field names
   const fieldMappings = {
-    // Step 1: Business Basics
     building_type: 'buildingType',
     business_email: 'businessEmail',
     has_proventous_id: 'hasProventousId',
     proventous_id: 'proventousId',
     business_name: 'businessName',
-
-    // Step 2: About Your Business
     contact_number: 'contactNumber',
     preferred_contact: 'preferredContact',
-    industry: 'industry',
     year_started: 'yearStarted',
     primary_location: 'primaryLocation',
     behind_brand: 'behindBrand',
     current_customers: 'currentCustomers',
     want_to_attract: 'wantToAttract',
     team_description: 'teamDescription',
-    spending_type: 'spendingType',
-    secondary_audience: 'secondaryAudience',
-    business_stage: 'businessStage',
-    mission_statement: 'missionStatement',
-    long_term_vision: 'visionStatement',
-    core_values: 'coreValues',
-    business_description: 'brandDescription',
-
-    // Step 3: Audience Clarity
     desired_emotion: 'desiredEmotion',
     target_professions: 'targetProfessions',
     reach_locations: 'reachLocations',
@@ -213,34 +223,19 @@ export const transformToFrontendFormat = (dbData) => {
     spending_habits: 'spendingHabits',
     interaction_methods: 'interactionMethods',
     customer_challenges: 'customerChallenges',
-    customer_motivation: 'purchaseMotivators',
+    customer_motivation: 'customerMotivation',
     audience_behavior: 'audienceBehavior',
     customer_choice: 'customerChoice',
-    emotional_goal: 'emotionalGoal',
-    purchaseMotivators: 'customerMotivation',
-
-    // Step 4: Team & Culture
     culture_words: 'cultureWords',
     team_traditions: 'teamTraditions',
     team_highlights: 'teamHighlights',
-    culture_description: 'cultureDescription',
-
-    // Step 5: Brand Identity
-    reason1: 'reason1',
-    reason2: 'reason2',
-    reason3: 'reason3',
     brand_soul: 'brandSoul',
     brand_tone: 'brandTone',
-    brand1: 'brand1',
-    brand2: 'brand2',
-    brand3: 'brand3',
     brand_avoid: 'brandAvoid',
     mission_statement: 'missionStatement',
-    long_term_vision: 'visionStatement',
+    long_term_vision: 'longTermVision',
     core_values: 'coreValues',
     brand_personality: 'brandPersonality',
-
-    // Step 6: Visual Direction
     has_logo: 'hasLogo',
     logo_action: 'logoAction',
     preferred_colors: 'preferredColors',
@@ -250,54 +245,45 @@ export const transformToFrontendFormat = (dbData) => {
     logo_type: 'logoType',
     imagery_style: 'imageryStyle',
     inspiration_links: 'inspirationLinks',
-
-    // Step 7: Collateral Needs
     brand_kit_use: 'brandKitUse',
     brand_elements: 'brandElements',
     file_formats: 'fileFormats',
-
-    // Step 8: Business Goals
     primary_goal: 'primaryGoal',
     short_term_goals: 'shortTermGoals',
     mid_term_goals: 'midTermGoals',
     long_term_goal: 'longTermGoal',
     big_picture_vision: 'bigPictureVision',
     success_metrics: 'successMetrics',
-
-    // Step 9: AI-Powered Insights
+    business_description: 'businessDescription',
     inspiration: 'inspiration',
     target_interests: 'targetInterests',
     current_interests: 'currentInterests',
-
-    // Step 10: Wrap-Up
     special_notes: 'specialNotes',
-    timeline: 'timeline',
     approver: 'approver',
-
-    // Step 11: Upload References
-    reference_materials: 'referenceMaterials'
+    reference_materials: 'referenceMaterials',
+    spending_type: 'spendingType',
+    secondary_audience: 'secondaryAudience',
+    emotional_goal: 'emotionalGoal',
+    culture_description: 'cultureDescription',
+    business_stage: 'businessStage'
   };
 
-  const transformed = {};
-  
-  Object.keys(dbData).forEach(key => {
-    if (fieldMappings[key] && dbData[key] !== undefined && dbData[key] !== null) {
-      const frontendField = fieldMappings[key];
-      let value = dbData[key];
-
+  for (const [dbKey, value] of Object.entries(dbData)) {
+    const frontendKey = fieldMappings[dbKey] || dbKey;
+    
+    if (value !== undefined && value !== null) {
       // Handle special cases
-      if (key === 'primary_location' && value && typeof value === 'object') {
-        value = JSON.stringify(value);
+      if (dbKey === 'primary_location' && typeof value === 'string') {
+        try {
+          transformed[frontendKey] = JSON.parse(value);
+        } catch (e) {
+          transformed[frontendKey] = value;
+        }
+      } else {
+        transformed[frontendKey] = value;
       }
-
-      // Handle year conversion
-      if (key === 'year_started' && value) {
-        value = value.toString();
-      }
-
-      transformed[frontendField] = value;
     }
-  });
+  }
 
   return transformed;
 }; 

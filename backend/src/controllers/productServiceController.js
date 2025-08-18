@@ -1,5 +1,6 @@
 const { supabase } = require('../config/supabase');
 const logger = require('../utils/logger');
+const { extractFileUploads, cleanupOldFiles } = require('../utils/fileUploadUtils');
 
 /**
  * Save or update ProductService form data for a specific step
@@ -9,7 +10,24 @@ const logger = require('../utils/logger');
 const saveFormData = async (req, res) => {
   try {
     console.log('📥 Received ProductService request body:', req.body);
-    const { userId, stepData, currentStep } = req.body;
+    console.log('📁 Files in request:', req.files);
+    
+    let { userId, stepData, currentStep } = req.body;
+    
+    // Parse stepData if it's a JSON string (when files are uploaded)
+    if (typeof stepData === 'string') {
+      try {
+        stepData = JSON.parse(stepData);
+        console.log('📋 Parsed stepData from JSON string:', stepData);
+      } catch (error) {
+        console.error('❌ Error parsing stepData JSON:', error);
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid stepData format',
+          error: error.message
+        });
+      }
+    }
 
     console.log('📋 Extracted ProductService fields:', { userId, stepData, currentStep });
 
@@ -20,6 +38,37 @@ const saveFormData = async (req, res) => {
         message: 'Missing required fields: userId, stepData, currentStep',
         received: { userId, stepData: !!stepData, currentStep }
       });
+    }
+
+    // === FILE UPLOAD PROCESSING ===
+    console.log('📁 Processing file uploads for ProductService...');
+    console.log('📁 req.files:', req.files);
+    console.log('📁 req.files.reference_materials:', req.files?.reference_materials);
+    
+    let processedStepData = { ...stepData };
+
+    // Handle file uploads for reference_materials
+    if (req.files && req.files.reference_materials) {
+      console.log('📁 Processing reference_materials files:', req.files.reference_materials);
+      
+      // Extract file paths from uploaded files
+      const filePaths = extractFileUploads(processedStepData, req.files.reference_materials, 'reference_materials');
+      
+      // Store file paths as comma-separated string in the database
+      // This is more compatible with different database column types
+      processedStepData.reference_materials = filePaths.join(',');
+      
+      console.log('📁 File paths array:', filePaths);
+      console.log('📁 Comma-separated string:', processedStepData.reference_materials);
+      
+      console.log('📁 reference_materials file paths:', filePaths);
+      console.log('📁 Final processedStepData.reference_materials:', processedStepData.reference_materials);
+    } else {
+      console.log('📁 No reference_materials files found in request');
+      // Ensure reference_materials is set to empty string if no files
+      if (!processedStepData.reference_materials) {
+        processedStepData.reference_materials = '';
+      }
     }
 
     logger.info(`Saving ProductService form data for user ${userId}, step ${currentStep}`);
@@ -43,7 +92,7 @@ const saveFormData = async (req, res) => {
         const { data, error } = await supabase
           .from('product_service_forms')
           .update({
-            ...stepData,
+            ...processedStepData,
             current_step: currentStep,
             updated_at: new Date().toISOString()
           })
@@ -71,7 +120,7 @@ const saveFormData = async (req, res) => {
           .from('product_service_forms')
           .insert({
             user_id: userId,
-            ...stepData,
+            ...processedStepData,
             current_step: currentStep,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()

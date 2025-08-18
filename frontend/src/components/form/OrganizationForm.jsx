@@ -13,11 +13,11 @@ import FormField from './FormField';
 import FileUpload from './FileUpload';
 import AISuggestion from './AISuggestion';
 import CheckboxGroup from './CheckboxGroup';
-import { brandKitApi, transformToDatabaseFormat, transformToFrontendFormat } from '@/utils/brandKitApi';
+import { organizationApi, transformToDatabaseFormat, transformToFrontendFormat } from '@/utils/organizationApi';
 import KnowingYouForm from './KnowingYouForm';
 import ProductServiceForm from './ProductServiceForm';
 
-const OrganizationForm = ({ onFormTypeChange = () => { } }) => {
+const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [currentStep, setCurrentStep] = useState(1);
@@ -51,7 +51,7 @@ const OrganizationForm = ({ onFormTypeChange = () => { } }) => {
             setError(null);
 
             try {
-                const response = await brandKitApi.getFormData(userId);
+                const response = await organizationApi.getFormData(userId);
 
                 if (response.success && response.data?.formData) {
                     const frontendData = transformToFrontendFormat(response.data.formData);
@@ -73,6 +73,19 @@ const OrganizationForm = ({ onFormTypeChange = () => { } }) => {
     const updateFormData = (field, value) => {
         console.log(`Field change: ${field} =`, value);
 
+        if (field === 'referenceMaterials') {
+            console.log('🔍 OrganizationForm - referenceMaterials value:', value);
+            console.log('🔍 OrganizationForm - referenceMaterials type:', typeof value);
+            console.log('🔍 OrganizationForm - referenceMaterials is array:', Array.isArray(value));
+            if (Array.isArray(value)) {
+                value.forEach((file, index) => {
+                    console.log(`🔍 OrganizationForm - file ${index}:`, file);
+                    console.log(`🔍 OrganizationForm - file ${index} instanceof File:`, file instanceof File);
+                    console.log(`🔍 OrganizationForm - file ${index} constructor:`, file.constructor.name);
+                });
+            }
+        }
+
         setFormData(prev => ({
             ...prev,
             [field]: value
@@ -82,11 +95,6 @@ const OrganizationForm = ({ onFormTypeChange = () => { } }) => {
         if (field === 'buildingType' && onFormTypeChange) {
             onFormTypeChange(value);
         }
-
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
     };
 
     const nextStep = async () => {
@@ -104,15 +112,15 @@ const OrganizationForm = ({ onFormTypeChange = () => { } }) => {
         setError(null);
 
         try {
-            // Transform form data to database format
-            const stepData = transformToDatabaseFormat(formData);
-
             console.log('Saving form data for step:', currentStep);
             console.log('User ID:', user.id);
-            console.log('Step data:', stepData);
+            console.log('Form data:', formData);
+            console.log('Form data referenceMaterials:', formData.referenceMaterials);
+            console.log('Form data referenceMaterials type:', typeof formData.referenceMaterials);
+            console.log('Form data referenceMaterials is array:', Array.isArray(formData.referenceMaterials));
 
-            // Save current step data
-            const response = await brandKitApi.saveFormData(userId, stepData, currentStep);
+            // Save current step data (pass raw formData, let API handle transformation)
+            const response = await organizationApi.saveFormData(userId, formData, currentStep);
 
             if (response.success) {
                 console.log('Form data saved successfully:', response.data);
@@ -149,13 +157,10 @@ const OrganizationForm = ({ onFormTypeChange = () => { } }) => {
         setError(null);
 
         try {
-            // Transform form data to database format
-            const finalData = transformToDatabaseFormat(formData);
+            console.log('Completing form with data:', formData);
 
-            console.log('Completing form with data:', finalData);
-
-            // Save the final step data (step 4)
-            const response = await brandKitApi.saveFormData(userId, finalData, 4);
+            // Save the final step data (step 4) (pass raw formData, let API handle transformation)
+            const response = await organizationApi.saveFormData(userId, formData, 4);
 
             if (response.success) {
                 console.log('Form completed successfully:', response.data);
@@ -174,7 +179,12 @@ const OrganizationForm = ({ onFormTypeChange = () => { } }) => {
     };
 
     const handleBackToDashboard = () => {
-        navigate('/dashboard');
+        if (embedded) {
+            // If embedded, notify parent to go back to forms selection
+            onFormTypeChange && onFormTypeChange(null);
+        } else {
+            navigate('/dashboard');
+        }
     };
 
     // If building type is "business", render the KnowingYouForm component
@@ -428,14 +438,16 @@ const OrganizationForm = ({ onFormTypeChange = () => { } }) => {
 
     return (
         <div className="w-full max-w-4xl mx-auto p-4 sm:p-6">
-            <div className="mb-6 sm:mb-8 text-center">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                    Organization Form – Alta Media
-                </h1>
-                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
-                    Let's create the perfect social media strategy for your organization
-                </p>
-            </div>
+            {!embedded && (
+                <div className="mb-6 sm:mb-8 text-center">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                        Organization Form – Alta Media
+                    </h1>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
+                        Let's create the perfect social media strategy for your organization
+                    </p>
+                </div>
+            )}
 
             {/* Error Display */}
             {error && (

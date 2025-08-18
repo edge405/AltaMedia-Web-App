@@ -17,7 +17,7 @@ import CheckboxGroup from './CheckboxGroup';
 import { saveFormData, getFormData } from '@/utils/productServiceApi';
 import OrganizationForm from './OrganizationForm';
 
-const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
+const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [currentStep, setCurrentStep] = useState(1);
@@ -213,7 +213,12 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
     };
 
     const handleBackToDashboard = () => {
-        navigate('/dashboard');
+        if (embedded) {
+            // If embedded, notify parent to go back to forms selection
+            onFormTypeChange && onFormTypeChange(null);
+        } else {
+            navigate('/dashboard');
+        }
     };
 
     // If building type is "organization", render the OrganizationForm component
@@ -359,7 +364,7 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
 
     const renderStep3 = () => (
         <div className="space-y-8">
-            <FormField label="What 3 words best describe your product's personality?" type="Tags">
+            <FormField label="What 3 words best describe your product's personality?" type="Tags" aiSuggestions>
                 <div className="space-y-4">
                     <TagInput
                         value={formData.brandPersonality || []}
@@ -370,15 +375,15 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
                             "Trustworthy", "Bold", "Elegant", "Friendly", "Modern"
                         ]}
                     />
-                    {/* <AISuggestion
+                    <AISuggestion
                         fieldName="brandPersonality"
                         onApplySuggestion={(suggestion) => updateFormData('brandPersonality', suggestion.split(', '))}
                         formData={formData}
-                    /> */}
+                    />
                 </div>
             </FormField>
 
-            <FormField label="Describe your preferred visual direction." type="Tags">
+            <FormField label="Describe your preferred visual direction." type="Tags" aiSuggestions>
                 <div className="space-y-4">
                     <TagInput
                         value={formData.designStyle || []}
@@ -389,11 +394,11 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
                             "Playful", "Professional", "Creative", "Clean", "Dynamic"
                         ]}
                     />
-                    {/* <AISuggestion
+                    <AISuggestion
                         fieldName="designStyle"
                         onApplySuggestion={(suggestion) => updateFormData('designStyle', suggestion.split(', '))}
                         formData={formData}
-                    /> */}
+                    />
                 </div>
             </FormField>
 
@@ -602,14 +607,16 @@ const ProductServiceForm = ({ onFormTypeChange = () => { } }) => {
 
     return (
         <div className="w-full max-w-4xl mx-auto p-4 sm:p-6">
-            <div className="mb-6 sm:mb-8 text-center">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                    Product/Service Brand Kit Form – Alta Media
-                </h1>
-                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
-                    Let's create the perfect brand identity for your product or service
-                </p>
-            </div>
+            {!embedded && (
+                <div className="mb-6 sm:mb-8 text-center">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                        Product/Service Brand Kit Form – Alta Media
+                    </h1>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
+                        Let's create the perfect brand identity for your product or service
+                    </p>
+                </div>
+            )}
 
             {error && (
                 <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">

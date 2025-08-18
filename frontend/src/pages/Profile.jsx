@@ -547,89 +547,34 @@ export default function Profile({ isDarkMode = false }) {
         </TabsContent>
 
         <TabsContent value="billing" className="space-y-3 animate-fade-in">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {/* Current Plan */}
-            <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-gray-100">
-                  <Crown className="w-5 h-5" />
-                  <span>Current Plan</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-gray-800 dark:text-gray-100">
-                      {planDetails[formData.current_plan].name}
-                    </h3>
-                    <Badge className={planDetails[formData.current_plan].color}>
-                      Current
-                    </Badge>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-gray-100">
+                <CreditCard className="w-5 h-5" />
+                <span>Billing & Subscription</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <div className="mb-6">
+                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CreditCard className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    {planDetails[formData.current_plan].price}/month
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    Coming Soon
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                    We're working on bringing you a comprehensive billing and subscription management system.
+                    Stay tuned for updates!
                   </p>
-                  <ul className="space-y-2">
-                    {planDetails[formData.current_plan].features.map((feature, index) => (
-                      <li key={index} className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
                 </div>
-                <Button
-                  onClick={handleUpgradePlan}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white transform hover:scale-105 transition-all duration-200"
-                >
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Upgrade Plan
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Billing History */}
-            <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-gray-100">
-                  <CreditCard className="w-5 h-5" />
-                  <span>Billing History</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200">
-                    <div>
-                      <p className="font-medium text-gray-800 dark:text-gray-100">March 2024</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Professional Plan</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-gray-800 dark:text-gray-100">₱10,999</p>
-                      <p className="text-sm text-green-600 dark:text-green-400">Paid</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200">
-                    <div>
-                      <p className="font-medium text-gray-800 dark:text-gray-100">February 2024</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Professional Plan</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-gray-800 dark:text-gray-100">₱10,999</p>
-                      <p className="text-sm text-green-600 dark:text-green-400">Paid</p>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                  <Sparkles className="w-4 h-4" />
+                  <span>Billing features will be available soon</span>
                 </div>
-                <Button
-                  variant="outline"
-                  className="w-full mt-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
-                  onClick={handleDownloadInvoices}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download All Invoices
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="security" className="space-y-3 animate-fade-in">

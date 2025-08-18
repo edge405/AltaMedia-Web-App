@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Bell, MessageSquare, ChevronDown, User, Settings, LogOut, Moon, Sun, Bot, Users, Inbox, BarChart3, Building2, Package, Palette } from "lucide-react";
+import { Bell, MessageSquare, ChevronDown, User, Settings, LogOut, Moon, Sun, Bot, Users, Inbox, BarChart3, Package, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -94,6 +94,10 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
         navigate("/profile");
         toast.success("Navigating to Profile");
         break;
+      case 'client-portal':
+        navigate("/client-portal");
+        toast.success("Navigating to Client Portal");
+        break;
       case 'settings':
         toast.info("Settings page - Coming soon");
         break;
@@ -142,30 +146,12 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
             {/* Left side - Logo */}
             <div className="flex items-center space-x-2 sm:space-x-3">
               <div onClick={() => handleNavigation("/")} className="cursor-pointer">
-                <AltamediaLogo size="default" className={`${isDarkMode ? 'text-white' : 'text-gray-800'}`} />
+                <AltamediaLogo size="xlarge" className={`${isDarkMode ? 'text-white' : 'text-gray-800'}`} />
               </div>
             </div>
 
             {/* Center - Navigation Menu */}
             <nav className="hidden md:flex items-center space-x-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleNavigation("/dashboard")}
-                className={`${currentPageName === 'Dashboard' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : ''} hover:bg-blue-50 dark:hover:bg-blue-900/10`}
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Dashboard
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleNavigation("/company-selection")}
-                className={`${currentPageName === 'CompanySelection' ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''} hover:bg-purple-50 dark:hover:bg-purple-900/10`}
-              >
-                <Building2 className="w-4 h-4 mr-2" />
-                Companies
-              </Button>
             </nav>
 
             {/* Right side - Notifications, Profile */}
@@ -244,6 +230,13 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
                   >
                     <User className="w-4 h-4 mr-2" />
                     Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleProfileAction('client-portal')}
+                    className={isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}
+                  >
+                    <Package className="w-4 h-4 mr-2" />
+                    Client Portal
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handleProfileAction('settings')}

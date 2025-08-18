@@ -14,7 +14,9 @@ const FIELD_TYPES = {
     'logoAction', 'preferredColors', 'colorsToAvoid', 'fontStyles', 
     'designStyle', 'logoType', 'imageryStyle', 'brandKitUse', 
     'brandElements', 'fileFormats', 'interactionMethods', 'successMetrics',
-    'cultureWords', 'brandTone'
+    'cultureWords', 'brandTone',
+    // OrganizationForm specific fields
+    'targetPlatforms', 'contentTypes', 'deliverables'
   ],
   
   // Short text fields - brief, concise responses
@@ -23,7 +25,11 @@ const FIELD_TYPES = {
     'reason1', 'reason2', 'reason3', 'brandSoul', 'primaryGoal',
     'longTermGoal', 'timeline', 'approver', 'buildingType',
     'hasProventousId', 'proventousId', 'preferredContact','businessDescription', 'businessStage',
-    'desiredEmotion', 'spendingType', 'hasLogo'
+    'desiredEmotion', 'spendingType', 'hasLogo',
+    // ProductService specific fields
+    'productName', 'productDescription',
+    // OrganizationForm specific fields
+    'organizationName', 'mainContact'
   ],
   
   // Long text fields - detailed, conversational responses
@@ -35,7 +41,11 @@ const FIELD_TYPES = {
     'brand3', 'brandAvoid', 'shortTermGoals', 'midTermGoals', 
     'bigPictureVision', 'customerChoice', 
     'teamHighlights', 'specialNotes', 'inspirationLinks', 
-    'referenceMaterials'
+    'referenceMaterials',
+    // ProductService specific fields
+    'missionStory', 'targetAudienceProfile', 'competitors',
+    // OrganizationForm specific fields
+    'socialMediaGoals', 'brandUniqueness', 'additionalInfo'
   ]
 };
 
@@ -59,7 +69,35 @@ const extractBusinessContext = (formData) => {
     behindBrand: formData.behindBrand || '',
     inspiration: formData.inspiration || '',
     primaryGoal: formData.primaryGoal || '',
-    longTermGoal: formData.longTermGoal || ''
+    longTermGoal: formData.longTermGoal || '',
+    // ProductService specific context
+    productName: formData.productName || '',
+    productDescription: formData.productDescription || '',
+    missionStory: formData.missionStory || '',
+    targetAudienceProfile: formData.targetAudienceProfile || '',
+    competitors: formData.competitors || '',
+    brandTone: formData.brandTone || '',
+    designStyle: Array.isArray(formData.designStyle) ? formData.designStyle.join(', ') : formData.designStyle || '',
+    preferredColors: Array.isArray(formData.preferredColors) ? formData.preferredColors.join(', ') : formData.preferredColors || '',
+    colorsToAvoid: Array.isArray(formData.colorsToAvoid) ? formData.colorsToAvoid.join(', ') : formData.colorsToAvoid || '',
+    brandKitUse: Array.isArray(formData.brandKitUse) ? formData.brandKitUse.join(', ') : formData.brandKitUse || '',
+    brandElements: Array.isArray(formData.brandElements) ? formData.brandElements.join(', ') : formData.brandElements || '',
+    fileFormats: Array.isArray(formData.fileFormats) ? formData.fileFormats.join(', ') : formData.fileFormats || '',
+    platformSupport: Array.isArray(formData.platformSupport) ? formData.platformSupport.join(', ') : formData.platformSupport || '',
+    timeline: formData.timeline || '',
+    primaryLocation: formData.primaryLocation || '',
+    preferredContact: formData.preferredContact || '',
+    approver: formData.approver || '',
+    specialNotes: formData.specialNotes || '',
+    // OrganizationForm specific context
+    organizationName: formData.organizationName || '',
+    socialMediaGoals: formData.socialMediaGoals || '',
+    brandUniqueness: formData.brandUniqueness || '',
+    targetPlatforms: Array.isArray(formData.targetPlatforms) ? formData.targetPlatforms.join(', ') : formData.targetPlatforms || '',
+    contentTypes: Array.isArray(formData.contentTypes) ? formData.contentTypes.join(', ') : formData.contentTypes || '',
+    deliverables: Array.isArray(formData.deliverables) ? formData.deliverables.join(', ') : formData.deliverables || '',
+    mainContact: formData.mainContact || '',
+    additionalInfo: formData.additionalInfo || ''
   };
   
   return context;
@@ -102,6 +140,32 @@ Business Context:
 - Inspiration: ${businessContext.inspiration}
 - Primary Goal: ${businessContext.primaryGoal}
 - Long Term Goal: ${businessContext.longTermGoal}
+- Product Name: ${businessContext.productName}
+- Product Description: ${businessContext.productDescription}
+- Mission Story: ${businessContext.missionStory}
+- Target Audience Profile: ${businessContext.targetAudienceProfile}
+- Competitors: ${businessContext.competitors}
+- Brand Tone: ${businessContext.brandTone}
+- Design Style: ${businessContext.designStyle}
+- Preferred Colors: ${businessContext.preferredColors}
+- Colors to Avoid: ${businessContext.colorsToAvoid}
+- Brand Kit Use: ${businessContext.brandKitUse}
+- Brand Elements: ${businessContext.brandElements}
+- File Formats: ${businessContext.fileFormats}
+- Platform Support: ${businessContext.platformSupport}
+- Timeline: ${businessContext.timeline}
+- Primary Location: ${businessContext.primaryLocation}
+- Preferred Contact: ${businessContext.preferredContact}
+- Approver: ${businessContext.approver}
+- Special Notes: ${businessContext.specialNotes}
+- Organization Name: ${businessContext.organizationName}
+- Social Media Goals: ${businessContext.socialMediaGoals}
+- Brand Uniqueness: ${businessContext.brandUniqueness}
+- Target Platforms: ${businessContext.targetPlatforms}
+- Content Types: ${businessContext.contentTypes}
+- Deliverables: ${businessContext.deliverables}
+- Main Contact: ${businessContext.mainContact}
+- Additional Info: ${businessContext.additionalInfo}
 `;
 
   // Field-specific prompts with fallback strategies
@@ -120,6 +184,23 @@ Business Context:
     brandDescription: hasContext
       ? `Based on the business context, write a concise, powerful one-sentence description of what this business does. Make it memorable and compelling.`
       : `Write a concise, powerful one-sentence description of what a business does. Focus on the core value proposition and make it memorable and compelling.`,
+    
+    // ProductService specific fields
+    productDescription: hasContext
+      ? `Based on the business context, write a one sentence concise, compelling description of this product or service. Focus on the core value proposition, what it does, and who it's for. Make it memorable and engaging.`
+      : `Write a one sentence concise, compelling description of a product or service. Focus on the core value proposition, what it does, and who it's for. Make it memorable and engaging.`,
+    
+    missionStory: hasContext
+      ? `Based on the business context, write a one paragraph compelling story about the problem this product/service solves and what inspired its creation. Focus on the pain points, the solution, and the motivation behind solving this problem. Make it personal and authentic.`
+      : `Write a compelling story about the problem a product/service solves and what inspired its creation. Focus on the pain points, the solution, and the motivation behind solving this problem. Make it personal and authentic.`,
+    
+    targetAudienceProfile: hasContext
+      ? `Based on the business context, describe the specific types of people this product/service is designed for. Include demographics, psychographics, behaviors, and pain points. Be detailed and specific about who would benefit most from this solution.`
+      : `Describe the specific types of people a product/service is designed for. Include demographics, psychographics, behaviors, and pain points. Be detailed and specific about who would benefit most from this solution.`,
+    
+    competitors: hasContext
+      ? `Based on the business context, describe the competitive landscape and similar products/services in the market. Focus on direct competitors, their strengths and weaknesses, and how this product/service differentiates itself.`
+      : `Describe the competitive landscape and similar products/services in the market. Focus on direct competitors, their strengths and weaknesses, and how a product/service might differentiate itself.`,
     
     // Target Audience
     wantToAttract: hasContext
@@ -188,12 +269,12 @@ Business Context:
     
     // Brand Tone
     brandTone: hasContext
-      ? `Based on the business context, suggest tone of voice characteristics. Return only the tone traits as comma-separated tags.`
+      ? `Based on the business context, suggest 4-5 tone of voice characteristics. Return only the tone traits as comma-separated tags.`
       : `Suggest tone of voice characteristics for a professional brand. Focus on trustworthy, friendly, and authoritative traits. Return only the tone traits as comma-separated tags.`,
     
     // Design Style
     designStyle: hasContext
-      ? `Based on the business context, suggest visual design styles. Return only the styles as comma-separated tags.`
+      ? `Based on the business context, suggest 4-5 visual design styles. Return only the styles as comma-separated tags.`
       : `Suggest visual design styles for a professional brand. Consider modern, clean, and professional approaches. Return only the styles as comma-separated tags.`,
     
     // Logo Type
@@ -307,6 +388,39 @@ Business Context:
     specialNotes: hasContext
       ? `Based on the business context, note any special considerations or unique aspects about this business.`
       : `Note any special considerations or unique aspects about a business. Focus on competitive advantages, unique positioning, and market opportunities.`,
+    
+    // OrganizationForm specific fields
+    socialMediaGoals: hasContext
+      ? `Based on the business context, write compelling social media goals that align with the organization's mission and target audience. Focus on specific, measurable objectives that drive engagement, awareness, and business growth.`
+      : `Write compelling social media goals for an organization. Focus on increasing brand awareness, driving engagement, generating leads, and building community. Be specific about target audience and desired outcomes.`,
+    
+    brandUniqueness: hasContext
+      ? `Based on the business context, describe what makes this brand unique and how it should sound online. Focus on the distinctive voice, personality, and positioning that sets this organization apart from competitors.`
+      : `Describe what makes a brand unique and how it should sound online. Focus on distinctive voice, personality, and positioning that sets an organization apart. Consider tone, style, and unique value propositions.`,
+    
+    targetPlatforms: hasContext
+      ? `Based on the business context, suggest the most effective social media platforms for this organization. Consider the target audience, content type, and business goals. Return only the platform names as comma-separated tags.`
+      : `Suggest the most effective social media platforms for an organization. Consider Facebook, Instagram, TikTok, YouTube, LinkedIn, Twitter, and Pinterest. Return only the platform names as comma-separated tags.`,
+    
+    contentTypes: hasContext
+      ? `Based on the business context, suggest the most effective content types for this organization's social media strategy. Consider the target platforms, audience preferences, and business objectives. Return only the content types as comma-separated tags.`
+      : `Suggest the most effective content types for social media strategy. Consider Short Videos/Reels, Static Graphics, Carousel Posts, Motion Graphics, Long-Form Videos, Stories, and Live Content. Return only the content types as comma-separated tags.`,
+    
+    deliverables: hasContext
+      ? `Based on the business context, suggest the most valuable deliverables for this organization's social media needs. Consider the business goals, available resources, and desired outcomes. Return only the deliverables as comma-separated tags.`
+      : `Suggest the most valuable deliverables for social media needs. Consider Social Media Calendar, Ad Creatives, Caption Writing + Hashtags, Video Editing, Graphics Design, Platform Setup/Optimization, and Performance Reports. Return only the deliverables as comma-separated tags.`,
+    
+    organizationName: hasContext
+      ? `Based on the business context, suggest a compelling name for this organization that reflects its mission, values, and target audience. Make it memorable, professional, and aligned with the brand identity.`
+      : `Suggest a compelling name for an organization that reflects its mission, values, and target audience. Make it memorable, professional, and aligned with the brand identity.`,
+    
+    mainContact: hasContext
+      ? `Based on the business context, suggest who would be the ideal main point of contact for this organization's social media project. Consider the role, responsibilities, and communication style needed.`
+      : `Suggest who would be the ideal main point of contact for an organization's social media project. Consider marketing managers, business owners, or communications directors.`,
+    
+    additionalInfo: hasContext
+      ? `Based on the business context, provide additional insights or considerations that would be valuable for understanding this organization's social media needs. Focus on unique aspects, challenges, or opportunities.`
+      : `Provide additional insights or considerations that would be valuable for understanding an organization's social media needs. Focus on unique aspects, challenges, or opportunities.`,
     
     // Default for any other field
     default: hasContext

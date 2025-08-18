@@ -1,6 +1,7 @@
 const { supabase } = require('../config/supabase');
 const { executeQuery, executeTransaction } = require('../config/mariadb');
 const logger = require('../utils/logger');
+const { extractFileUploads, cleanupOldFiles } = require('../utils/fileUploadUtils');
 
 /**
  * Helper function to validate and clean form data for Supabase
@@ -75,6 +76,27 @@ const saveFormData = async (req, res) => {
       });
     }
 
+    // === FILE UPLOAD PROCESSING ===
+    console.log('📁 Processing file uploads...');
+    let processedStepData = { ...stepData };
+
+    // Handle file uploads for reference_materials and inspiration_links
+    const fileFields = ['reference_materials', 'inspiration_links'];
+    
+    for (const fieldName of fileFields) {
+      if (req.files && req.files[fieldName]) {
+        console.log(`📁 Processing ${fieldName} files:`, req.files[fieldName]);
+        
+        // Extract file paths from uploaded files
+        const filePaths = extractFileUploads(processedStepData, req.files[fieldName], fieldName);
+        
+        // Store file paths as JSON array in the database
+        processedStepData[fieldName] = JSON.stringify(filePaths);
+        
+        console.log(`📁 ${fieldName} file paths:`, filePaths);
+      }
+    }
+
     logger.info(`Saving BrandKit form data for user ${userId}, step ${currentStep} (Supabase + MariaDB)`);
 
     try {
@@ -92,7 +114,7 @@ const saveFormData = async (req, res) => {
       let supabaseSuccess = false;
 
       // Clean and validate the form data
-      const cleanedStepData = validateAndCleanFormData(stepData);
+      const cleanedStepData = validateAndCleanFormData(processedStepData);
       console.log('📝 Cleaned step data for Supabase:', cleanedStepData);
 
       if (existingForm) {
@@ -183,7 +205,7 @@ const saveFormData = async (req, res) => {
           const filteredStepData = {};
           const filteredValues = [];
           
-          for (const [key, value] of Object.entries(stepData)) {
+          for (const [key, value] of Object.entries(processedStepData)) {
             if (value !== undefined && value !== null) {
               filteredStepData[key] = value;
               filteredValues.push(value);
@@ -229,7 +251,7 @@ const saveFormData = async (req, res) => {
           const filteredStepData = {};
           const filteredValues = [];
           
-          for (const [key, value] of Object.entries(stepData)) {
+          for (const [key, value] of Object.entries(processedStepData)) {
             if (value !== undefined && value !== null) {
               filteredStepData[key] = value;
               filteredValues.push(value);

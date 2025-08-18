@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import authService from '@/utils/authService';
 import { toast } from 'sonner';
 
 const AuthContext = createContext();
@@ -13,216 +14,128 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for existing token on app load
+  // Check authentication status on mount
   useEffect(() => {
-    const initializeAuth = () => {
-      const storedToken = localStorage.getItem('authToken');
-      const storedUser = localStorage.getItem('user');
+    const checkAuth = () => {
+      try {
+        const token = authService.getToken();
+        const currentUser = authService.getCurrentUser();
 
-      if (storedToken && storedUser) {
-        try {
-          const userData = JSON.parse(storedUser);
-          setToken(storedToken);
-          setUser(userData);
-        } catch (error) {
-          console.error('Error parsing stored user data:', error);
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('user');
+        if (token && currentUser) {
+          setUser(currentUser);
+          setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
         }
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+        setUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
-    initializeAuth();
+    checkAuth();
   }, []);
 
+  // Login function
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      setIsLoading(true);
+      const response = await authService.login(email, password);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      if (data.success) {
-        const { user: userData, token: authToken } = data.data;
-
-        // Store token and user data
-        localStorage.setItem('authToken', authToken);
-        localStorage.setItem('user', JSON.stringify(userData));
-
-        setToken(authToken);
-        setUser(userData);
-
-        toast.success('Login successful! Welcome to Altamedia');
+      if (response.success) {
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        toast.success('Login successful!');
         return { success: true };
       } else {
-        throw new Error(data.message || 'Login failed');
+        toast.error(response.message || 'Login failed');
+        return { success: false, message: response.message };
       }
     } catch (error) {
       console.error('Login error:', error);
-      toast.error(error.message || 'Login failed. Please try again.');
-      return { success: false, error: error.message };
+      toast.error(error.message || 'Login failed');
+      return { success: false, message: error.message };
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Register function
   const register = async (userData) => {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      setIsLoading(true);
+      const response = await authService.register(userData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      if (data.success) {
-        const { user: newUser, token: authToken } = data.data;
-
-        // Store token and user data
-        localStorage.setItem('authToken', authToken);
-        localStorage.setItem('user', JSON.stringify(newUser));
-
-        setToken(authToken);
-        setUser(newUser);
-
-        toast.success('Registration successful! Welcome to Altamedia');
+      if (response.success) {
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        toast.success('Registration successful!');
         return { success: true };
       } else {
-        throw new Error(data.message || 'Registration failed');
+        toast.error(response.message || 'Registration failed');
+        return { success: false, message: response.message };
       }
     } catch (error) {
       console.error('Registration error:', error);
-      toast.error(error.message || 'Registration failed. Please try again.');
-      return { success: false, error: error.message };
+      toast.error(error.message || 'Registration failed');
+      return { success: false, message: error.message };
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Logout function
   const logout = async () => {
     try {
-      // Call logout endpoint if token exists
-      if (token) {
-        await fetch('http://localhost:3000/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-      }
-    } catch (error) {
-      console.error('Logout API error:', error);
-    } finally {
-      // Clear local storage and state regardless of API call result
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      setToken(null);
+      await authService.logout();
       setUser(null);
+      setIsAuthenticated(false);
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Clear auth data even if logout request fails
+      authService.clearAuth();
+      setUser(null);
+      setIsAuthenticated(false);
       toast.success('Logged out successfully');
     }
   };
 
-  const updateProfile = async (profileData) => {
-    try {
-      const response = await fetch('http://localhost:3000/api/auth/profile', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(profileData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Profile update failed');
-      }
-
-      if (data.success) {
-        const updatedUser = data.data;
-
-        // Update stored user data
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        setUser(updatedUser);
-
-        toast.success('Profile updated successfully');
-        return { success: true };
-      } else {
-        throw new Error(data.message || 'Profile update failed');
-      }
-    } catch (error) {
-      console.error('Profile update error:', error);
-      toast.error(error.message || 'Profile update failed. Please try again.');
-      return { success: false, error: error.message };
-    }
+  // Update user data
+  const updateUser = (userData) => {
+    setUser(userData);
+    authService.setUser(userData);
   };
 
-  const changePassword = async (currentPassword, newPassword) => {
+  // Refresh user data from API
+  const refreshUser = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/password', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Password change failed');
-      }
-
-      if (data.success) {
-        toast.success('Password changed successfully');
-        return { success: true };
-      } else {
-        throw new Error(data.message || 'Password change failed');
+      const response = await authService.getProfile();
+      if (response.success && response.data) {
+        setUser(response.data);
+        authService.setUser(response.data);
       }
     } catch (error) {
-      console.error('Password change error:', error);
-      toast.error(error.message || 'Password change failed. Please try again.');
-      return { success: false, error: error.message };
+      console.error('Error refreshing user data:', error);
     }
-  };
-
-  const getAuthHeaders = () => {
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
   };
 
   const value = {
     user,
-    token,
+    isAuthenticated,
     isLoading,
-    isAuthenticated: !!token,
     login,
     register,
     logout,
-    updateProfile,
-    changePassword,
-    getAuthHeaders,
+    updateUser,
+    refreshUser
   };
 
   return (

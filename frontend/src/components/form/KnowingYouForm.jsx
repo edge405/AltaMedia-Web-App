@@ -22,11 +22,13 @@ import MapPicker from './MapPicker';
 import ProductServiceForm from './ProductServiceForm';
 import OrganizationForm from './OrganizationForm';
 
-const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
+const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, embedded = false }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    buildingType: initialFormType || ''
+  });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,8 +43,8 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
     'Brand Identity',
     'Visual Direction',
     'Collateral Needs',
-    'Business Goals',
-    'AI-Powered Insights',
+    'Business Goals and Vision',
+    'Mission, Vision & Values',
     'Wrap-Up',
     'Upload References'
   ];
@@ -68,6 +70,12 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
           setFormData(frontendData);
           setCurrentStep(response.data.currentStep || 1);
           console.log('Loaded existing form data:', frontendData);
+        } else if (initialFormType) {
+          // If no existing data but we have an initial form type, set it
+          console.log('No existing data, setting initial form type:', initialFormType);
+          setFormData({ buildingType: initialFormType });
+        } else {
+          console.log('No existing data and no initial form type');
         }
       } catch (err) {
         console.error('Error loading form data:', err);
@@ -78,7 +86,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
     };
 
     loadFormData();
-  }, [user?.id]);
+  }, [user?.id, initialFormType]);
 
   const updateFormData = (field, value) => {
     console.log(`Field change: ${field} =`, value);
@@ -101,7 +109,9 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
   // Debug: Log when buildingType changes
   useEffect(() => {
     console.log('Building type changed to:', formData.buildingType);
-  }, [formData.buildingType]);
+    console.log('Initial form type:', initialFormType);
+    console.log('Current form data:', formData);
+  }, [formData.buildingType, initialFormType, formData]);
 
   const nextStep = async () => {
     console.log('User object:', user);
@@ -133,6 +143,8 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
 
         if (currentStep < totalSteps) {
           setCurrentStep(currentStep + 1);
+          // Scroll to top when moving to next step
+          window.scrollTo({ top: 10, behavior: 'smooth' });
         }
       } else {
         setError('Failed to save form data');
@@ -148,6 +160,8 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      // Scroll to top when moving to previous step
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -176,6 +190,10 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
         setIsSubmitted(true);
         // Show success message
         toast.success('🎉 BrandKit form completed successfully! Your brand identity is ready.');
+        // Automatically redirect to client-portal after a short delay
+        setTimeout(() => {
+          navigate('/client-portal');
+        }, 2000);
       } else {
         setError('Failed to complete form');
       }
@@ -188,8 +206,27 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
   };
 
   const handleBackToDashboard = () => {
-    navigate('/dashboard');
+    if (embedded) {
+      // If embedded, notify parent to go back to forms selection
+      onFormTypeChange && onFormTypeChange(null);
+    } else {
+      navigate('/client-portal');
+    }
   };
+
+  // Show loading state while initializing
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-4xl mx-auto p-4 sm:p-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+            <p className="text-gray-600 dark:text-gray-300">Loading your form data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // If building type is "product", render the ProductServiceForm component
   if (formData.buildingType === 'product') {
@@ -324,50 +361,6 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
         />
       </FormField>
 
-      <FormField label="What's your mission as a business?" type="Long Text" aiSuggestions>
-        <Textarea
-          placeholder="Describe your business mission"
-          value={formData.missionStatement || ''}
-          onChange={(e) => updateFormData('missionStatement', e.target.value)}
-          rows={4}
-        />
-        <AISuggestion
-          fieldName="missionStatement"
-          currentValue={formData.missionStatement}
-          onApplySuggestion={(suggestion) => updateFormData('missionStatement', suggestion)}
-          formData={formData}
-        />
-      </FormField>
-
-      <FormField label="What's your long-term vision?" type="Long Text" aiSuggestions>
-        <Textarea
-          placeholder="Describe your long-term vision"
-          value={formData.visionStatement || ''}
-          onChange={(e) => updateFormData('visionStatement', e.target.value)}
-          rows={4}
-        />
-        <AISuggestion
-          fieldName="visionStatement"
-          currentValue={formData.visionStatement}
-          onApplySuggestion={(suggestion) => updateFormData('visionStatement', suggestion)}
-          formData={formData}
-        />
-      </FormField>
-
-      <FormField label="What values drive the way you do business?" type="Tags" aiSuggestions>
-        <TagInput
-          value={formData.coreValues || []}
-          onChange={(value) => updateFormData('coreValues', value)}
-          placeholder="Add your core values"
-        />
-        <AISuggestion
-          fieldName="coreValues"
-          currentValue={formData.coreValues?.join(', ')}
-          onApplySuggestion={(suggestion) => updateFormData('coreValues', suggestion.split(', '))}
-          formData={formData}
-        />
-      </FormField>
-
       <FormField label="Where is your business currently in its journey?" type="Dropdown">
         <Select value={formData.businessStage} onValueChange={(value) => updateFormData('businessStage', value)}>
           <SelectTrigger>
@@ -395,6 +388,168 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
           formData={formData}
         />
       </FormField>
+
+      <FormField label="Do you have social media accounts for your business?" type="Dropdown">
+        <Select value={formData.hasSocialMedia} onValueChange={(value) => updateFormData('hasSocialMedia', value)}>
+          <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            <SelectValue placeholder="Select an option" />
+          </SelectTrigger>
+          <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+            <SelectItem value="yes">Yes</SelectItem>
+            <SelectItem value="no">No</SelectItem>
+          </SelectContent>
+        </Select>
+      </FormField>
+
+      {formData.hasSocialMedia === 'yes' && (
+        <>
+          <FormField label="Which social media platforms do you currently use?" type="Checkbox">
+            <CheckboxGroup
+              options={['Facebook', 'Instagram', 'Twitter/X', 'LinkedIn', 'TikTok', 'YouTube', 'Pinterest', 'Snapchat', 'Other']}
+              value={formData.socialMediaPlatforms || []}
+              onChange={(value) => updateFormData('socialMediaPlatforms', value)}
+            />
+          </FormField>
+
+          {formData.socialMediaPlatforms && formData.socialMediaPlatforms.length > 0 && (
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Please provide links to your social media accounts:</h4>
+
+              {formData.socialMediaPlatforms.includes('Facebook') && (
+                <FormField label="Facebook URL" type="Short Text">
+                  <Input
+                    type="url"
+                    value={formData.facebookUrl || ''}
+                    onChange={(e) => updateFormData('facebookUrl', e.target.value)}
+                    placeholder="https://facebook.com/yourpage"
+                    className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </FormField>
+              )}
+
+              {formData.socialMediaPlatforms.includes('Instagram') && (
+                <FormField label="Instagram URL" type="Short Text">
+                  <Input
+                    type="url"
+                    value={formData.instagramUrl || ''}
+                    onChange={(e) => updateFormData('instagramUrl', e.target.value)}
+                    placeholder="https://instagram.com/yourhandle"
+                    className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </FormField>
+              )}
+
+              {formData.socialMediaPlatforms.includes('Twitter/X') && (
+                <FormField label="Twitter/X URL" type="Short Text">
+                  <Input
+                    type="url"
+                    value={formData.twitterUrl || ''}
+                    onChange={(e) => updateFormData('twitterUrl', e.target.value)}
+                    placeholder="https://twitter.com/yourhandle"
+                    className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </FormField>
+              )}
+
+              {formData.socialMediaPlatforms.includes('LinkedIn') && (
+                <FormField label="LinkedIn URL" type="Short Text">
+                  <Input
+                    type="url"
+                    value={formData.linkedinUrl || ''}
+                    onChange={(e) => updateFormData('linkedinUrl', e.target.value)}
+                    placeholder="https://linkedin.com/company/yourcompany"
+                    className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </FormField>
+              )}
+
+              {formData.socialMediaPlatforms.includes('TikTok') && (
+                <FormField label="TikTok URL" type="Short Text">
+                  <Input
+                    type="url"
+                    value={formData.tiktokUrl || ''}
+                    onChange={(e) => updateFormData('tiktokUrl', e.target.value)}
+                    placeholder="https://tiktok.com/@yourhandle"
+                    className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </FormField>
+              )}
+
+              {formData.socialMediaPlatforms.includes('YouTube') && (
+                <FormField label="YouTube URL" type="Short Text">
+                  <Input
+                    type="url"
+                    value={formData.youtubeUrl || ''}
+                    onChange={(e) => updateFormData('youtubeUrl', e.target.value)}
+                    placeholder="https://youtube.com/@yourchannel"
+                    className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </FormField>
+              )}
+
+              {formData.socialMediaPlatforms.includes('Pinterest') && (
+                <FormField label="Pinterest URL" type="Short Text">
+                  <Input
+                    type="url"
+                    value={formData.pinterestUrl || ''}
+                    onChange={(e) => updateFormData('pinterestUrl', e.target.value)}
+                    placeholder="https://pinterest.com/yourprofile"
+                    className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </FormField>
+              )}
+
+              {formData.socialMediaPlatforms.includes('Snapchat') && (
+                <FormField label="Snapchat Username" type="Short Text">
+                  <Input
+                    value={formData.snapchatUsername || ''}
+                    onChange={(e) => updateFormData('snapchatUsername', e.target.value)}
+                    placeholder="your_snapchat_username"
+                    className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </FormField>
+              )}
+
+              {formData.socialMediaPlatforms.includes('Other') && (
+                <FormField label="Other Social Media URLs" type="Long Text">
+                  <Textarea
+                    value={formData.otherSocialMediaUrls || ''}
+                    onChange={(e) => updateFormData('otherSocialMediaUrls', e.target.value)}
+                    placeholder="Please list any other social media platforms and their URLs (one per line)"
+                    rows={3}
+                    className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </FormField>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {formData.hasSocialMedia === 'no' && (
+        <FormField label="Would you like to create social media accounts for your business?" type="Dropdown">
+          <Select value={formData.wantToCreateSocialMedia} onValueChange={(value) => updateFormData('wantToCreateSocialMedia', value)}>
+            <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+              <SelectValue placeholder="Select an option" />
+            </SelectTrigger>
+            <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+              <SelectItem value="yes">Yes, I'd like to create social media accounts</SelectItem>
+              <SelectItem value="no">No, not interested at this time</SelectItem>
+              <SelectItem value="maybe">Maybe, I'm not sure yet</SelectItem>
+            </SelectContent>
+          </Select>
+        </FormField>
+      )}
+
+      {formData.wantToCreateSocialMedia === 'yes' && (
+        <FormField label="Which social media platforms would you like to create?" type="Checkbox">
+          <CheckboxGroup
+            options={['Facebook', 'Instagram', 'Twitter/X', 'LinkedIn', 'TikTok', 'YouTube', 'Pinterest', 'Snapchat', 'Other']}
+            value={formData.desiredSocialMediaPlatforms || []}
+            onChange={(value) => updateFormData('desiredSocialMediaPlatforms', value)}
+          />
+        </FormField>
+      )}
 
       {/* Business-specific fields */}
       {formData.buildingType === 'business' && (
@@ -616,12 +771,18 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
 
   const renderStep4 = () => (
     <div className="space-y-8">
-      <FormField label="3 Words to Describe Your Company Culture" type="Tags">
+      <FormField label="3 Words to Describe Your Company Culture" type="Tags" aiSuggestions>
         <TagInput
           value={formData.cultureWords || []}
           onChange={(value) => updateFormData('cultureWords', value)}
           placeholder="Enter 3 words that describe your company culture"
           suggestions={['Innovative', 'Collaborative', 'Professional', 'Fun', 'Fast-paced', 'Relaxed', 'Creative', 'Structured']}
+        />
+        <AISuggestion
+          fieldName="cultureWords"
+          currentValue={formData.cultureWords?.join(', ')}
+          onApplySuggestion={(suggestion) => updateFormData('cultureWords', suggestion.split(', '))}
+          formData={formData}
         />
       </FormField>
       <FormField label="How would your team typically describe working at your business?" type="Long Text">
@@ -698,7 +859,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
         />
       </FormField>
 
-      <FormField label="If Your Brand Had a Soul, Houw would you describe it?" type="Short Text">
+      <FormField label="If Your Brand Had a Soul, How would you describe it?" type="Short Text">
         <Input
           value={formData.brandSoul || ''}
           onChange={(e) => updateFormData('brandSoul', e.target.value)}
@@ -957,152 +1118,52 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
 
   const renderStep9 = () => (
     <div className="space-y-8">
-      {/* <FormField label="Describe Business in One Powerful Sentence" type="Short Text" aiSuggestions>
-        <div className="space-y-4">
-          <Input
-            value={formData.businessDescription || ''}
-            onChange={(e) => updateFormData('businessDescription', e.target.value)}
-            placeholder="Describe your business in one powerful sentence"
-            className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-          />
-          <AISuggestion
-            fieldName="businessDescription"
-            onApplySuggestion={(suggestion) => updateFormData('businessDescription', suggestion)}
-            formData={formData}
-          />
-        </div>
-      </FormField> */}
 
-      <FormField label="What Inspired You to Start?" type="Long Text" aiSuggestions>
-        <div className="space-y-4">
-          <Textarea
-            value={formData.inspiration || ''}
-            onChange={(e) => updateFormData('inspiration', e.target.value)}
-            placeholder="What inspired you to start this business?"
-            rows={4}
-            className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-          />
-          <AISuggestion
-            fieldName="inspiration"
-            onApplySuggestion={(suggestion) => updateFormData('inspiration', suggestion)}
-            formData={formData}
-          />
-        </div>
+      <FormField label="What's your mission as a business?" type="Long Text" aiSuggestions>
+        <Textarea
+          placeholder="Describe your business mission"
+          value={formData.missionStatement || ''}
+          onChange={(e) => updateFormData('missionStatement', e.target.value)}
+          rows={4}
+        />
+        <AISuggestion
+          fieldName="missionStatement"
+          currentValue={formData.missionStatement}
+          onApplySuggestion={(suggestion) => updateFormData('missionStatement', suggestion)}
+          formData={formData}
+        />
       </FormField>
 
-      <FormField label="Target Market Interests & Lifestyle" type="Tags" aiSuggestions>
-        <div className="space-y-4">
-          <TagInput
-            value={formData.targetInterests || []}
-            onChange={(value) => updateFormData('targetInterests', value)}
-            placeholder="Enter target market interests and lifestyle"
-            suggestions={['Technology', 'Fitness', 'Travel', 'Food', 'Fashion', 'Business', 'Education', 'Entertainment']}
-          />
-          <AISuggestion
-            fieldName="targetInterests"
-            onApplySuggestion={(suggestion) => updateFormData('targetInterests', suggestion.split(', '))}
-            formData={formData}
-          />
-        </div>
+      <FormField label="What's your long-term vision?" type="Long Text" aiSuggestions>
+        <Textarea
+          placeholder="Describe your long-term vision"
+          value={formData.visionStatement || ''}
+          onChange={(e) => updateFormData('visionStatement', e.target.value)}
+          rows={4}
+        />
+        <AISuggestion
+          fieldName="visionStatement"
+          currentValue={formData.visionStatement}
+          onApplySuggestion={(suggestion) => updateFormData('visionStatement', suggestion)}
+          formData={formData}
+        />
       </FormField>
 
-      <FormField label="Current Customers' Interests" type="Tags" aiSuggestions>
-        <div className="space-y-4">
-          <TagInput
-            value={formData.currentInterests || []}
-            onChange={(value) => updateFormData('currentInterests', value)}
-            placeholder="Enter current customers' interests"
-            suggestions={['Technology', 'Fitness', 'Travel', 'Food', 'Fashion', 'Business', 'Education', 'Entertainment']}
-          />
-          <AISuggestion
-            fieldName="currentInterests"
-            onApplySuggestion={(suggestion) => updateFormData('currentInterests', suggestion.split(', '))}
-            formData={formData}
-          />
-        </div>
+      <FormField label="What values drive the way you do business?" type="Tags" aiSuggestions>
+        <TagInput
+          value={formData.coreValues || []}
+          onChange={(value) => updateFormData('coreValues', value)}
+          placeholder="Add your core values"
+          suggestions={['Innovation', 'Integrity', 'Excellence', 'Customer-First', 'Collaboration', 'Transparency', 'Sustainability']}
+        />
+        <AISuggestion
+          fieldName="coreValues"
+          currentValue={formData.coreValues?.join(', ')}
+          onApplySuggestion={(suggestion) => updateFormData('coreValues', suggestion.split(', '))}
+          formData={formData}
+        />
       </FormField>
 
-      <FormField label="Current Audience Behavior" type="Tags" aiSuggestions>
-        <div className="space-y-4">
-          <TagInput
-            value={formData.audienceBehavior || []}
-            onChange={(value) => updateFormData('audienceBehavior', value)}
-            placeholder="Enter current audience behavior patterns"
-            suggestions={['Online shopping', 'Social media active', 'Mobile-first', 'Research-oriented', 'Impulse buyers', 'Value-conscious']}
-          />
-          <AISuggestion
-            fieldName="audienceBehavior"
-            onApplySuggestion={(suggestion) => updateFormData('audienceBehavior', suggestion.split(', '))}
-            formData={formData}
-          />
-        </div>
-      </FormField>
-
-      <FormField label="Why Customers Choose You" type="Long Text" aiSuggestions>
-        <div className="space-y-4">
-          <Textarea
-            value={formData.customerChoice || ''}
-            onChange={(e) => updateFormData('customerChoice', e.target.value)}
-            placeholder="Why do customers choose you over competitors?"
-            rows={4}
-            className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-          />
-          <AISuggestion
-            fieldName="Why Customers Choose You"
-            onApplySuggestion={(suggestion) => updateFormData('customerChoice', suggestion)}
-            formData={formData}
-          />
-        </div>
-      </FormField>
-
-      <FormField label="Core Values" type="Tags" aiSuggestions>
-        <div className="space-y-4">
-          <TagInput
-            value={formData.coreValues || []}
-            onChange={(value) => updateFormData('coreValues', value)}
-            placeholder="Enter your company's core values"
-            suggestions={['Innovation', 'Integrity', 'Excellence', 'Customer-First', 'Collaboration', 'Transparency', 'Sustainability']}
-          />
-          <AISuggestion
-            fieldName="coreValues"
-            onApplySuggestion={(suggestion) => updateFormData('coreValues', suggestion.split(', '))}
-            formData={formData}
-          />
-        </div>
-      </FormField>
-
-      <FormField label="Words to Describe Brand Personality" type="Tags" aiSuggestions>
-        <div className="space-y-4">
-          <TagInput
-            value={formData.brandPersonality || []}
-            onChange={(value) => updateFormData('brandPersonality', value)}
-            placeholder="Enter words that describe your brand personality"
-            suggestions={['Friendly', 'Professional', 'Innovative', 'Trustworthy', 'Creative', 'Reliable', 'Dynamic', 'Approachable']}
-          />
-          <AISuggestion
-            fieldName="brandPersonality"
-            onApplySuggestion={(suggestion) => updateFormData('brandPersonality', suggestion.split(', '))}
-            formData={formData}
-          />
-        </div>
-      </FormField>
-
-      <FormField label="Team Traditions/Fun Highlights" type="Long Text" aiSuggestions>
-        <div className="space-y-4">
-          <Textarea
-            value={formData.teamHighlights || ''}
-            onChange={(e) => updateFormData('teamHighlights', e.target.value)}
-            placeholder="Describe team traditions and fun highlights"
-            rows={4}
-            className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-          />
-          <AISuggestion
-            fieldName="teamHighlights"
-            onApplySuggestion={(suggestion) => updateFormData('teamHighlights', suggestion)}
-            formData={formData}
-          />
-        </div>
-      </FormField>
     </div>
   );
 
@@ -1199,6 +1260,10 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
             </h2>
             <p className="text-gray-600 dark:text-gray-300 mb-6 text-lg">
               Congratulations! Your brand identity information has been successfully saved.
+              <br />
+              <span className="text-blue-600 dark:text-blue-400 font-medium">
+                Redirecting to dashboard in 2 seconds...
+              </span>
             </p>
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border mb-8 shadow-sm">
               <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-4 text-lg">All Submitted Data:</h3>
@@ -1220,43 +1285,33 @@ const KnowingYouForm = ({ onFormTypeChange = () => { } }) => {
                 ))}
               </div>
             </div>
-            <Button
-              onClick={handleBackToDashboard}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 px-8 py-3 text-lg"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              Return to Dashboard
-            </Button>
+            <div className="flex justify-center">
+              <Button
+                onClick={handleBackToDashboard}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 px-8 py-3 text-lg"
+              >
+                Return to Dashboard
+              </Button>
+            </div>
+
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // Show loading state while initializing
-  if (isLoading) {
-    return (
-      <div className="w-full max-w-4xl mx-auto p-4 sm:p-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-            <p className="text-gray-600 dark:text-gray-300">Loading your form data...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full max-w-4xl mx-auto p-4 sm:p-6">
-      <div className="mb-6 sm:mb-8 text-center">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-          Knowing You Form – Alta Media
-        </h1>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
-          Let's get to know your business and create the perfect brand identity
-        </p>
-      </div>
+      {!embedded && (
+        <div className="mb-6 sm:mb-8 text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+            Knowing You Form – Alta Media
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
+            Let's get to know your business and create the perfect brand identity
+          </p>
+        </div>
+      )}
 
       {/* Error Display */}
       {error && (

@@ -887,6 +887,7 @@ button:focus-visible {
 
 .dark .gradient-border::before {
   background: #4f46e5;
+  animation: gradient-border-dark 3s ease infinite;
 }
 
 @keyframes gradient-border {
@@ -898,7 +899,7 @@ button:focus-visible {
   }
 }
 
-.dark @keyframes gradient-border {
+@keyframes gradient-border-dark {
   0%, 100% {
     background: #4f46e5;
   }

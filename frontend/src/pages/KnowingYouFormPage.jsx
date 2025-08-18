@@ -1,9 +1,13 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import KnowingYouForm from '@/components/form/KnowingYouForm';
 import BrandKitForm from '@/components/form/BrandKitForm';
 
 const KnowingYouFormPage = () => {
+  const location = useLocation();
+  const formType = location.state?.formType || null;
+
   return (
     <div className="min-h-screen bg-transparent custom-scrollbar">
       <div className="container mx-auto px-4 py-4 sm:py-8">
@@ -16,7 +20,7 @@ const KnowingYouFormPage = () => {
           </p>
         </div>
 
-        <KnowingYouForm />
+        <KnowingYouForm initialFormType={formType} />
       </div>
     </div>
   );

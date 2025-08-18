@@ -6,14 +6,14 @@ import Profile from "./Profile";
 import Forms from "./Forms.jsx";
 import KnowingYouFormPage from "./KnowingYouFormPage.jsx";
 import BrandKitFormPage from "./BrandKitFormPage.jsx";
-import CompanySelectionPage from "./CompanySelectionPage.jsx";
-import CompanyPage from "./CompanyPage.jsx";
+import ClientPortal from "./ClientPortal.jsx";
+import AdminPortal from "./AdminPortal.jsx";
 import AdminLogin from "./AdminLogin.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
 import AdminTest from "./AdminTest.jsx";
 import ProtectedRoute from "../components/ProtectedRoute.jsx";
 import AdminProtectedRoute from "../components/AdminProtectedRoute.jsx";
-
+import FormCompletionCheck from "../components/FormCompletionCheck.jsx";
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
@@ -23,8 +23,7 @@ const PAGES = {
     Forms: Forms,
     KnowYourForm: KnowingYouFormPage,
     BrandKitForm: BrandKitFormPage,
-    CompanySelection: CompanySelectionPage,
-    Company: CompanyPage,
+    ClientPortal: ClientPortal,
 }
 
 function _getCurrentPage(url) {
@@ -59,12 +58,19 @@ function PagesContent() {
                 <AdminDashboard />
                 // </AdminProtectedRoute>
             } />
+            <Route path="/admin-portal" element={
+                // <AdminProtectedRoute>
+                <AdminPortal />
+                // </AdminProtectedRoute>
+            } />
 
             {/* Protected routes with layout */}
             <Route path="/" element={
                 <Layout currentPageName={currentPage}>
                     <ProtectedRoute>
-                        <CompanySelectionPage />
+                        <FormCompletionCheck>
+                            <Dashboard />
+                        </FormCompletionCheck>
                     </ProtectedRoute>
                 </Layout>
             } />
@@ -72,7 +78,9 @@ function PagesContent() {
             <Route path="/dashboard" element={
                 <Layout currentPageName={currentPage}>
                     <ProtectedRoute>
+                        {/* <FormCompletionCheck> */}
                         <Dashboard />
+                        {/* </FormCompletionCheck> */}
                     </ProtectedRoute>
                 </Layout>
             } />
@@ -109,22 +117,10 @@ function PagesContent() {
                 </Layout>
             } />
 
-            <Route path="/company-selection" element={
-                <Layout currentPageName={currentPage}>
-                    <ProtectedRoute>
-                        <CompanySelectionPage />
-                    </ProtectedRoute>
-                </Layout>
-            } />
-
-
-
-            <Route path="/company/:companyId" element={
-                <Layout currentPageName={currentPage}>
-                    <ProtectedRoute>
-                        <CompanyPage />
-                    </ProtectedRoute>
-                </Layout>
+            <Route path="/client-portal" element={
+                <ProtectedRoute>
+                    <ClientPortal />
+                </ProtectedRoute>
             } />
         </Routes>
     );

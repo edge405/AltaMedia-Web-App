@@ -1,0 +1,37 @@
+---
+alwaysApply: true
+---
+Tech Stack & Coding Principles
+- Backend: Node.js with Express (no additional frameworks unless requested).
+- Frontend: React (no extra libraries unless explicitly requested).
+- CSS: Tailwind CSS via CDN for static HTML or via npm in React.
+- HTML: Use semantic, accessible markup for all JSX/HTML.
+- JavaScript/JSX: Use modular, clean, and reusable components.
+
+Code must be:
+- Fully functional
+- Bug-free
+- Secure and maintainable
+- Readable and efficient
+- Easy to debug
+
+🧾 General Rules
+- Reuse and modularize repeated layouts/components (store in components/ for frontend, routes/ & controllers/ for backend).
+- Use clear file naming conventions (e.g., EmployeeDashboard.jsx, TaskLogger.js).
+Mobile-first responsive design is required.
+- Prioritize readability over micro-optimization or performance hacks.
+- Avoid unnecessary abstraction and over-engineering.
+- All frontend scripts must be inside .jsx or .js files (no inline <script> in HTML).
+- Frontend–Backend communication: use fetch() or axios (only if explicitly approved).
+- Always validate and sanitize inputs server-side in Express.
+- Use JSON for all frontend–backend data exchange.
+- All form submissions must be handled asynchronously unless explicitly noted.
+
+AI Behavior Guidelines
+- Never add frameworks or libraries unless explicitly requested.
+- Always explain file structure and locations for new files.
+- Write pseudocode first before implementation, then confirm before coding.
+- Do not include // TODO, placeholders, or partial logic.
+- Keep explanations short and clear — minimize unnecessary prose.
+- If the correct solution is unclear, ask for clarification — do not guess.
+- If multiple solutions exist, list them with pros/cons before recommending one.
