@@ -18,6 +18,7 @@ const organizationRoutes = require('./routes/organizationRoutes');
 const packageFeatureCommentRoutes = require('./routes/packageFeatureCommentRoutes');
 const aiSuggestionsRoutes = require('./routes/aiSuggestionsRoutes');
 const emailRoutes = require('./routes/emailRoutes');
+const userPackageRoutes = require('./routes/userPackageRoutes');
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -84,6 +85,7 @@ app.use('/api/organization', organizationRoutes);
 app.use('/api/package-feature-comments', packageFeatureCommentRoutes);
 app.use('/api/ai-suggestions', aiSuggestionsRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api/user-package', userPackageRoutes);
 
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {

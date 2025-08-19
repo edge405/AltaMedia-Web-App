@@ -47,9 +47,9 @@ export default function ClientSidebar({
 
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-black border-r border-gray-800 transform transition-transform duration-300 ease-in-out h-screen ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="flex flex-col h-screen overflow-hidden">
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-8 border-b border-gray-800">
+        <div className="flex flex-col h-screen">
+          {/* Sidebar Header - Fixed */}
+          <div className="flex-shrink-0 flex items-center justify-between p-8 border-b border-gray-800">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-[#f7e833] rounded-2xl flex items-center justify-center shadow-lg">
                 <span className="text-black font-bold text-lg">A</span>
@@ -69,15 +69,13 @@ export default function ClientSidebar({
             </Button>
           </div>
 
-          {/* Client Info */}
-          <div className="p-8 border-b border-gray-800">
+          {/* Client Info - Fixed */}
+          <div className="flex-shrink-0 p-8 border-b border-gray-800">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-2xl overflow-hidden ring-2 ring-[#f7e833] ring-opacity-30">
-                <img
-                  src={profileData.avatar}
-                  alt={profileData.fullname}
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-12 h-12 rounded-2xl overflow-hidden ring-2 ring-[#f7e833] ring-opacity-30 bg-gradient-to-br from-[#f7e833] to-yellow-400 flex items-center justify-center">
+                <span className="text-lg font-bold text-black">
+                  {profileData.fullname ? profileData.fullname.charAt(0).toUpperCase() : 'U'}
+                </span>
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-white text-lg">{profileData.fullname}</p>
@@ -98,8 +96,8 @@ export default function ClientSidebar({
             </div>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-6 space-y-3 overflow-hidden">
+          {/* Navigation - Scrollable */}
+          <nav className="flex-1 p-6 space-y-3 overflow-y-auto sidebar-scroll">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -136,8 +134,8 @@ export default function ClientSidebar({
             })}
           </nav>
 
-          {/* Logout Button */}
-          <div className="p-6 border-t border-gray-800">
+          {/* Logout Button - Fixed */}
+          <div className="flex-shrink-0 p-6 border-t border-gray-800">
             <Button
               onClick={logout}
               className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-2xl font-semibold text-lg transition-all duration-200 hover:scale-105 flex items-center justify-center space-x-3"

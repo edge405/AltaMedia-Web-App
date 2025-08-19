@@ -45,7 +45,7 @@ export default function ClientPortal() {
     phone_number: '',
     address: '',
     company: '',
-    avatar: '/default-avatar.png'
+    avatar: null // No avatar needed since we use dummy placeholders
   });
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);

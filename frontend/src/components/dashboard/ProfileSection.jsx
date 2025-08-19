@@ -49,12 +49,10 @@ export default function ProfileSection({
             <div className="lg:col-span-1">
               <div className="text-center space-y-4">
                 <div className="relative inline-block">
-                  <div className="w-32 h-32 rounded-3xl overflow-hidden ring-4 ring-[#f7e833] ring-opacity-30 mx-auto">
-                    <img
-                      src={profileData.avatar}
-                      alt={profileData.fullname}
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="w-32 h-32 rounded-3xl overflow-hidden ring-4 ring-[#f7e833] ring-opacity-30 mx-auto bg-gradient-to-br from-[#f7e833] to-yellow-400 flex items-center justify-center">
+                    <span className="text-4xl font-bold text-black">
+                      {profileData.fullname ? profileData.fullname.charAt(0).toUpperCase() : 'U'}
+                    </span>
                   </div>
                   {isEditingProfile && (
                     <button className="absolute bottom-0 right-0 w-10 h-10 bg-[#f7e833] rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">

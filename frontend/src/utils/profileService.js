@@ -82,7 +82,7 @@ class ProfileService {
       phone_number: userData?.phone_number || '',
       address: userData?.address || '',
       company: userData?.company || '',
-      avatar: userData?.avatar || '/default-avatar.png'
+      avatar: null // No avatar needed since we use dummy placeholders
     };
   }
 

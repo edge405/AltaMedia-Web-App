@@ -1662,9 +1662,9 @@ export default function AdminPortal() {
 
             {/* Sidebar */}
             <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-black border-r border-gray-800 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:z-auto ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="flex flex-col h-full">
-                    {/* Sidebar Header */}
-                    <div className="flex items-center justify-between p-8 border-b border-gray-800">
+                <div className="flex flex-col h-screen">
+                    {/* Sidebar Header - Fixed */}
+                    <div className="flex-shrink-0 flex items-center justify-between p-8 border-b border-gray-800">
                         <div className="flex items-center space-x-4">
                             <div className="w-12 h-12 bg-[#f7e833] rounded-2xl flex items-center justify-center shadow-lg">
                                 <span className="text-black font-bold text-lg">A</span>
@@ -1684,8 +1684,8 @@ export default function AdminPortal() {
                         </Button>
                     </div>
 
-                    {/* Navigation */}
-                    <nav className="flex-1 p-6 space-y-3">
+                    {/* Navigation - Scrollable */}
+                    <nav className="flex-1 p-6 space-y-3 overflow-y-auto sidebar-scroll">
                         {sidebarItems.map((item) => {
                             const Icon = item.icon;
                             return (
@@ -1710,8 +1710,8 @@ export default function AdminPortal() {
                         })}
                     </nav>
 
-                    {/* Admin Info */}
-                    <div className="p-6 border-t border-gray-800">
+                    {/* Admin Info - Fixed */}
+                    <div className="flex-shrink-0 p-6 border-t border-gray-800">
                         <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
                             <p className="text-xs text-gray-400 mb-3 font-medium">Admin Account</p>
                             <div className="flex items-center space-x-3">

@@ -1022,3 +1022,43 @@ html {
 .dark .form-scroll::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+
+/* Sidebar-specific scrollbar styles */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #374151 transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Mobile responsive sidebar scrollbar */
+@media (max-width: 1024px) {
+  .sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: #6b7280;
+  }
+  
+  .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+}
