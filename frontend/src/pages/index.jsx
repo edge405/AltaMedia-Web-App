@@ -54,18 +54,18 @@ function PagesContent() {
 
             {/* Admin routes */}
             <Route path="/admin/dashboard" element={
-                // <AdminProtectedRoute>
-                <AdminDashboard />
-                // </AdminProtectedRoute>
+                <AdminProtectedRoute>
+                    <AdminDashboard />
+                </AdminProtectedRoute>
             } />
             <Route path="/admin-portal" element={
-                // <AdminProtectedRoute>
-                <AdminPortal />
-                // </AdminProtectedRoute>
+                <AdminProtectedRoute>
+                    <AdminPortal />
+                </AdminProtectedRoute>
             } />
 
             {/* Protected routes with layout */}
-            <Route path="/" element={
+            {/* <Route path="/" element={
                 <Layout currentPageName={currentPage}>
                     <ProtectedRoute>
                         <FormCompletionCheck>
@@ -73,7 +73,7 @@ function PagesContent() {
                         </FormCompletionCheck>
                     </ProtectedRoute>
                 </Layout>
-            } />
+            } /> */}
 
             <Route path="/dashboard" element={
                 <Layout currentPageName={currentPage}>

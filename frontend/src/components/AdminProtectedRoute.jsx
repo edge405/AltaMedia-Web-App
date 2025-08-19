@@ -20,18 +20,23 @@ const AdminProtectedRoute = ({ children }) => {
           const now = new Date();
           const hoursDiff = (now - loginTime) / (1000 * 60 * 60);
 
-          if (hoursDiff < 24) {
+          // Also check if user has admin role
+          if (hoursDiff < 24 && userData.role === 'admin') {
             setIsAuthenticated(true);
           } else {
-            // Session expired
+            // Session expired or not admin
             localStorage.removeItem("isAdmin");
             localStorage.removeItem("adminUser");
+            localStorage.removeItem("authToken");
+            localStorage.removeItem("user");
             navigate("/admin/login");
           }
         } catch (error) {
           // Invalid user data
           localStorage.removeItem("isAdmin");
           localStorage.removeItem("adminUser");
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("user");
           navigate("/admin/login");
         }
       } else {

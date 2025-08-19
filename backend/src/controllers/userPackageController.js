@@ -195,7 +195,7 @@ const sendWelcomeEmailWithPackage = async (email, password, fullname, packageNam
         <div style="background-color: #e7f3ff; padding: 15px; border-radius: 5px; border-left: 4px solid #007bff; margin: 20px 0;">
           <h3 style="color: #0056b3; margin-top: 0;">Your Package Details</h3>
           <p style="margin: 5px 0;"><strong>Package:</strong> ${packageName}</p>
-          <p style="margin: 5px 0;"><strong>Total Amount:</strong> $${totalAmount}</p>
+          <p style="margin: 5px 0;"><strong>Total Amount:</strong> ₱${totalAmount}</p>
           <p style="margin: 5px 0;"><strong>Expiration Date:</strong> ${new Date(expirationDate).toLocaleDateString()}</p>
         </div>
         
@@ -228,7 +228,7 @@ const sendWelcomeEmailWithPackage = async (email, password, fullname, packageNam
       
       <div style="text-align: center; margin-top: 20px; color: #6c757d; font-size: 12px;">
         <p>This is an automated message. Please do not reply to this email.</p>
-        <p>&copy; 2024 AltaMedia. All rights reserved.</p>
+        <p>&copy; 2025 AltaMedia. All rights reserved.</p>
       </div>
     </div>
   `;

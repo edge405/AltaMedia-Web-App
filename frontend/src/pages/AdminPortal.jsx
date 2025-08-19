@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { toast } from 'sonner';
 import {
     Home,
     Users,
@@ -51,7 +53,8 @@ import {
     RefreshCw,
     Star,
     StarOff,
-    Palette
+    Palette,
+    LogOut
 } from 'lucide-react';
 
 // Mock admin data
@@ -202,6 +205,7 @@ const adminData = {
 };
 
 export default function AdminPortal() {
+    const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState("dashboard");
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState(null);
@@ -209,6 +213,16 @@ export default function AdminPortal() {
     const [filterStatus, setFilterStatus] = useState("all");
     const [brandKits, setBrandKits] = useState([]);
     const [loadingBrandKits, setLoadingBrandKits] = useState(false);
+
+    const handleLogout = () => {
+        // Clear all auth data
+        localStorage.removeItem("isAdmin");
+        localStorage.removeItem("adminUser");
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        toast.success("Admin logged out successfully");
+        navigate("/admin/login");
+    };
 
     const sidebarItems = [
         { id: "dashboard", label: "Dashboard", icon: Home },
@@ -1714,7 +1728,7 @@ export default function AdminPortal() {
                     <div className="flex-shrink-0 p-6 border-t border-gray-800">
                         <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
                             <p className="text-xs text-gray-400 mb-3 font-medium">Admin Account</p>
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-3 mb-4">
                                 <div className="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-[#f7e833] ring-opacity-30">
                                     <div className="w-full h-full bg-[#f7e833] flex items-center justify-center">
                                         <span className="text-black font-bold">A</span>
@@ -1725,6 +1739,15 @@ export default function AdminPortal() {
                                     <p className="text-xs text-[#f7e833] font-medium">Super Admin</p>
                                 </div>
                             </div>
+                            <Button
+                                onClick={handleLogout}
+                                variant="outline"
+                                size="sm"
+                                className="w-full border-red-500 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
+                            >
+                                <LogOut className="w-4 h-4 mr-2" />
+                                Logout
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -1759,6 +1782,14 @@ export default function AdminPortal() {
                             </Button>
                             <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black hover:bg-gray-100">
                                 <Settings className="w-5 h-5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleLogout}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                                <LogOut className="w-5 h-5" />
                             </Button>
                         </div>
                     </div>
