@@ -40,14 +40,7 @@ export default function AdminAllForms({
     const [loadingQuestionnaires, setLoadingQuestionnaires] = useState(false);
     const [loadingOrganizations, setLoadingOrganizations] = useState(false);
 
-    // Debug: Log the props received
-    console.log('AdminAllForms props:', {
-        brandKits,
-        loadingBrandKits,
-        searchTerm,
-        filterStatus,
-        brandKitsLength: brandKits?.length
-    });
+
 
     // Fetch all form types
     const fetchAllFormTypes = async () => {
@@ -66,7 +59,6 @@ export default function AdminAllForms({
             const questionnaireData = await questionnaireResponse.json();
 
             if (questionnaireData.success) {
-                console.log('✅ BrandKit Questionnaires fetched:', questionnaireData.data.forms);
                 setBrandKitQuestionnaires(questionnaireData.data.forms || []);
             } else {
                 console.error('❌ BrandKit Questionnaires API error:', questionnaireData);
@@ -83,15 +75,12 @@ export default function AdminAllForms({
             const organizationData = await organizationResponse.json();
 
             if (organizationData.success) {
-                console.log('✅ Organization Forms fetched:', organizationData.data.forms);
                 setOrganizationForms(organizationData.data.forms || []);
             } else {
-                console.error('❌ Organization Forms API error:', organizationData);
                 setOrganizationForms([]);
             }
 
         } catch (error) {
-            console.error('❌ Error fetching additional form types:', error);
             setBrandKitQuestionnaires([]);
             setOrganizationForms([]);
         } finally {
@@ -108,12 +97,6 @@ export default function AdminAllForms({
 
     useEffect(() => {
         if (brandKits && brandKits.length > 0) {
-            console.log('Processing brandKits data:', brandKits);
-            console.log('Sample brandKit structure:', brandKits[0]);
-            console.log('User fullname from API:', brandKits[0]?.user_fullname);
-            console.log('User email from API:', brandKits[0]?.user_email);
-            console.log('Business name from API:', brandKits[0]?.business_name);
-
             // Transform brandKits data to match the expected format
             const transformedBrandKits = brandKits.map(brandKit => ({
                 ...brandKit,
@@ -164,10 +147,7 @@ export default function AdminAllForms({
             ];
 
             setAllForms(allFormsCombined);
-            console.log('Combined all forms:', allFormsCombined);
-            console.log('Total forms:', allFormsCombined.length);
         } else {
-            console.log('No brandKits data available');
             // Still show other form types even if brandKits is empty
             const transformedQuestionnaires = brandKitQuestionnaires.map(questionnaire => ({
                 ...questionnaire,

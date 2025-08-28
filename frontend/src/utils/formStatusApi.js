@@ -29,7 +29,7 @@ export const formStatusApi = {
           status.business.completed = businessResponse.data.currentStep === 11;
         }
       } catch (error) {
-        console.log('No business form data found');
+        // No business form data found
       }
 
       // Check Product/Service form (BrandKit Questionnaire)
@@ -40,7 +40,7 @@ export const formStatusApi = {
           status.product.completed = productResponse.data.currentStep === 9;
         }
       } catch (error) {
-        console.log('No brandkit questionnaire form data found');
+        // No brandkit questionnaire form data found
       }
 
       // Check Organization form
@@ -51,7 +51,7 @@ export const formStatusApi = {
           status.organization.completed = organizationResponse.data.currentStep === 4;
         }
       } catch (error) {
-        console.log('No organization form data found');
+        // No organization form data found
       }
 
       return {
@@ -60,7 +60,6 @@ export const formStatusApi = {
         hasAnyCompleted: Object.values(status).some(form => form.completed)
       };
     } catch (error) {
-      console.error('Error checking form status:', error);
       return {
         success: false,
         error: error.message,
@@ -84,7 +83,6 @@ export const formStatusApi = {
       const status = await formStatusApi.checkAllFormStatus(userId);
       return status.hasAnyCompleted;
     } catch (error) {
-      console.error('Error checking if any form is completed:', error);
       return false;
     }
   }

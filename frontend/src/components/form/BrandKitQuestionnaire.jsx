@@ -34,7 +34,6 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
             const userId = user?.id || 1;
 
             if (!user?.id) {
-                console.log('No authenticated user, using test user ID:', userId);
             }
 
             setIsLoading(true);
@@ -45,12 +44,9 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
 
                 if (response.success && response.data?.formData) {
                     const frontendData = transformToFrontendFormat(response.data.formData);
-                    console.log('🔍 Loaded BrandKit Questionnaire form data:', frontendData);
                     setFormData(frontendData);
                     setCurrentStep(response.data.currentStep || 1);
-                    console.log('Loaded existing BrandKit Questionnaire form data:', frontendData);
                 } else {
-                    console.log('No existing BrandKit Questionnaire form data found');
                 }
             } catch (err) {
                 console.error('Error loading BrandKit Questionnaire form data:', err);
@@ -77,7 +73,6 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
     ];
 
     const updateFormData = (field, value) => {
-        console.log(`Field change: ${field} =`, value);
         setFormData(prev => ({
             ...prev,
             [field]: value
@@ -85,29 +80,22 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
     };
 
     const nextStep = async () => {
-        console.log('User object:', user);
-        console.log('User ID:', user?.id);
 
         // For testing, use a default user ID if not authenticated
         const userId = user?.id || 1;
 
         if (!user?.id) {
-            console.log('No authenticated user, using test user ID:', userId);
         }
 
         setIsSaving(true);
         setError(null);
 
         try {
-            console.log('Saving BrandKit Questionnaire form data for step:', currentStep);
-            console.log('User ID:', userId);
-            console.log('Form data:', formData);
 
             // Save current step data (pass original formData, not transformed)
             const response = await brandKitQuestionnaireApi.saveFormData(userId, formData, currentStep);
 
             if (response.success) {
-                console.log('BrandKit Questionnaire form data saved successfully:', response.data);
 
                 if (currentStep < totalSteps) {
                     const nextStepNumber = currentStep + 1;
@@ -123,7 +111,6 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                     // Update progress in database for the next step (in background)
                     try {
                         await brandKitQuestionnaireApi.saveFormData(userId, formData, nextStepNumber);
-                        console.log('Progress updated to step:', nextStepNumber);
                     } catch (progressError) {
                         console.error('Error updating progress:', progressError);
                     }
@@ -150,39 +137,32 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
     };
 
     const handleSubmit = async () => {
-        // For testing, use a default user ID if not authenticated
         const userId = user?.id || 1;
 
         if (!user?.id) {
-            console.log('No authenticated user, using test user ID:', userId);
         }
 
         setIsSaving(true);
         setError(null);
 
         try {
-            console.log('Completing BrandKit Questionnaire form with data:', formData);
 
             // Save the final step data (step 9) - pass original formData
             const response = await brandKitQuestionnaireApi.saveFormData(userId, formData, 9);
 
             if (response.success) {
-                console.log('BrandKit Questionnaire form completed successfully:', response.data);
 
                 // Mark form as completed
                 await brandKitQuestionnaireApi.completeForm(userId);
-                console.log('✅ Form marked as completed');
 
                 // Don't show completion screen, redirect to next form
                 if (onFormTypeChange) {
                     // Redirect to OrganizationForm (the next form in the flow)
-                    console.log('🔄 Redirecting to OrganizationForm...');
                     onFormTypeChange('organization');
 
                     // Trigger refresh after redirect to update status
                     if (onRefreshStatuses) {
                         setTimeout(() => {
-                            console.log('🔄 Triggering refresh after redirect...');
                             onRefreshStatuses();
                         }, 500);
                     }

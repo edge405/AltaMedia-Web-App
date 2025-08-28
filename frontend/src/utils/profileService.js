@@ -126,7 +126,7 @@ class ProfileService {
         return this.formatProfileData(response.data);
       }
     } catch (error) {
-      console.warn('Failed to load profile from API, using localStorage data:', error);
+      // Failed to load profile from API, using localStorage data
     }
 
     // Fallback to localStorage

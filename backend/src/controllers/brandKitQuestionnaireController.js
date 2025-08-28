@@ -60,7 +60,6 @@ const validateAndCleanQuestionnaireData = (stepData) => {
               JSON.parse(value);
               cleanedData[key] = value;
             } catch (e) {
-              console.warn(`Invalid JSON for field ${key}:`, e);
               cleanedData[key] = null;
             }
           } else if (typeof value === 'object' && value !== null) {
@@ -180,13 +179,12 @@ const saveFormData = async (req, res) => {
          
          // Build dynamic UPDATE query
          const updateFields = Object.keys(cleanedStepData).map(key => `${key} = ?`).join(', ');
-         const updateValues = Object.values(cleanedStepData).map(value => {
-           if (value === undefined) {
-             console.warn('⚠️ Found undefined value, converting to null');
-             return null;
-           }
-           return value;
-         });
+                 const updateValues = Object.values(cleanedStepData).map(value => {
+          if (value === undefined) {
+            return null;
+          }
+          return value;
+        });
          updateValues.push(currentStep, Math.round((currentStep / 9) * 100), existingForm[0].id);
 
          // Handle case where there are no fields to update (only step and progress)
@@ -225,13 +223,12 @@ const saveFormData = async (req, res) => {
          // Build dynamic INSERT query
          const insertFields = ['id', 'user_id', ...Object.keys(cleanedStepData), 'current_step', 'progress_percentage'];
          const insertPlaceholders = ['?', '?', ...Object.keys(cleanedStepData).map(() => '?'), '?', '?'];
-         const insertValues = [formId, userId, ...Object.values(cleanedStepData).map(value => {
-           if (value === undefined) {
-             console.warn('⚠️ Found undefined value in INSERT, converting to null');
-             return null;
-           }
-           return value;
-         }), currentStep, Math.round((currentStep / 9) * 100)];
+                 const insertValues = [formId, userId, ...Object.values(cleanedStepData).map(value => {
+          if (value === undefined) {
+            return null;
+          }
+          return value;
+        }), currentStep, Math.round((currentStep / 9) * 100)];
 
          const insertSql = `
            INSERT INTO brandkit_questionnaire_forms (
@@ -394,7 +391,6 @@ const getAllForms = async (req, res) => {
           try {
             parsed[field] = JSON.parse(parsed[field]);
           } catch (e) {
-            console.warn(`Failed to parse JSON field ${field}:`, e);
             parsed[field] = null;
           }
         }
@@ -540,7 +536,7 @@ const deleteForm = async (req, res) => {
             cleanupOldFiles(filePaths, []);
           }
         } catch (e) {
-          console.warn(`Could not parse file paths for ${fieldName}:`, e);
+          // Could not parse file paths
         }
       }
     }

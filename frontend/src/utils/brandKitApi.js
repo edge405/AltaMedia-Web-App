@@ -55,7 +55,6 @@ export const brandKitApi = {
         return response;
       }
     } catch (error) {
-      console.error('Error saving form data:', error);
       throw new Error(error.message || 'Failed to save form data');
     }
   },
@@ -70,7 +69,6 @@ export const brandKitApi = {
       const response = await apiService.get(`/brandkit/data/${userId}`);
       return response;
     } catch (error) {
-      console.error('Error fetching form data:', error);
       throw new Error(error.message || 'Failed to fetch form data');
     }
   },
@@ -88,7 +86,6 @@ export const brandKitApi = {
       }
       return false;
     } catch (error) {
-      console.error('Error checking form completion:', error);
       return false;
     }
   }

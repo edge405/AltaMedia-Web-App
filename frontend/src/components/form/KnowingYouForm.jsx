@@ -57,7 +57,6 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
       const userId = user?.id || 1;
 
       if (!user?.id) {
-        console.log('No authenticated user, using test user ID:', userId);
       }
 
       setIsLoading(true);
@@ -68,20 +67,12 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
 
         if (response.success && response.data?.formData) {
           const frontendData = transformToFrontendFormat(response.data.formData);
-          console.log('🔍 Loaded form data:', frontendData);
-          console.log('🔍 Industry field type:', typeof frontendData.industry, 'Value:', frontendData.industry);
-          console.log('🔍 Current customers field type:', typeof frontendData.currentCustomers, 'Value:', frontendData.currentCustomers);
-          console.log('🔍 Primary location field type:', typeof frontendData.primaryLocation, 'Value:', frontendData.primaryLocation);
-          console.log('🔍 Year started field type:', typeof frontendData.yearStarted, 'Value:', frontendData.yearStarted);
           setFormData(frontendData);
           setCurrentStep(response.data.currentStep || 1);
-          console.log('Loaded existing form data:', frontendData);
         } else if (initialFormType) {
           // If no existing data but we have an initial form type, set it
-          console.log('No existing data, setting initial form type:', initialFormType);
           setFormData({ buildingType: initialFormType });
         } else {
-          console.log('No existing data and no initial form type');
         }
       } catch (err) {
         console.error('Error loading form data:', err);
@@ -95,7 +86,6 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
   }, [user?.id, initialFormType]);
 
   const updateFormData = (field, value) => {
-    console.log(`Field change: ${field} =`, value, 'Type:', typeof value, 'Is Array:', Array.isArray(value));
 
     setFormData(prev => ({
       ...prev,
@@ -112,22 +102,12 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
     updateFormData(field, value);
   };
 
-  // Debug: Log when buildingType changes
-  useEffect(() => {
-    console.log('Building type changed to:', formData.buildingType);
-    console.log('Initial form type:', initialFormType);
-    console.log('Current form data:', formData);
-  }, [formData.buildingType, initialFormType, formData]);
-
   const nextStep = async () => {
-    console.log('User object:', user);
-    console.log('User ID:', user?.id);
 
     // For testing, use a default user ID if not authenticated
     const userId = user?.id || 1;
 
     if (!user?.id) {
-      console.log('No authenticated user, using test user ID:', userId);
     }
 
     setIsSaving(true);
@@ -137,15 +117,10 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
       // Transform form data to database format
       const stepData = transformToDatabaseFormat(formData);
 
-      console.log('Saving form data for step:', currentStep);
-      console.log('User ID:', user.id);
-      console.log('Step data:', stepData);
-
       // Save current step data
       const response = await brandKitApi.saveFormData(userId, stepData, currentStep);
 
       if (response.success) {
-        console.log('Form data saved successfully:', response.data);
 
         if (currentStep < totalSteps) {
           const nextStepNumber = currentStep + 1;
@@ -161,7 +136,6 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
           // Update progress in database for the next step (in background)
           try {
             await brandKitApi.saveFormData(userId, stepData, nextStepNumber);
-            console.log('Progress updated to step:', nextStepNumber);
           } catch (progressError) {
             console.error('Error updating progress:', progressError);
           }
@@ -193,7 +167,6 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
     const userId = user?.id || 1;
 
     if (!user?.id) {
-      console.log('No authenticated user, using test user ID:', userId);
     }
 
     setIsSaving(true);
@@ -203,13 +176,10 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
       // Transform form data to database format
       const finalData = transformToDatabaseFormat(formData);
 
-      console.log('Completing form with data:', finalData);
-
       // Save the final step data (step 11)
       const response = await brandKitApi.saveFormData(userId, finalData, 11);
 
       if (response.success) {
-        console.log('Form completed successfully:', response.data);
 
         // Skip the completion screen and directly proceed
         // setIsSubmitted(true); // Remove this line to skip the completion screen

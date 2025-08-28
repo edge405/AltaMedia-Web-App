@@ -12,44 +12,14 @@ const BrandKitFormTest = () => {
     });
 
     const handleFieldChange = (field, value) => {
-        console.log(`Field change: ${field} =`, value);
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
     const handleNext = () => {
-        // Multiple logging approaches
-        console.log('=== TEST LOGGING ===');
-        console.log('Current step:', step);
-        console.log('Form data:', formData);
-        console.log('=== END TEST LOGGING ===');
-
-        // Also try different console methods
-        console.info('Info: Step data captured');
-        console.warn('Warning: This is a test log');
-        console.error('Error: This is a test error log');
-
-        // Create a visible log on the page
-        const logDiv = document.createElement('div');
-        logDiv.style.cssText = 'position: fixed; top: 10px; right: 10px; background: yellow; padding: 10px; border: 2px solid red; z-index: 9999;';
-        logDiv.innerHTML = `
-            <strong>Step ${step} Data:</strong><br>
-            ${JSON.stringify(formData, null, 2)}
-        `;
-        document.body.appendChild(logDiv);
-
-        // Remove the log after 5 seconds
-        setTimeout(() => {
-            if (logDiv.parentNode) {
-                logDiv.parentNode.removeChild(logDiv);
-            }
-        }, 5000);
-
-        console.log(`Step ${step} data logged! Check console and yellow box.`);
-
         if (step < 3) {
             setStep(step + 1);
         } else {
-            console.log('Form complete! Final data logged to console.');
+            // Form complete
         }
     };
 

@@ -13,7 +13,6 @@ export const userPackageApi = {
       const response = await apiService.get('/user-package/packages');
       return response;
     } catch (error) {
-      console.error('Error fetching user packages:', error);
       throw new Error(error.message || 'Failed to fetch user packages');
     }
   },
@@ -28,7 +27,6 @@ export const userPackageApi = {
       const response = await apiService.get(`/user-package/packages/${packageId}`);
       return response;
     } catch (error) {
-      console.error('Error fetching package details:', error);
       throw new Error(error.message || 'Failed to fetch package details');
     }
   },
@@ -42,7 +40,6 @@ export const userPackageApi = {
       const response = await apiService.get('/user-package/user-packages-detailed');
       return response;
     } catch (error) {
-      console.error('Error fetching detailed packages:', error);
       throw new Error(error.message || 'Failed to fetch detailed packages');
     }
   },
@@ -56,7 +53,6 @@ export const userPackageApi = {
       const response = await apiService.get('/user-package/active-packages');
       return response;
     } catch (error) {
-      console.error('Error fetching active packages:', error);
       throw new Error(error.message || 'Failed to fetch active packages');
     }
   },
@@ -70,7 +66,6 @@ export const userPackageApi = {
       const response = await apiService.get('/user-package/admin/all');
       return response;
     } catch (error) {
-      console.error('Error fetching all user packages:', error);
       throw new Error(error.message || 'Failed to fetch all user packages');
     }
   },
@@ -84,7 +79,6 @@ export const userPackageApi = {
       const response = await apiService.get('/user-package/admin/dashboard-stats');
       return response;
     } catch (error) {
-      console.error('Error fetching admin dashboard stats:', error);
       throw new Error(error.message || 'Failed to fetch admin dashboard stats');
     }
   },
@@ -105,7 +99,6 @@ export const userPackageApi = {
       });
       return response;
     } catch (error) {
-      console.error('Error updating feature status:', error);
       throw new Error(error.message || 'Failed to update feature status');
     }
   }

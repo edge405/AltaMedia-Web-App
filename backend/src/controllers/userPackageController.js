@@ -102,7 +102,6 @@ const createUserWithPackage = async (req, res) => {
       try {
         await sendWelcomeEmail(email, generatedPassword, fullname, purchasedPackage, processedFeatures);
       } catch (emailError) {
-        console.error('Failed to send welcome email:', emailError);
         // Don't fail the request if email fails
       }
     }
@@ -134,7 +133,6 @@ const createUserWithPackage = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create user with package error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -174,7 +172,6 @@ const getUserPackages = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get user packages error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -216,7 +213,6 @@ const getUserPackageById = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get user package by ID error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -296,7 +292,6 @@ const updateFeatureStatus = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update feature status error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -341,7 +336,6 @@ const getAllUserPackages = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get all user packages error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -383,7 +377,6 @@ const deleteUserPackage = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Delete user package error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -489,7 +482,6 @@ const getUserPackagesDetailed = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get user packages detailed error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -542,7 +534,6 @@ const getUserActivePackages = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get user active packages error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -727,7 +718,6 @@ const getAdminDashboardStats = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get admin dashboard stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

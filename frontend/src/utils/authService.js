@@ -7,7 +7,6 @@ class AuthService {
       const response = await apiService.getProfile();
       return response;
     } catch (error) {
-      console.error('Failed to get profile:', error);
       throw error;
     }
   }
@@ -18,7 +17,6 @@ class AuthService {
       const response = await apiService.updateProfile(profileData);
       return response;
     } catch (error) {
-      console.error('Failed to update profile:', error);
       throw error;
     }
   }
@@ -29,7 +27,6 @@ class AuthService {
       const response = await apiService.changePassword(currentPassword, newPassword);
       return response;
     } catch (error) {
-      console.error('Failed to change password:', error);
       throw error;
     }
   }
@@ -47,7 +44,6 @@ class AuthService {
       
       return response;
     } catch (error) {
-      console.error('Login failed:', error);
       throw error;
     }
   }
@@ -65,7 +61,6 @@ class AuthService {
       
       return response;
     } catch (error) {
-      console.error('Registration failed:', error);
       throw error;
     }
   }
@@ -80,7 +75,6 @@ class AuthService {
       
       return response;
     } catch (error) {
-      console.error('Logout failed:', error);
       // Clear auth data even if logout request fails
       apiService.clearAuth();
       throw error;

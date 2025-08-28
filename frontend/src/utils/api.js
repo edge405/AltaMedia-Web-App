@@ -21,6 +21,7 @@ class ApiService {
   getAuthHeaders() {
     const token = localStorage.getItem('authToken');
     console.log("API_BASE_URL: ", this.baseURL);
+    console.log("Token exists: ", !!token);
     return {
       'Content-Type': 'application/json',
       ...(token && { 'Authorization': `Bearer ${token}` }),
@@ -32,11 +33,24 @@ class ApiService {
     const url = `${this.baseURL}${endpoint}`;
     const config = {
       headers: this.getAuthHeaders(),
+      credentials: 'include', // Include cookies for session management
       ...options,
     };
 
     try {
+      console.log('Making request to:', url);
       const response = await fetch(url, config);
+      console.log('Response status:', response.status);
+      
+      // Handle 401 Unauthorized - clear auth and redirect to login
+      if (response.status === 401) {
+        console.log('Unauthorized request - clearing auth data');
+        this.clearAuth();
+        // Redirect to login page
+        window.location.href = '/login';
+        throw new Error('Unauthorized - please log in again');
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -90,6 +104,7 @@ class ApiService {
         ...(token && { 'Authorization': `Bearer ${token}` }),
         // Don't set Content-Type for FormData - browser will set it automatically with boundary
       },
+      credentials: 'include',
       body: formData,
     };
 
@@ -98,6 +113,14 @@ class ApiService {
       const response = await fetch(url, config);
       console.log('Response status:', response.status);
       console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      // Handle 401 Unauthorized
+      if (response.status === 401) {
+        console.log('Unauthorized request - clearing auth data');
+        this.clearAuth();
+        window.location.href = '/login';
+        throw new Error('Unauthorized - please log in again');
+      }
       
       const data = await response.json();
       console.log('Response data:', data);
@@ -124,11 +147,21 @@ class ApiService {
         ...(token && { 'Authorization': `Bearer ${token}` }),
         // Don't set Content-Type for FormData - browser will set it automatically with boundary
       },
+      credentials: 'include',
       body: formData,
     };
 
     try {
       const response = await fetch(url, config);
+      
+      // Handle 401 Unauthorized
+      if (response.status === 401) {
+        console.log('Unauthorized request - clearing auth data');
+        this.clearAuth();
+        window.location.href = '/login';
+        throw new Error('Unauthorized - please log in again');
+      }
+      
       const data = await response.json();
 
       if (!response.ok) {
@@ -157,7 +190,15 @@ class ApiService {
   }
 
   async logout() {
-    return this.post('/auth/logout');
+    try {
+      const response = await this.post('/auth/logout');
+      this.clearAuth();
+      return response;
+    } catch (error) {
+      // Clear auth data even if logout request fails
+      this.clearAuth();
+      throw error;
+    }
   }
 
   async getProfile() {
@@ -175,7 +216,8 @@ class ApiService {
   // Check if user is authenticated
   isAuthenticated() {
     const token = localStorage.getItem('authToken');
-    return !!token;
+    const user = localStorage.getItem('user');
+    return !!(token && user);
   }
 
   // Get current user data
@@ -307,8 +349,6 @@ class ApiService {
   async getAllBrandKitForms() {
     return this.get('/brandkit/forms/admin/all');
   }
-
-
 
   // Client Request methods
   async getClientRequests() {

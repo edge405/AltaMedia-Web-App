@@ -135,54 +135,16 @@ const BrandKitForm = () => {
     const [formData, dispatch] = useReducer(formReducer, initialFormState);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Debug: Monitor form data changes
-    useEffect(() => {
-        console.log('Form data updated:', formData);
-    }, [formData]);
-
-    // Debug: Component mount
-    useEffect(() => {
-        console.log('BrandKitForm component mounted');
-        console.log('Initial form data:', formData);
-        console.error('TEST ERROR LOG');
-        console.warn('TEST WARNING LOG');
-        console.info('TEST INFO LOG');
-    }, []);
-
     // Handle field updates
     const handleFieldChange = (field, value) => {
-        console.log(`Field change: ${field} =`, value);
         dispatch({ type: 'UPDATE_FIELD', field, value });
     };
 
     // Handle step navigation
     const handleNext = () => {
-        console.log('handleNext called for step:', currentStep);
-        console.error('ERROR LOG - Step:', currentStep);
-        console.warn('WARNING LOG - Step:', currentStep);
-        console.info('INFO LOG - Step:', currentStep);
-
-        // Create a visible log on the page
-        const logDiv = document.createElement('div');
-        logDiv.style.cssText = 'position: fixed; top: 10px; right: 10px; background: yellow; padding: 10px; border: 2px solid red; z-index: 9999; max-width: 300px; font-size: 12px;';
-        logDiv.innerHTML = `
-      <strong>Step ${currentStep} Data:</strong><br>
-      <pre>${JSON.stringify(formData, null, 2)}</pre>
-    `;
-        document.body.appendChild(logDiv);
-
-        // Remove the log after 10 seconds
-        setTimeout(() => {
-            if (logDiv.parentNode) {
-                logDiv.parentNode.removeChild(logDiv);
-            }
-        }, 10000);
-
         if (currentStep < 11) {
-            console.log(`Moving from step ${currentStep} to step ${currentStep + 1}`);
             setCurrentStep(currentStep + 1);
         } else {
-            console.log('Reached final step, calling handleSubmit');
             handleSubmit();
         }
     };
@@ -195,12 +157,10 @@ const BrandKitForm = () => {
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
-        console.log('Final Form Submission:', formData);
 
         // Simulate API call
         setTimeout(() => {
             setIsSubmitting(false);
-            console.log('BrandKit form submitted successfully! Check console for data.');
         }, 2000);
     };
 

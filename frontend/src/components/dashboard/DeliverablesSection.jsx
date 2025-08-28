@@ -35,12 +35,9 @@ export default function DeliverablesSection({
   // Load deliverables from API
   const loadDeliverables = async (showLoading = true) => {
     if (!clientData?.activePackage?.id) {
-      console.log('No active package found');
       if (showLoading) setIsLoading(false);
       return;
     }
-
-    console.log('Loading deliverables for package:', clientData.activePackage);
 
     if (showLoading) {
       setIsLoading(true);
@@ -49,10 +46,7 @@ export default function DeliverablesSection({
 
     try {
       // Use the purchase ID from the active package
-      console.log('Active package:', clientData.activePackage);
       const response = await deliverableApi.getClientDeliverables(clientData.activePackage.id);
-
-      console.log('Deliverables response:', response);
 
       if (response && response.success && response.data) {
         setDeliverables(response.data);
@@ -60,16 +54,9 @@ export default function DeliverablesSection({
         // Fallback: if response is directly an array
         setDeliverables(response);
       } else {
-        console.log('No deliverables found or invalid response structure');
         setDeliverables([]);
       }
     } catch (error) {
-      console.error('Failed to load deliverables:', error);
-      console.error('Error details:', {
-        message: error.message,
-        status: error.status,
-        response: error.response
-      });
       setError('Failed to load deliverables');
       if (showLoading) {
         toast.error('Failed to load deliverables');
@@ -211,7 +198,6 @@ export default function DeliverablesSection({
 
     try {
       const downloadUrl = deliverableApi.downloadFile(filePath);
-      console.log('Starting forced download for:', downloadUrl);
 
       // Fetch the file as a blob to force download behavior
       const response = await fetch(downloadUrl, {
@@ -246,11 +232,8 @@ export default function DeliverablesSection({
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 
     } catch (error) {
-      console.error('Download error:', error);
-
       // Fallback: Try XMLHttpRequest method
       try {
-        console.log('Trying XMLHttpRequest fallback...');
 
         const downloadUrl = deliverableApi.downloadFile(filePath);
         const xhr = new XMLHttpRequest();
@@ -284,11 +267,8 @@ export default function DeliverablesSection({
         xhr.send();
 
       } catch (fallbackError) {
-        console.error('Fallback download also failed:', fallbackError);
-
         // Final fallback: Direct link method
         try {
-          console.log('Trying direct link fallback...');
           const downloadUrl = deliverableApi.downloadFile(filePath);
           const link = document.createElement('a');
           link.href = downloadUrl;
@@ -302,7 +282,6 @@ export default function DeliverablesSection({
           document.body.removeChild(link);
 
         } catch (finalError) {
-          console.error('All download methods failed:', finalError);
           toast.error('Failed to download file. Please try again or contact support.');
         }
       }
@@ -317,7 +296,6 @@ export default function DeliverablesSection({
 
   // Handle successful image load
   const handleImageLoad = (deliverableId, imageUrl) => {
-    console.log('Image loaded successfully:', imageUrl);
     setImageLoadErrors(prev => {
       const newSet = new Set(prev);
       newSet.delete(deliverableId);
@@ -360,11 +338,8 @@ export default function DeliverablesSection({
     const extension = fileName?.split('.').pop()?.toLowerCase();
     const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
 
-    console.log('File display check:', { fileName, filePath, extension, isImage });
-
     if (isImage && filePath) {
       const imageUrl = deliverableApi.downloadFile(filePath);
-      console.log('Image URL constructed:', imageUrl);
       return {
         type: 'image',
         url: imageUrl,
@@ -536,12 +511,9 @@ export default function DeliverablesSection({
           {!isLoading && !error && filteredApiDeliverables.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredApiDeliverables.map((deliverable) => {
-                console.log('Processing deliverable:', deliverable);
                 const statusBadge = getStatusBadge(deliverable.status);
                 const deliverableDisplay = getDeliverableDisplay(deliverable);
                 const hasImageError = imageLoadErrors.has(deliverable.id);
-
-                console.log('Deliverable display result:', deliverableDisplay);
 
                 return (
                   <div key={deliverable.id} className="bg-white border-2 border-gray-200 rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">

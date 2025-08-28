@@ -19,20 +19,43 @@ export const AuthProvider = ({ children }) => {
 
   // Check authentication status on mount
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       try {
+        setIsLoading(true);
         const token = authService.getToken();
         const currentUser = authService.getCurrentUser();
 
+        console.log('Checking authentication:', { hasToken: !!token, hasUser: !!currentUser });
+
         if (token && currentUser) {
-          setUser(currentUser);
-          setIsAuthenticated(true);
+          // Verify token is still valid by making a profile request
+          try {
+            const profileResponse = await authService.getProfile();
+            if (profileResponse.success && profileResponse.data) {
+              setUser(profileResponse.data);
+              setIsAuthenticated(true);
+              console.log('Authentication verified successfully');
+            } else {
+              // Token is invalid, clear auth data
+              console.log('Token verification failed, clearing auth data');
+              authService.clearAuth();
+              setUser(null);
+              setIsAuthenticated(false);
+            }
+          } catch (error) {
+            console.log('Profile request failed, clearing auth data:', error);
+            authService.clearAuth();
+            setUser(null);
+            setIsAuthenticated(false);
+          }
         } else {
+          console.log('No token or user data found');
           setUser(null);
           setIsAuthenticated(false);
         }
       } catch (error) {
         console.error('Error checking authentication:', error);
+        authService.clearAuth();
         setUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -124,6 +147,10 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error refreshing user data:', error);
+      // If refresh fails, user might be logged out
+      authService.clearAuth();
+      setUser(null);
+      setIsAuthenticated(false);
     }
   };
 

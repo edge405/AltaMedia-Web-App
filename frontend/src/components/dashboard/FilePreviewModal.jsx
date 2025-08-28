@@ -68,11 +68,8 @@ export default function FilePreviewModal({
       // Use a simpler approach: create a blob URL from the download
       const loadImageForPreview = async () => {
         try {
-          console.log('Loading image for preview:', fileName);
-
           // Use the same URL construction as the working download
           const downloadUrl = deliverableApi.downloadFile(filePath);
-          console.log('Image URL:', downloadUrl);
 
           // Create a temporary link element to trigger the download
           const link = document.createElement('a');
@@ -90,9 +87,7 @@ export default function FilePreviewModal({
               const blob = xhr.response;
               const blobUrl = URL.createObjectURL(blob);
               setImageBlobUrl(blobUrl);
-              console.log('Image loaded successfully for preview');
             } else {
-              console.log('XHR failed, showing download option');
               setError(`Image preview not available due to browser restrictions. Please use the download button to view: ${fileName}`);
             }
             // Clean up
@@ -100,7 +95,6 @@ export default function FilePreviewModal({
           };
 
           xhr.onerror = function () {
-            console.log('XHR error, showing download option');
             setError(`Image preview not available due to browser restrictions. Please use the download button to view: ${fileName}`);
             document.body.removeChild(link);
           };
@@ -108,7 +102,6 @@ export default function FilePreviewModal({
           xhr.send();
 
         } catch (error) {
-          console.error('Error loading image for preview:', error);
           setError(`Image preview not available due to browser restrictions. Please use the download button to view: ${fileName}`);
         }
       };
@@ -155,7 +148,6 @@ export default function FilePreviewModal({
 
     try {
       const downloadUrl = deliverableApi.downloadFile(filePath);
-      console.log('Starting forced download for:', downloadUrl);
 
       // Fetch the file as a blob to force download behavior
       const response = await fetch(downloadUrl, {
@@ -224,7 +216,6 @@ export default function FilePreviewModal({
 
       // Fallback: Try XMLHttpRequest method
       try {
-        console.log('Trying XMLHttpRequest fallback...');
         setDownloadProgress(25);
 
         const downloadUrl = deliverableApi.downloadFile(filePath);
@@ -263,11 +254,8 @@ export default function FilePreviewModal({
         xhr.send();
 
       } catch (fallbackError) {
-        console.error('Fallback download also failed:', fallbackError);
-
         // Final fallback: Direct link method
         try {
-          console.log('Trying direct link fallback...');
           const downloadUrl = deliverableApi.downloadFile(filePath);
           const link = document.createElement('a');
           link.href = downloadUrl;
@@ -280,7 +268,6 @@ export default function FilePreviewModal({
           link.click();
           document.body.removeChild(link);
         } catch (finalError) {
-          console.error('All download methods failed:', finalError);
           setError('Failed to download file. Please try again or contact support.');
         }
       }
@@ -303,9 +290,6 @@ export default function FilePreviewModal({
     }
 
     const fileUrl = deliverableApi.downloadFile(filePath);
-    console.log('File preview URL:', fileUrl);
-    console.log('File path:', filePath);
-    console.log('File info:', fileInfo);
 
     // For images, we need to use a different approach to avoid CORS issues
     // Use the same approach as the working download functionality
@@ -323,7 +307,6 @@ export default function FilePreviewModal({
                   }`}
                 onClick={() => setIsFullscreen(!isFullscreen)}
                 onLoad={() => {
-                  console.log('Image loaded successfully from blob');
                   setError(null);
                 }}
               />

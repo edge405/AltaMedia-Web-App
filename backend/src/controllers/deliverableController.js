@@ -10,8 +10,6 @@ const path = require('path');
  */
 const uploadDeliverable = async (req, res) => {
   try {
-    console.log('Upload deliverable request body:', req.body);
-    console.log('Upload deliverable files:', req.files);
     
     const { purchaseId, featureName, adminNotes, uploadType, deliverableLink } = req.body;
     const uploadedBy = req.user.id;
@@ -91,11 +89,9 @@ const uploadDeliverable = async (req, res) => {
       }
       const uploadedFiles = processUploadedFiles(req.files);
       filePath = uploadedFiles[0].path;
-      console.log('Processed file path:', filePath);
     } else if (uploadType === 'link') {
       // Store the link
       linkPath = deliverableLink.trim();
-      console.log('Link path:', linkPath);
     }
     
     // Insert new deliverable record with version number

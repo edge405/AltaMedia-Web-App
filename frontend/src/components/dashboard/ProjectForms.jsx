@@ -43,7 +43,6 @@ export default function ProjectForms({ onProjectCreated }) {
         status: "draft"
       };
       
-      console.log("Creating project:", projectData);
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       

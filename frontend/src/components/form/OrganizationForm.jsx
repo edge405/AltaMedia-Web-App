@@ -48,7 +48,6 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
             const userId = user?.id || 1;
 
             if (!user?.id) {
-                console.log('No authenticated user, using test user ID:', userId);
             }
 
             setIsLoading(true);
@@ -66,23 +65,19 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
                             ...frontendData
                         });
                         setCurrentStep(response.data.currentStep || 1);
-                        console.log('Loaded existing form data:', frontendData);
                     } else {
                         // No data found, start with empty form
-                        console.log('No existing form data found, starting with empty form');
                         setFormData({ buildingType: 'organization' });
                         setCurrentStep(1);
                     }
                 } else {
                     // API returned success: false
-                    console.log('API returned no data, starting with empty form');
                     setFormData({ buildingType: 'organization' });
                     setCurrentStep(1);
                 }
             } catch (err) {
                 console.error('Error loading form data:', err);
                 // Don't show error to user, just start with empty form
-                console.log('Error occurred, starting with empty form');
                 setFormData({ buildingType: 'organization' });
                 setCurrentStep(1);
             } finally {
@@ -94,17 +89,10 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
     }, [user?.id]);
 
     const updateFormData = (field, value) => {
-        console.log(`Field change: ${field} =`, value);
 
         if (field === 'referenceMaterials') {
-            console.log('🔍 OrganizationForm - referenceMaterials value:', value);
-            console.log('🔍 OrganizationForm - referenceMaterials type:', typeof value);
-            console.log('🔍 OrganizationForm - referenceMaterials is array:', Array.isArray(value));
             if (Array.isArray(value)) {
                 value.forEach((file, index) => {
-                    console.log(`🔍 OrganizationForm - file ${index}:`, file);
-                    console.log(`🔍 OrganizationForm - file ${index} instanceof File:`, file instanceof File);
-                    console.log(`🔍 OrganizationForm - file ${index} constructor:`, file.constructor.name);
                 });
             }
         }
@@ -124,32 +112,22 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
     };
 
     const nextStep = async () => {
-        console.log('User object:', user);
-        console.log('User ID:', user?.id);
 
         // For testing, use a default user ID if not authenticated
         const userId = user?.id || 1;
 
         if (!user?.id) {
-            console.log('No authenticated user, using test user ID:', userId);
         }
 
         setIsNextLoading(true);
         setError(null);
 
         try {
-            console.log('Saving form data for step:', currentStep);
-            console.log('User ID:', user.id);
-            console.log('Form data:', formData);
-            console.log('Form data referenceMaterials:', formData.referenceMaterials);
-            console.log('Form data referenceMaterials type:', typeof formData.referenceMaterials);
-            console.log('Form data referenceMaterials is array:', Array.isArray(formData.referenceMaterials));
 
             // Save current step data (pass raw formData, let API handle transformation)
             const response = await organizationApi.saveFormData(formData || { buildingType: 'organization' }, currentStep);
 
             if (response.success) {
-                console.log('Form data saved successfully:', response.data);
 
                 if (currentStep < totalSteps) {
                     const nextStepNumber = currentStep + 1;
@@ -165,7 +143,6 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
                     // Update progress in database for the next step (in background)
                     try {
                         await organizationApi.saveFormData(formData || { buildingType: 'organization' }, nextStepNumber);
-                        console.log('Progress updated to step:', nextStepNumber);
                     } catch (progressError) {
                         console.error('Error updating progress:', progressError);
                     }
@@ -192,20 +169,17 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
         const userId = user?.id || 1;
 
         if (!user?.id) {
-            console.log('No authenticated user, using test user ID:', userId);
         }
 
         setIsSaving(true);
         setError(null);
 
         try {
-            console.log('Completing form with data:', formData);
 
             // Save the final step data (step 4) (pass raw formData, let API handle transformation)
             const response = await organizationApi.saveFormData(formData || { buildingType: 'organization' }, 4);
 
             if (response.success) {
-                console.log('Form completed successfully:', response.data);
 
                 // Skip the completion screen and directly proceed
                 // setIsSubmitted(true); // Remove this line to skip the completion screen

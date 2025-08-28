@@ -51,7 +51,6 @@ const consolidateFormData = async (req, res) => {
           try {
             parsed[field] = JSON.parse(parsed[field]);
           } catch (e) {
-            console.warn(`Failed to parse JSON field ${field}:`, e);
             parsed[field] = null;
           }
         }
@@ -188,7 +187,6 @@ const triggerWebhook = async (req, res) => {
           try {
             parsed[field] = JSON.parse(parsed[field]);
           } catch (e) {
-            console.warn(`Failed to parse JSON field ${field}:`, e);
             parsed[field] = null;
           }
         }

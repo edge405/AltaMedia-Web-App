@@ -73,7 +73,6 @@ const validateAndCleanFormData = (stepData) => {
               JSON.parse(value);
               cleanedData[key] = value;
             } catch (e) {
-              console.warn(`Invalid JSON for field ${key}:`, e);
               cleanedData[key] = null;
             }
           } else if (typeof value === 'object' && value !== null) {
@@ -178,7 +177,6 @@ const saveFormData = async (req, res) => {
         const updateFields = Object.keys(cleanedStepData).map(key => `${key} = ?`).join(', ');
         const updateValues = Object.values(cleanedStepData).map(value => {
           if (value === undefined) {
-            console.warn('⚠️ Found undefined value, converting to null');
             return null;
           }
           return value;
@@ -223,7 +221,6 @@ const saveFormData = async (req, res) => {
         const insertPlaceholders = ['?', '?', ...Object.keys(cleanedStepData).map(() => '?'), '?', '?'];
         const insertValues = [formId, userId, ...Object.values(cleanedStepData).map(value => {
           if (value === undefined) {
-            console.warn('⚠️ Found undefined value in INSERT, converting to null');
             return null;
           }
           return value;

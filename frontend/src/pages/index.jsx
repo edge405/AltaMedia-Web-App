@@ -45,10 +45,22 @@ function PagesContent() {
     return (
         <Routes>
             {/* Public routes */}
-            <Route path="/" element={<ClientPortal />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/admin/login" element={<AdminLogin />} />
+
+            {/* Protected routes */}
+            <Route path="/" element={
+                <ClientProtectedRoute>
+                    <ClientPortal />
+                </ClientProtectedRoute>
+            } />
+
+            <Route path="/client-portal" element={
+                <ClientProtectedRoute>
+                    <ClientPortal />
+                </ClientProtectedRoute>
+            } />
 
             <Route path="/admin-portal" element={
                 <AdminProtectedRoute>
@@ -56,61 +68,45 @@ function PagesContent() {
                 </AdminProtectedRoute>
             } />
 
-            {/* <Route path="/dashboard" element={
-                <Layout currentPageName={currentPage}>
-                    <ProtectedRoute>
-                        <FormCompletionCheck>
-                        <Dashboard />
-                        </FormCompletionCheck>
-                    </ProtectedRoute>
-                </Layout>
-            } /> */}
-
-            {/* <Route path="/profile" element={
-                <Layout currentPageName={currentPage}>
-                    <ProtectedRoute>
-                        <Profile />
-                    </ProtectedRoute>
-                </Layout>
-            } /> */}
-
-            {/* <Route path="/forms" element={
-                <Layout currentPageName={currentPage}>
-                    <ProtectedRoute>
-                        <Forms />
-                    </ProtectedRoute>
-                </Layout>
-            } /> */}
-
-            {/* <Route path="/know-your-form" element={
-                <Layout currentPageName={currentPage}>
-                    <ProtectedRoute>
-                        <KnowingYouFormPage />
-                    </ProtectedRoute>
-                </Layout>
-            } /> */}
-
-            {/* <Route path="/brandkit-form" element={
-                <Layout currentPageName={currentPage}>
-                    <ProtectedRoute>
-                        <BrandKitFormPage />
-                    </ProtectedRoute>
-                </Layout>
-            } /> */}
-
-            {/* <Route path="/brandkit-questionnaire" element={
-                <Layout currentPageName={currentPage}>
-                    <ProtectedRoute>
-                        <BrandKitQuestionnairePage />
-                    </ProtectedRoute>
-                </Layout>
-            } /> */}
-
-            <Route path="/client-portal" element={
+            {/* Additional protected routes for future use */}
+            <Route path="/dashboard" element={
                 <ClientProtectedRoute>
-                    <ClientPortal />
+                    <Dashboard />
                 </ClientProtectedRoute>
             } />
+
+            <Route path="/profile" element={
+                <ClientProtectedRoute>
+                    <Profile />
+                </ClientProtectedRoute>
+            } />
+
+            <Route path="/forms" element={
+                <ClientProtectedRoute>
+                    <Forms />
+                </ClientProtectedRoute>
+            } />
+
+            <Route path="/know-your-form" element={
+                <ClientProtectedRoute>
+                    <KnowingYouFormPage />
+                </ClientProtectedRoute>
+            } />
+
+            <Route path="/brandkit-form" element={
+                <ClientProtectedRoute>
+                    <BrandKitFormPage />
+                </ClientProtectedRoute>
+            } />
+
+            <Route path="/brandkit-questionnaire" element={
+                <ClientProtectedRoute>
+                    <BrandKitQuestionnairePage />
+                </ClientProtectedRoute>
+            } />
+
+            {/* Catch-all route - redirect to login */}
+            <Route path="*" element={<Login />} />
         </Routes>
     );
 }

@@ -292,13 +292,7 @@ export default function AdminPortal() {
     const [revisionRequests, setRevisionRequests] = useState([]);
     const [loadingRevisions, setLoadingRevisions] = useState(false);
 
-    // Debug: Log brandKits state changes
-    useEffect(() => {
-        console.log('🔄 BrandKits state updated:', {
-            count: brandKits.length,
-            data: brandKits
-        });
-    }, [brandKits]);
+    // BrandKits state management
 
     // Fetch brandkits when component mounts or when brandkits section is active
     useEffect(() => {
@@ -328,9 +322,6 @@ export default function AdminPortal() {
     const fetchBrandKits = async () => {
         setLoadingBrandKits(true);
         try {
-            console.log('🔄 Fetching brandkits from API...');
-            console.log('🔑 Auth token available:', !!localStorage.getItem('authToken'));
-
             const response = await fetch('/api/brandkit/admin/all', {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -338,25 +329,13 @@ export default function AdminPortal() {
                 }
             });
 
-            console.log('📡 Response status:', response.status);
-            console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
-
             const data = await response.json();
-            console.log('📊 BrandKits API response:', data);
 
             if (data.success) {
-                console.log('✅ BrandKits fetched successfully:', data.data.forms);
-                console.log('📊 Number of forms:', data.data.forms?.length || 0);
                 setBrandKits(data.data.forms || []);
-            } else {
-                console.error('❌ BrandKits API returned error:', data);
             }
         } catch (error) {
-            console.error('❌ Error fetching brandkits:', error);
-            console.error('❌ Error details:', {
-                message: error.message,
-                stack: error.stack
-            });
+            // Error handled by loading state
         } finally {
             setLoadingBrandKits(false);
         }
@@ -375,7 +354,7 @@ export default function AdminPortal() {
                 setRevisionRequests(data.data || []);
             }
         } catch (error) {
-            console.error('Error fetching revision requests:', error);
+            // Error handled by loading state
         } finally {
             setLoadingRevisions(false);
         }
@@ -383,7 +362,6 @@ export default function AdminPortal() {
 
     const downloadBrandKit = async (brandKit) => {
         try {
-            console.log('🔄 Starting comprehensive form download for user:', brandKit.user_id);
 
             // Fetch all form types for this user
             const [brandKitData, organizationData] = await Promise.allSettled([
@@ -508,17 +486,14 @@ export default function AdminPortal() {
             document.body.removeChild(a);
 
             toast.success('✅ Complete form data downloaded successfully!');
-            console.log('✅ Comprehensive form download completed for user:', brandKit.user_id);
 
         } catch (error) {
-            console.error('❌ Error downloading comprehensive form data:', error);
             toast.error('Failed to download form data. Please try again.');
         }
     };
 
     const downloadAllBrandKits = async () => {
         try {
-            console.log('🔄 Starting comprehensive bulk download for all users...');
 
             // Fetch all form types for all users
             const [allBrandKits, allOrganizations] = await Promise.allSettled([
@@ -668,10 +643,8 @@ export default function AdminPortal() {
             document.body.removeChild(a);
 
             toast.success(`✅ Bulk export completed! ${comprehensiveBulkData.users.length} users processed.`);
-            console.log('✅ Comprehensive bulk download completed');
 
         } catch (error) {
-            console.error('❌ Error downloading bulk form data:', error);
             toast.error('Failed to download bulk form data. Please try again.');
         }
     };

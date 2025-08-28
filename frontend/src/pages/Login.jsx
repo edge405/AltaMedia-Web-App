@@ -68,19 +68,16 @@ export default function Login() {
         if (result.success) {
           // Redirect based on user role
           const currentUser = authService.getCurrentUser();
-          console.log('Login successful - User:', currentUser);
 
           if (currentUser && currentUser.role === 'admin') {
-            console.log('Admin user logged in - redirecting to admin dashboard');
             navigate("/admin/dashboard");
           } else {
-            console.log('Regular user logged in - redirecting to client portal');
             navigate("/client-portal");
           }
         }
       }
     } catch (error) {
-      console.error('Authentication error:', error);
+      // Authentication error handled by toast notifications
     } finally {
       setIsLoading(false);
     }
@@ -387,14 +384,6 @@ export default function Login() {
                 ) : (
                   showRegisterForm ? "Create Account" : "Sign In"
                 )}
-              </button>
-
-              <button
-                type="button"
-                onClick={toggleFormMode}
-                className="demo-button"
-              >
-                {showRegisterForm ? "Already have an account? Sign In" : "Don't have an account? Register"}
               </button>
             </div>
           </form>

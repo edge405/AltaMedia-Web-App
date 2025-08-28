@@ -139,23 +139,8 @@ export const adminDeliverableApi = {
 
   // Download deliverable file
   downloadFile: (filePath) => {
-    // Construct the full URL for file download
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-    
-    if (!filePath) {
-      console.error('No file path provided for download');
-      return '';
-    }
-    
-    // Remove any leading slashes and normalize path separators
-    const cleanPath = filePath.replace(/^[\/\\]+/, '').replace(/\\/g, '/');
-    
-    // If the path already includes 'uploads', use it as is
-    if (cleanPath.startsWith('uploads/')) {
-      return `${baseUrl}/${cleanPath}`;
-    }
-    
-    // Otherwise, assume it's a relative path and prepend 'uploads/'
-    return `${baseUrl}/uploads/${cleanPath}`;
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    return `${baseUrl}/${normalizedPath}`;
   }
 };

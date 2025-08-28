@@ -670,9 +670,9 @@ const getAISuggestions = async (req, res) => {
     if (formData) {
       try {
         parsedFormData = JSON.parse(formData);
-      } catch (e) {
-        console.warn('Failed to parse formData:', e);
-      }
+              } catch (e) {
+          // Failed to parse formData
+        }
     }
 
     console.log(`Generating AI suggestion for field: ${fieldName}`);

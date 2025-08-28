@@ -155,7 +155,6 @@ export default function DeliverableHistoryModal({
 
         try {
             const downloadUrl = deliverableApi.downloadFile(filePath);
-            console.log('Starting forced download for:', downloadUrl);
 
             // Fetch the file as a blob to force download behavior
             const response = await fetch(downloadUrl, {
@@ -196,7 +195,6 @@ export default function DeliverableHistoryModal({
 
             // Fallback: Try XMLHttpRequest method
             try {
-                console.log('Trying XMLHttpRequest fallback...');
 
                 const downloadUrl = deliverableApi.downloadFile(filePath);
                 const xhr = new XMLHttpRequest();
@@ -236,7 +234,6 @@ export default function DeliverableHistoryModal({
 
                 // Final fallback: Direct link method
                 try {
-                    console.log('Trying direct link fallback...');
                     const downloadUrl = deliverableApi.downloadFile(filePath);
                     const link = document.createElement('a');
                     link.href = downloadUrl;

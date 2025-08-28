@@ -54,12 +54,8 @@ export default function AdminRevisions() {
             const data = await apiService.get('/revision-requests/admin');
 
             if (data.success) {
-                console.log('Revision requests data:', data.data);
-                console.log('Sample revision request structure:', data.data[0]);
-
                 // Check for link deliverables
                 const linkDeliverables = data.data.filter(req => req.deliverable_link);
-                console.log('Link deliverables found:', linkDeliverables.length, linkDeliverables);
 
                 setRevisionRequests(data.data || []);
             } else {
@@ -133,7 +129,6 @@ export default function AdminRevisions() {
                     requests: [],
                     total_versions: request.total_versions || 1 // Use from API response
                 };
-                console.log('Created new group for:', key, 'with deliverable_status:', request.deliverable_status);
             }
 
             grouped[key].requests.push(request);
@@ -143,22 +138,12 @@ export default function AdminRevisions() {
         Object.values(grouped).forEach(group => {
             const sortedRequests = group.requests.sort((a, b) => new Date(b.requested_at) - new Date(a.requested_at));
             group.deliverable_status = sortedRequests[0].deliverable_status;
-            console.log('Updated group deliverable_status to:', group.deliverable_status, 'for group:', `${group.user_name}_${group.feature_name}`);
         });
 
         const result = Object.values(grouped);
-        console.log('Grouped requests result:', result.map(g => ({
-            key: `${g.user_name}_${g.feature_name}`,
-            deliverable_status: g.deliverable_status,
-            deliverable_link: g.deliverable_link,
-            file_path: g.file_path,
-            request_count: g.requests.length,
-            total_versions: g.total_versions
-        })));
 
         // Check for groups with link deliverables
         const groupsWithLinks = result.filter(g => g.deliverable_link);
-        console.log('Groups with link deliverables:', groupsWithLinks.length, groupsWithLinks);
 
         return result;
     };
@@ -180,24 +165,14 @@ export default function AdminRevisions() {
 
     // Get the overall status for a group (show the most urgent status)
     const getGroupStatus = (requests, deliverableStatus) => {
-        // Debug logging
-        console.log('getGroupStatus called with:', {
-            requests: requests.length,
-            deliverableStatus,
-            requestStatuses: requests.map(r => r.status),
-            requestDeliverableStatuses: requests.map(r => r.deliverable_status)
-        });
-
         // If deliverable is approved by client, show that status
         if (deliverableStatus === 'approved') {
-            console.log('Deliverable is approved by client, returning approved');
             return 'approved';
         }
 
         // Otherwise, show the most urgent revision request status
         const statusPriority = { 'pending': 3, 'in_progress': 2, 'completed': 1 };
         const sortedByPriority = requests.sort((a, b) => statusPriority[b.status] - statusPriority[a.status]);
-        console.log('Returning revision request status:', sortedByPriority[0].status);
         return sortedByPriority[0].status;
     };
 
@@ -308,16 +283,6 @@ export default function AdminRevisions() {
 
             // If there's a file or link to upload, upload it first
             if (selectedFile || (uploadType === 'link' && deliverableLink.trim())) {
-                console.log('Uploading revision deliverable:', {
-                    uploadType,
-                    fileName: selectedFile?.name,
-                    fileSize: selectedFile?.size,
-                    deliverableLink: uploadType === 'link' ? deliverableLink : null,
-                    purchaseId: selectedRequest.purchase_id,
-                    featureName: selectedRequest.feature_name,
-                    selectedRequest: selectedRequest
-                });
-
                 // Validate required fields
                 if (!selectedRequest.purchase_id || !selectedRequest.feature_name) {
                     throw new Error(`Missing required data: purchase_id=${selectedRequest.purchase_id}, feature_name=${selectedRequest.feature_name}`);
@@ -335,11 +300,7 @@ export default function AdminRevisions() {
                         formData.append('adminNotes', adminResponse || `Revision response: ${newStatus}`);
                         formData.append('files', selectedFile);
 
-                        // Log FormData contents for debugging
-                        console.log('FormData contents:');
-                        for (let [key, value] of formData.entries()) {
-                            console.log('  FormData entry:', key, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value);
-                        }
+                        // FormData prepared for file upload
 
                         uploadResponse = await adminDeliverableApi.uploadDeliverable(formData);
                     } else if (uploadType === 'link' && deliverableLink.trim()) {
@@ -352,11 +313,8 @@ export default function AdminRevisions() {
                             deliverableLink: deliverableLink.trim()
                         };
 
-                        console.log('Link upload data:', linkData);
                         uploadResponse = await adminDeliverableApi.uploadDeliverableLink(linkData);
                     }
-
-                    console.log('Upload response:', uploadResponse);
 
                     if (uploadResponse.success) {
                         const uploadTypeText = uploadType === 'link' ? 'link deliverable' : 'file';
@@ -365,7 +323,6 @@ export default function AdminRevisions() {
                         throw new Error(uploadResponse.message || 'Failed to upload deliverable');
                     }
                 } catch (uploadError) {
-                    console.error('Upload error:', uploadError);
                     toast.error(`Upload failed: ${uploadError.message}`);
                     return; // Don't proceed with status update if upload failed
                 }
@@ -398,16 +355,9 @@ export default function AdminRevisions() {
                     throw new Error(statusData.message || 'Failed to update status');
                 }
             } catch (statusError) {
-                console.error('Status update error:', statusError);
                 toast.error(`Status update failed: ${statusError.message}`);
             }
         } catch (err) {
-            console.error('Error in handleStatusUpdate:', err);
-            console.error('Error details:', {
-                message: err.message,
-                stack: err.stack,
-                response: err.response
-            });
             toast.error(err.message || 'Failed to process revision request');
         } finally {
             setUpdatingStatus(false);
@@ -450,7 +400,6 @@ export default function AdminRevisions() {
         try {
             const downloadUrl = adminDeliverableApi.downloadFile(filePath);
             const fileName = filePath.split('/').pop() || 'deliverable';
-            console.log('Starting forced download for:', downloadUrl);
 
             // Fetch the file as a blob to force download behavior
             const response = await fetch(downloadUrl, {
@@ -485,11 +434,8 @@ export default function AdminRevisions() {
             setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 
         } catch (error) {
-            console.error('Download error:', error);
-
             // Fallback: Try XMLHttpRequest method
             try {
-                console.log('Trying XMLHttpRequest fallback...');
 
                 const downloadUrl = adminDeliverableApi.downloadFile(filePath);
                 const fileName = filePath.split('/').pop() || 'deliverable';
@@ -525,7 +471,6 @@ export default function AdminRevisions() {
                 xhr.send();
 
             } catch (fallbackError) {
-                console.error('Fallback download also failed:', fallbackError);
                 toast.error('Failed to download file. Please try again or contact support.');
             }
         }
@@ -544,7 +489,6 @@ export default function AdminRevisions() {
                 throw new Error(data.message || 'Failed to fetch version history');
             }
         } catch (err) {
-            console.error('Error fetching version history:', err);
             toast.error('Failed to load version history');
             setVersionHistory([]);
         } finally {
@@ -554,8 +498,6 @@ export default function AdminRevisions() {
 
     // Handle response modal
     const handleOpenResponseModal = (request, group) => {
-        console.log('handleOpenResponseModal called with:', { request, group });
-
         // Create a combined object with all necessary data
         const selectedRequestData = {
             ...request,
@@ -567,8 +509,6 @@ export default function AdminRevisions() {
             file_path: group.file_path,
             deliverable_status: group.deliverable_status
         };
-
-        console.log('Created selectedRequestData:', selectedRequestData);
 
         setSelectedRequest(selectedRequestData);
         setAdminResponse(request.admin_response || "");
@@ -740,13 +680,6 @@ export default function AdminRevisions() {
                                                 <td className="py-4 px-4">
                                                     <div className="flex space-x-2">
                                                         {(() => {
-                                                            console.log('Group data for actions:', {
-                                                                groupKey: `${group.user_name}_${group.feature_name}`,
-                                                                deliverable_link: group.deliverable_link,
-                                                                file_path: group.file_path,
-                                                                deliverableType: getDeliverableType(group)
-                                                            });
-
                                                             if (group.deliverable_link) {
                                                                 // Link deliverable - show Visit Link button
                                                                 return (
@@ -897,8 +830,8 @@ export default function AdminRevisions() {
                                             setDeliverableLink('');
                                         }}
                                         className={`p-6 rounded-xl border-2 transition-all duration-200 text-left ${uploadType === 'files'
-                                                ? 'border-[#f7e833] bg-[#f7e833]/10 shadow-lg'
-                                                : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
+                                            ? 'border-[#f7e833] bg-[#f7e833]/10 shadow-lg'
+                                            : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
                                             }`}
                                     >
                                         <div className="flex items-center mb-3">
@@ -923,8 +856,8 @@ export default function AdminRevisions() {
                                             setDeliverableLink('');
                                         }}
                                         className={`p-6 rounded-xl border-2 transition-all duration-200 text-left ${uploadType === 'link'
-                                                ? 'border-[#f7e833] bg-[#f7e833]/10 shadow-lg'
-                                                : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
+                                            ? 'border-[#f7e833] bg-[#f7e833]/10 shadow-lg'
+                                            : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
                                             }`}
                                     >
                                         <div className="flex items-center mb-3">
@@ -950,8 +883,8 @@ export default function AdminRevisions() {
                                         setDeliverableLink('');
                                     }}
                                     className={`w-full mt-4 p-4 rounded-xl border-2 transition-all duration-200 text-left ${uploadType === 'response'
-                                            ? 'border-[#f7e833] bg-[#f7e833]/10 shadow-lg'
-                                            : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
+                                        ? 'border-[#f7e833] bg-[#f7e833]/10 shadow-lg'
+                                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
                                         }`}
                                 >
                                     <div className="flex items-center">
@@ -1270,13 +1203,6 @@ export default function AdminRevisions() {
 
                                     <div className="flex space-x-2">
                                         {(() => {
-                                            console.log('Version data for actions:', {
-                                                versionId: version.id,
-                                                deliverable_link: version.deliverable_link,
-                                                file_path: version.file_path,
-                                                deliverableType: getDeliverableType(version)
-                                            });
-
                                             if (version.deliverable_link) {
                                                 // Link deliverable - show Visit Link button
                                                 return (
