@@ -2,14 +2,14 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
+import {
   Crown,
   BarChart3
 } from "lucide-react";
 
 export default function MainDashboard({ client, projects, onProjectCreated }) {
   const [selectedPeriod, setSelectedPeriod] = useState("Week");
-  
+
   const totalRevenue = 2456; // Mock data to match reference
   const growthPercentage = 20;
 
@@ -21,13 +21,13 @@ export default function MainDashboard({ client, projects, onProjectCreated }) {
       tools: ["Basic Templates", "Email Support", "5 Projects/Month"]
     },
     professional: {
-      name: "Professional Plan", 
+      name: "Professional Plan",
       color: "bg-blue-100 text-blue-800",
       tools: ["Premium Templates", "Priority Support", "20 Projects/Month", "Advanced Analytics"]
     },
     enterprise: {
       name: "Enterprise Plan",
-      color: "bg-purple-100 text-purple-800", 
+      color: "bg-purple-100 text-purple-800",
       tools: ["Custom Templates", "24/7 Support", "Unlimited Projects", "White Label", "API Access"]
     }
   };
@@ -95,7 +95,7 @@ export default function MainDashboard({ client, projects, onProjectCreated }) {
             {chartData.map((item, index) => (
               <div key={index} className="flex flex-col items-center gap-2">
                 <div className="relative">
-                  <div 
+                  <div
                     className="w-8 bg-slate-200 rounded-full"
                     style={{ height: `${item.value}px` }}
                   ></div>

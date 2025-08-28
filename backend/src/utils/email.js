@@ -46,8 +46,10 @@ const sendEmail = async (to, subject, htmlContent, textContent = '') => {
  * @param {string} email - User's email address
  * @param {string} password - Generated password
  * @param {string} fullname - User's full name
+ * @param {Object} purchasedPackage - Purchased package details
+ * @param {Array} features - Package features array
  */
-const sendWelcomeEmail = async (email, password, fullname) => {
+const sendWelcomeEmail = async (email, password, fullname, purchasedPackage, features = []) => {
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
@@ -66,6 +68,33 @@ const sendWelcomeEmail = async (email, password, fullname) => {
           <p style="margin: 5px 0;"><strong>Password:</strong> ${password}</p>
         </div>
         
+        ${purchasedPackage ? `
+        <div style="background-color: #d4edda; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745; margin: 20px 0;">
+          <h3 style="color: #155724; margin-top: 0;">Your Package Details:</h3>
+          <div style="color: #155724;">
+            <p style="margin: 8px 0;"><strong>Package Name:</strong> ${purchasedPackage.package_name}</p>
+            <p style="margin: 8px 0;"><strong>Total Amount:</strong> ₱${purchasedPackage.total_amount}</p>
+            <p style="margin: 8px 0;"><strong>Purchase Date:</strong> ${new Date(purchasedPackage.purchase_date).toLocaleDateString()}</p>
+            <p style="margin: 8px 0;"><strong>Expiration Date:</strong> ${new Date(purchasedPackage.expiration_date).toLocaleDateString()}</p>
+          </div>
+        </div>
+        ` : ''}
+        
+        ${features.length > 0 ? `
+        <div style="background-color: #e7f3ff; padding: 15px; border-radius: 5px; border-left: 4px solid #007bff; margin: 20px 0;">
+          <h3 style="color: #004085; margin-top: 0;">Your Package Features:</h3>
+          <ul style="color: #004085; margin: 0; padding-left: 20px;">
+            ${features.map(feature => `
+              <li style="margin-bottom: 8px;">
+                <strong>${feature.feature_name}</strong>
+                ${feature.description ? `<br><span style="font-size: 14px; color: #6c757d;">${feature.description}</span>` : ''}
+                <br>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+        ` : ''}
+        
         <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin: 20px 0;">
           <p style="margin: 0; color: #856404;">
             <strong>Important:</strong> For security reasons, we recommend changing your password after your first login.
@@ -78,7 +107,7 @@ const sendWelcomeEmail = async (email, password, fullname) => {
         </p>
         
         <div style="text-align: center; margin-top: 30px;">
-          <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" 
+          <a href="${`https://altamedia-web-app.onrender.com`}/login" 
              style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
             Login to Your Account
           </a>
@@ -87,7 +116,7 @@ const sendWelcomeEmail = async (email, password, fullname) => {
       
       <div style="text-align: center; margin-top: 20px; color: #6c757d; font-size: 12px;">
         <p>This is an automated message. Please do not reply to this email.</p>
-        <p>&copy; 2024 AltaMedia. All rights reserved.</p>
+        <p>&copy; 2025 AltaMedia. All rights reserved.</p>
       </div>
     </div>
   `;

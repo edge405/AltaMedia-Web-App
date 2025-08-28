@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import authService from '@/utils/authService';
 import { brandKitApi, transformToDatabaseFormat, transformToFrontendFormat } from '@/utils/brandKitApi';
 import ProgressBar from './ProgressBar';
 import FormField from './FormField';
@@ -19,10 +20,10 @@ import FileUpload from './FileUpload';
 import AISuggestion from './AISuggestion';
 import CheckboxGroup from './CheckboxGroup';
 import MapPicker from './MapPicker';
-import ProductServiceForm from './ProductServiceForm';
+import BrandKitQuestionnaire from './BrandKitQuestionnaire';
 import OrganizationForm from './OrganizationForm';
 
-const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, embedded = false }) => {
+const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, embedded = false, onComplete = null, onRefreshStatuses = null }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
@@ -67,6 +68,11 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
 
         if (response.success && response.data?.formData) {
           const frontendData = transformToFrontendFormat(response.data.formData);
+          console.log('🔍 Loaded form data:', frontendData);
+          console.log('🔍 Industry field type:', typeof frontendData.industry, 'Value:', frontendData.industry);
+          console.log('🔍 Current customers field type:', typeof frontendData.currentCustomers, 'Value:', frontendData.currentCustomers);
+          console.log('🔍 Primary location field type:', typeof frontendData.primaryLocation, 'Value:', frontendData.primaryLocation);
+          console.log('🔍 Year started field type:', typeof frontendData.yearStarted, 'Value:', frontendData.yearStarted);
           setFormData(frontendData);
           setCurrentStep(response.data.currentStep || 1);
           console.log('Loaded existing form data:', frontendData);
@@ -89,7 +95,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
   }, [user?.id, initialFormType]);
 
   const updateFormData = (field, value) => {
-    console.log(`Field change: ${field} =`, value);
+    console.log(`Field change: ${field} =`, value, 'Type:', typeof value, 'Is Array:', Array.isArray(value));
 
     setFormData(prev => ({
       ...prev,
@@ -142,7 +148,24 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
         console.log('Form data saved successfully:', response.data);
 
         if (currentStep < totalSteps) {
-          setCurrentStep(currentStep + 1);
+          const nextStepNumber = currentStep + 1;
+
+          // Update UI immediately for real-time experience
+          setCurrentStep(nextStepNumber);
+
+          // Immediately refresh form statuses to update the UI
+          if (onRefreshStatuses) {
+            onRefreshStatuses();
+          }
+
+          // Update progress in database for the next step (in background)
+          try {
+            await brandKitApi.saveFormData(userId, stepData, nextStepNumber);
+            console.log('Progress updated to step:', nextStepNumber);
+          } catch (progressError) {
+            console.error('Error updating progress:', progressError);
+          }
+
           // Scroll to top when moving to next step
           window.scrollTo({ top: 10, behavior: 'smooth' });
         }
@@ -187,13 +210,32 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
 
       if (response.success) {
         console.log('Form completed successfully:', response.data);
-        setIsSubmitted(true);
-        // Show success message
-        toast.success('🎉 BrandKit form completed successfully! Your brand identity is ready.');
-        // Automatically redirect to client-portal after a short delay
-        setTimeout(() => {
-          navigate('/client-portal');
-        }, 2000);
+
+        // Skip the completion screen and directly proceed
+        // setIsSubmitted(true); // Remove this line to skip the completion screen
+
+        // Remove the success toast notification that was causing the "review popup"
+        // toast.success('🎉 BrandKit form completed successfully! Your brand identity is ready.');
+
+        // Don't show completion screen, redirect to next form
+        if (onFormTypeChange) {
+          // Refresh form statuses before redirecting
+          if (onRefreshStatuses) {
+            onRefreshStatuses();
+          }
+          // Redirect to BrandKitQuestionnaire (the next form in the flow)
+          onFormTypeChange('product');
+        } else if (onComplete) {
+          onComplete();
+        } else {
+          // Fallback: Navigate based on user role
+          const currentUser = authService.getCurrentUser();
+          if (currentUser && currentUser.role === 'admin') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/client-portal');
+          }
+        }
       } else {
         setError('Failed to complete form');
       }
@@ -210,7 +252,13 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
       // If embedded, notify parent to go back to forms selection
       onFormTypeChange && onFormTypeChange(null);
     } else {
-      navigate('/client-portal');
+      // Navigate based on user role
+      const currentUser = authService.getCurrentUser();
+      if (currentUser && currentUser.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/client-portal');
+      }
     }
   };
 
@@ -228,9 +276,9 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
     );
   }
 
-  // If building type is "product", render the ProductServiceForm component
+  // If building type is "product", render the BrandKitQuestionnaire component
   if (formData.buildingType === 'product') {
-    return <ProductServiceForm onFormTypeChange={(type) => {
+    return <BrandKitQuestionnaire onFormTypeChange={(type) => {
       updateFormData('buildingType', type);
       setCurrentStep(1); // Reset to first step
     }} />;
@@ -247,9 +295,9 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
   const renderStep1 = () => (
     <div className="space-y-8">
       <FormField label="What are you building?" type="Dropdown" required>
-        <Select value={formData.buildingType} onValueChange={(value) => updateFormData('buildingType', value)}>
-          <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-            <SelectValue placeholder="Select what you're building" />
+        <Select value={formData.buildingType} onValueChange={(value) => updateFormData('buildingType', value)} disabled>
+          <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed">
+            <SelectValue placeholder="Business/Company (Locked)" />
           </SelectTrigger>
           <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
             <SelectItem value="business">Business/Company</SelectItem>
@@ -257,6 +305,9 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
             <SelectItem value="organization">Organization/Brand/Page</SelectItem>
           </SelectContent>
         </Select>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          🔒 Form type is locked to ensure proper form completion flow
+        </p>
       </FormField>
 
       <FormField label="Business Email" type="Short Text" required>
@@ -269,7 +320,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
         />
       </FormField>
 
-      <FormField label="Do you have a Proventous ID?" type="Dropdown">
+      <FormField label="Does your business have a Proventous ID?" type="Dropdown">
         <Select value={formData.hasProventousId} onValueChange={(value) => updateFormData('hasProventousId', value)}>
           <SelectTrigger className="w-full border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
             <SelectValue placeholder="Select an option" />
@@ -378,13 +429,13 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
       <FormField label="Describe what your business does in one powerful sentence" type="Short Text" aiSuggestions>
         <Input
           placeholder="A concise description of your business"
-          value={formData.brandDescription || ''}
-          onChange={(e) => updateFormData('brandDescription', e.target.value)}
+          value={formData.businessDescription || ''}
+          onChange={(e) => updateFormData('businessDescription', e.target.value)}
         />
         <AISuggestion
-          fieldName="brandDescription"
-          currentValue={formData.brandDescription}
-          onApplySuggestion={(suggestion) => updateFormData('brandDescription', suggestion)}
+          fieldName="businessDescription"
+          currentValue={formData.businessDescription}
+          onApplySuggestion={(suggestion) => updateFormData('businessDescription', suggestion)}
           formData={formData}
         />
       </FormField>
@@ -594,16 +645,6 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
               className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             />
           </FormField>
-
-          {/* <FormField label="How Would Your Team Describe Working at Your Business?" type="Long Text">
-            <Textarea
-              value={formData.teamDescription || ''}
-              onChange={(e) => updateFormData('teamDescription', e.target.value)}
-              placeholder="Describe your company culture from your team's perspective"
-              rows={4}
-              className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-            />
-          </FormField> */}
         </>
       )}
     </div>

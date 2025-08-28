@@ -6,14 +6,16 @@ import { toast } from 'sonner';
 import { clientData } from '@/data/clientData';
 import { getPackageByName } from '@/data/packages';
 import { brandKitApi } from '@/utils/brandKitApi';
-import { getFormData as getProductServiceFormData } from '@/utils/productServiceApi';
+import { brandKitQuestionnaireApi } from '@/utils/brandKitQuestionnaireApi';
 import { organizationApi } from '@/utils/organizationApi';
+import { userPackageApi } from '@/utils/userPackageApi';
 
 // Import services
 import profileService from '@/utils/profileService';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Import components
+import FormCompletionCheck from '@/components/FormCompletionCheck';
 import ClientSidebar from '@/components/dashboard/ClientSidebar';
 import TopBar from '@/components/dashboard/TopBar';
 import DashboardSection from '@/components/dashboard/DashboardSection';
@@ -27,14 +29,23 @@ import ProfileSection from '@/components/dashboard/ProfileSection';
 export default function ClientPortal() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const [formsCompleted, setFormsCompleted] = useState(false);
   const [activeSection, setActiveSection] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [newMessage, setNewMessage] = useState("");
+
+  // User package data state
+  const [userPackages, setUserPackages] = useState([]);
+  const [activePackage, setActivePackage] = useState(null);
+  const [selectedPackageId, setSelectedPackageId] = useState(null);
+  const [isLoadingPackages, setIsLoadingPackages] = useState(true);
+  const [packageError, setPackageError] = useState(null);
+
   const [formStatuses, setFormStatuses] = useState({
     knowingYou: { completed: false, currentStep: 0, totalSteps: 11 },
-    productService: { completed: false, currentStep: 0, totalSteps: 5 },
+    brandKitQuestionnaire: { completed: false, currentStep: 0, totalSteps: 9 },
     organization: { completed: false, currentStep: 0, totalSteps: 4 }
   });
   const [isLoadingForms, setIsLoadingForms] = useState(true);
@@ -65,8 +76,84 @@ export default function ClientPortal() {
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // Get package details
-  const packageDetails = getPackageByName(clientData.activePackage.name);
+  // Load user packages
+  useEffect(() => {
+    const loadUserPackages = async () => {
+      if (!user?.id) return;
+
+      setIsLoadingPackages(true);
+      setPackageError(null);
+
+      try {
+        const response = await userPackageApi.getUserPackages();
+
+        if (response.success && response.data) {
+          const packages = response.data.packages || [];
+          setUserPackages(packages);
+
+          // Set the most recent active package as the active package
+          const activePkg = packages.find(pkg =>
+            pkg.status === 'active' &&
+            new Date(pkg.expiration_date) >= new Date()
+          ) || packages[0]; // Fallback to first package if no active ones
+
+          setActivePackage(activePkg);
+          setSelectedPackageId(activePkg?.id || null);
+        }
+      } catch (error) {
+        console.error('Failed to load user packages:', error);
+        setPackageError(error.message);
+        toast.error('Failed to load package information');
+      } finally {
+        setIsLoadingPackages(false);
+      }
+    };
+
+    loadUserPackages();
+  }, [user?.id]);
+
+  // Transform API package data to match expected format
+  const transformPackageData = (pkg) => {
+    if (!pkg) return null;
+
+    return {
+      name: pkg.package_name,
+      price: `₱${parseFloat(pkg.total_amount).toLocaleString()}`,
+      status: pkg.status === 'active' ? 'Active' : 'Inactive',
+      startDate: pkg.purchase_date ? new Date(pkg.purchase_date).toISOString().split('T')[0] : '',
+      endDate: pkg.expiration_date ? new Date(pkg.expiration_date).toISOString().split('T')[0] : '',
+      id: pkg.id,
+      features: pkg.features || [],
+      // Add API-specific data
+      total_amount: pkg.total_amount,
+      purchase_date: pkg.purchase_date,
+      expiration_date: pkg.expiration_date,
+      created_at: pkg.created_at,
+      updated_at: pkg.updated_at
+    };
+  };
+
+  // Handle package selection
+  const handlePackageSelect = (packageId) => {
+    const selectedPkg = userPackages.find(pkg => pkg.id === packageId);
+    if (selectedPkg) {
+      setSelectedPackageId(packageId);
+      setActivePackage(selectedPkg);
+    }
+  };
+
+  // Get currently selected package
+  const getCurrentPackage = () => {
+    if (selectedPackageId) {
+      return userPackages.find(pkg => pkg.id === selectedPackageId) || activePackage;
+    }
+    return activePackage;
+  };
+
+  // Get package details for the active package
+  const currentPackage = getCurrentPackage();
+  const packageDetails = currentPackage ? getPackageByName(currentPackage.package_name) : null;
+  const transformedActivePackage = transformPackageData(currentPackage);
 
   // Load profile data
   useEffect(() => {
@@ -108,26 +195,26 @@ export default function ClientPortal() {
           console.error('Error checking Knowing You Form status:', error);
         }
 
-        // Check Product Service Form
+        // Check BrandKitQuestionnaire Form
         try {
-          const productServiceResponse = await getProductServiceFormData(userId);
-          if (productServiceResponse.success && productServiceResponse.data) {
+          const brandKitQuestionnaireResponse = await brandKitQuestionnaireApi.getFormData(userId);
+          if (brandKitQuestionnaireResponse.success && brandKitQuestionnaireResponse.data) {
             setFormStatuses(prev => ({
               ...prev,
-              productService: {
-                completed: productServiceResponse.data.currentStep === 5,
-                currentStep: productServiceResponse.data.currentStep || 0,
-                totalSteps: 5
+              brandKitQuestionnaire: {
+                completed: brandKitQuestionnaireResponse.data.currentStep === 9,
+                currentStep: brandKitQuestionnaireResponse.data.currentStep || 0,
+                totalSteps: 9
               }
             }));
           }
         } catch (error) {
-          console.error('Error checking Product Service Form status:', error);
+          console.error('Error checking BrandKitQuestionnaire Form status:', error);
         }
 
         // Check Organization Form
         try {
-          const organizationResponse = await organizationApi.getFormData(userId);
+          const organizationResponse = await organizationApi.getFormData();
           if (organizationResponse.success && organizationResponse.data) {
             setFormStatuses(prev => ({
               ...prev,
@@ -303,6 +390,118 @@ export default function ClientPortal() {
     setCurrentForm(type);
   };
 
+  const handleFormsComplete = () => {
+    console.log('🎉 All forms completed! Setting form statuses to completed...');
+
+    // Set all form statuses to completed
+    setFormStatuses({
+      knowingYou: { completed: true, currentStep: 11, totalSteps: 11 },
+      brandKitQuestionnaire: { completed: true, currentStep: 9, totalSteps: 9 },
+      organization: { completed: true, currentStep: 4, totalSteps: 4 }
+    });
+
+    // Set forms as completed
+    setFormsCompleted(true);
+  };
+
+  // Function to refresh form statuses
+  const refreshFormStatuses = async () => {
+    console.log('🔄 Refreshing form statuses...');
+    setIsLoadingForms(true);
+
+    try {
+      const userId = user?.id;
+      if (!userId) {
+        console.log('No user ID available for refresh');
+        return;
+      }
+
+      // Check all form statuses
+      const newFormStatuses = { ...formStatuses };
+
+      // Check Knowing You Form (BrandKit)
+      try {
+        const knowingYouResponse = await brandKitApi.getFormData(userId);
+        if (knowingYouResponse.success && knowingYouResponse.data) {
+          newFormStatuses.knowingYou = {
+            completed: knowingYouResponse.data.currentStep === 11,
+            currentStep: knowingYouResponse.data.currentStep || 0,
+            totalSteps: 11
+          };
+        }
+      } catch (error) {
+        console.error('Error checking Knowing You Form status:', error);
+      }
+
+      // Check BrandKit Questionnaire Form
+      try {
+        const brandKitQuestionnaireResponse = await brandKitQuestionnaireApi.getFormData(userId);
+        if (brandKitQuestionnaireResponse.success && brandKitQuestionnaireResponse.data) {
+          const isCompleted = brandKitQuestionnaireResponse.data.isCompleted || brandKitQuestionnaireResponse.data.currentStep === 9;
+          const currentStep = brandKitQuestionnaireResponse.data.currentStep || 0;
+
+          newFormStatuses.brandKitQuestionnaire = {
+            completed: isCompleted,
+            currentStep: isCompleted ? 9 : currentStep, // Force to 9 if completed
+            totalSteps: 9
+          };
+
+          console.log('📊 BrandKit Questionnaire status:', {
+            isCompleted,
+            currentStep,
+            status: isCompleted ? 'Completed' : currentStep > 0 ? 'In Progress' : 'Not Started'
+          });
+        } else {
+          newFormStatuses.brandKitQuestionnaire = {
+            completed: false,
+            currentStep: 0,
+            totalSteps: 9
+          };
+        }
+      } catch (error) {
+        console.error('Error checking BrandKit Questionnaire Form status:', error);
+        newFormStatuses.brandKitQuestionnaire = {
+          completed: false,
+          currentStep: 0,
+          totalSteps: 9
+        };
+      }
+
+      // Check Organization Form
+      try {
+        const organizationResponse = await organizationApi.getFormData();
+        if (organizationResponse.success && organizationResponse.data) {
+          newFormStatuses.organization = {
+            completed: organizationResponse.data.currentStep === 4,
+            currentStep: organizationResponse.data.currentStep || 0,
+            totalSteps: 4
+          };
+        } else {
+          newFormStatuses.organization = {
+            completed: false,
+            currentStep: 0,
+            totalSteps: 4
+          };
+        }
+      } catch (error) {
+        console.error('Error checking Organization Form status:', error);
+        newFormStatuses.organization = {
+          completed: false,
+          currentStep: 0,
+          totalSteps: 4
+        };
+      }
+
+      console.log('📈 Updated form statuses:', newFormStatuses);
+      setFormStatuses(newFormStatuses);
+
+    } catch (error) {
+      console.error('Error refreshing form statuses:', error);
+    } finally {
+      setIsLoadingForms(false);
+    }
+  };
+
   // Filter deliverables
   const filteredDeliverables = clientData.deliverables.filter(deliverable => {
     const matchesSearch = deliverable.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -316,7 +515,7 @@ export default function ClientPortal() {
     { id: "package", label: "Package Details", icon: "Package" },
     { id: "deliverables", label: "Deliverables", icon: "Download" },
     { id: "brandkit", label: "BrandKit", icon: "Palette" },
-    { id: "analytics", label: "Analytics", icon: "BarChart3" },
+    // { id: "analytics", label: "Analytics", icon: "BarChart3" },
     { id: "support", label: "Support", icon: "MessageSquare" },
   ];
 
@@ -338,6 +537,17 @@ export default function ClientPortal() {
   const handleViewDeliverables = () => {
     setActiveSection("deliverables");
     setShowProfile(false);
+  };
+
+  // Create client data object with API data
+  const clientDataWithApi = {
+    ...clientData,
+    activePackage: transformedActivePackage,
+    userPackages: userPackages,
+    selectedPackageId: selectedPackageId,
+    onPackageSelect: handlePackageSelect,
+    isLoadingPackages: isLoadingPackages,
+    packageError: packageError
   };
 
   const renderContent = () => {
@@ -366,7 +576,7 @@ export default function ClientPortal() {
       case "dashboard":
         return (
           <DashboardSection
-            clientData={clientData}
+            clientData={clientDataWithApi}
             onViewPackage={handleViewPackage}
             onViewDeliverables={handleViewDeliverables}
           />
@@ -374,14 +584,14 @@ export default function ClientPortal() {
       case "package":
         return (
           <PackageDetailsSection
-            clientData={clientData}
+            clientData={clientDataWithApi}
             packageDetails={packageDetails}
           />
         );
       case "deliverables":
         return (
           <DeliverablesSection
-            clientData={clientData}
+            clientData={clientDataWithApi}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             filterStatus={filterStatus}
@@ -396,19 +606,20 @@ export default function ClientPortal() {
             formStatuses={formStatuses}
             currentForm={currentForm}
             onFormTypeChange={handleFormTypeChange}
+            onRefreshStatuses={refreshFormStatuses}
           />
         );
-      case "analytics":
-        return (
-          <AnalyticsSection
-            clientData={clientData}
-            getStatusColor={getStatusColor}
-          />
-        );
+      // case "analytics":
+      //   return (
+      //     <AnalyticsSection
+      //       clientData={clientDataWithApi}
+      //       getStatusColor={getStatusColor}
+      //     />
+      //   );
       case "support":
         return (
           <SupportSection
-            clientData={clientData}
+            clientData={clientDataWithApi}
             newMessage={newMessage}
             setNewMessage={setNewMessage}
             getStatusColor={getStatusColor}
@@ -417,13 +628,18 @@ export default function ClientPortal() {
       default:
         return (
           <DashboardSection
-            clientData={clientData}
+            clientData={clientDataWithApi}
             onViewPackage={handleViewPackage}
             onViewDeliverables={handleViewDeliverables}
           />
         );
     }
   };
+
+  // Show form completion check if forms are not completed
+  if (!formsCompleted) {
+    return <FormCompletionCheck onFormsComplete={handleFormsComplete} />;
+  }
 
   return (
     <div className="min-h-screen bg-black flex">
@@ -449,7 +665,7 @@ export default function ClientPortal() {
           sidebarItems={sidebarItems}
           showProfile={showProfile}
           profileData={profileData}
-          clientData={clientData}
+          clientData={clientDataWithApi}
         />
 
         {/* Page Content */}

@@ -1,6 +1,6 @@
 import apiService from './api';
 import { brandKitApi } from './brandKitApi';
-import { getFormData as getProductServiceData } from './productServiceApi';
+import { brandKitQuestionnaireApi } from './brandKitQuestionnaireApi';
 import { organizationApi } from './organizationApi';
 
 /**
@@ -17,7 +17,7 @@ export const formStatusApi = {
     try {
       const status = {
         business: { completed: false, currentStep: 0, totalSteps: 11 },
-        product: { completed: false, currentStep: 0, totalSteps: 5 },
+        product: { completed: false, currentStep: 0, totalSteps: 9 },
         organization: { completed: false, currentStep: 0, totalSteps: 4 }
       };
 
@@ -32,15 +32,15 @@ export const formStatusApi = {
         console.log('No business form data found');
       }
 
-      // Check Product/Service form
+      // Check Product/Service form (BrandKit Questionnaire)
       try {
-        const productResponse = await getProductServiceData(userId);
+        const productResponse = await brandKitQuestionnaireApi.getFormData(userId);
         if (productResponse.success && productResponse.data?.currentStep) {
           status.product.currentStep = productResponse.data.currentStep;
-          status.product.completed = productResponse.data.currentStep === 5;
+          status.product.completed = productResponse.data.currentStep === 9;
         }
       } catch (error) {
-        console.log('No product service form data found');
+        console.log('No brandkit questionnaire form data found');
       }
 
       // Check Organization form
@@ -66,7 +66,7 @@ export const formStatusApi = {
         error: error.message,
         data: {
           business: { completed: false, currentStep: 0, totalSteps: 11 },
-          product: { completed: false, currentStep: 0, totalSteps: 5 },
+          product: { completed: false, currentStep: 0, totalSteps: 9 },
           organization: { completed: false, currentStep: 0, totalSteps: 4 }
         },
         hasAnyCompleted: false

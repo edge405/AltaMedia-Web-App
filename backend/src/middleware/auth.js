@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { supabase } = require('../config/supabase');
+const { executeQuery } = require('../config/mysql');
 
 /**
  * Middleware to authenticate JWT tokens
@@ -18,23 +18,23 @@ const authenticateToken = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Verify user still exists in Supabase
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('id, email')
-      .eq('id', decoded.userId)
-      .single();
+    // Verify user still exists in MySQL database
+    const users = await executeQuery(
+      'SELECT id, email, fullname, role FROM users WHERE id = ?',
+      [decoded.userId]
+    );
 
-    if (error || !user) {
+    if (users.length === 0) {
       return res.status(401).json({ 
         success: false, 
         message: 'User not found'
       });
     }
 
-    req.user = user;
+    req.user = users[0];
     next();
   } catch (error) {
+    console.error('Authentication error:', error);
     return res.status(403).json({ 
       success: false, 
       message: 'Invalid or expired token' 
@@ -43,7 +43,7 @@ const authenticateToken = async (req, res, next) => {
 };
 
 /**
- * Middleware to check if user has required role (placeholder for future implementation)
+ * Middleware to check if user has required role
  */
 const requireRole = (roles) => {
   return (req, res, next) => {
@@ -54,8 +54,17 @@ const requireRole = (roles) => {
       });
     }
 
-    // For now, allow all authenticated users since we don't have roles in the database
-    // TODO: Implement role-based access control when roles are added to the database
+    // Check if user has the required role
+    if (roles && roles.length > 0) {
+      const userRole = req.user.role || 'user';
+      if (!roles.includes(userRole)) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Insufficient permissions' 
+        });
+      }
+    }
+
     next();
   };
 };

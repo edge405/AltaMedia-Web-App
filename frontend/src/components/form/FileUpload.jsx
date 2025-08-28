@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Upload, File, X } from "lucide-react";
+import { Upload, File, X, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const FileUpload = ({ value, onChange, placeholder }) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState({});
   const fileInputRef = useRef(null);
 
   // Initialize uploadedFiles from value prop (handle both string and array values)
@@ -13,12 +14,15 @@ const FileUpload = ({ value, onChange, placeholder }) => {
     if (value) {
       if (Array.isArray(value)) {
         setUploadedFiles(value);
+        // Generate previews for image files
+        generateImagePreviews(value);
       } else if (typeof value === 'string') {
         // If it's a string, it might be a JSON array, comma-separated list, or file paths
         try {
           const parsed = JSON.parse(value);
           if (Array.isArray(parsed)) {
             setUploadedFiles(parsed);
+            generateImagePreviews(parsed);
           }
         } catch (e) {
           // If JSON parsing fails, check if it's a comma-separated list of file paths
@@ -32,16 +36,47 @@ const FileUpload = ({ value, onChange, placeholder }) => {
               type: 'application/octet-stream'
             }));
             setUploadedFiles(fileObjects);
+            generateImagePreviews(fileObjects);
           } else {
             // Single file path or empty string
             setUploadedFiles([]);
+            setImagePreviews({});
           }
         }
       }
     } else {
       setUploadedFiles([]);
+      setImagePreviews({});
     }
   }, [value]);
+
+  // Generate image previews for uploaded files
+  const generateImagePreviews = (files) => {
+    const newPreviews = {};
+
+    files.forEach((file, index) => {
+      if (file.type && file.type.startsWith('image/')) {
+        if (file instanceof File) {
+          // For new file uploads
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            setImagePreviews(prev => ({
+              ...prev,
+              [index]: e.target.result
+            }));
+          };
+          reader.readAsDataURL(file);
+        } else if (file.path) {
+          // For existing files from database (file paths)
+          newPreviews[index] = file.path;
+        }
+      }
+    });
+
+    if (Object.keys(newPreviews).length > 0) {
+      setImagePreviews(prev => ({ ...prev, ...newPreviews }));
+    }
+  };
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -74,7 +109,10 @@ const FileUpload = ({ value, onChange, placeholder }) => {
     const fileArray = Array.from(files);
     const newUploadedFiles = [...uploadedFiles, ...fileArray];
     setUploadedFiles(newUploadedFiles);
-    
+
+    // Generate previews for new image files
+    generateImagePreviews(fileArray);
+
     // Call onChange with all file objects for form submission
     onChange(newUploadedFiles);
   };
@@ -82,7 +120,30 @@ const FileUpload = ({ value, onChange, placeholder }) => {
   const removeFile = (index) => {
     const newFiles = uploadedFiles.filter((_, i) => i !== index);
     setUploadedFiles(newFiles);
+
+    // Remove preview for deleted file
+    setImagePreviews(prev => {
+      const newPreviews = { ...prev };
+      delete newPreviews[index];
+      // Shift remaining previews
+      const shiftedPreviews = {};
+      Object.keys(newPreviews).forEach(key => {
+        const keyNum = parseInt(key);
+        if (keyNum > index) {
+          shiftedPreviews[keyNum - 1] = newPreviews[key];
+        } else {
+          shiftedPreviews[keyNum] = newPreviews[key];
+        }
+      });
+      return shiftedPreviews;
+    });
+
     onChange(newFiles);
+  };
+
+  // Check if file is an image
+  const isImageFile = (file) => {
+    return file.type && file.type.startsWith('image/');
   };
 
   return (
@@ -122,28 +183,75 @@ const FileUpload = ({ value, onChange, placeholder }) => {
 
       {/* Uploaded Files */}
       {uploadedFiles.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <p className="text-sm font-medium">Selected Files:</p>
-          {uploadedFiles.map((file, index) => (
-            <div key={index} className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
-              <File className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm flex-1">{file.name}</span>
-              <span className="text-xs text-muted-foreground">
-                ({(file.size / 1024 / 1024).toFixed(2)} MB)
-              </span>
-              <button
-                type="button"
-                onClick={() => removeFile(index)}
-                className="text-muted-foreground hover:text-destructive transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {uploadedFiles.map((file, index) => (
+              <div key={index} className="relative bg-muted/50 rounded-lg p-3 border">
+                {isImageFile(file) && imagePreviews[index] ? (
+                  // Image preview
+                  <div className="space-y-2">
+                    <div className="relative aspect-square rounded-md overflow-hidden bg-gray-100">
+                      <img
+                        src={imagePreviews[index]}
+                        alt={file.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback if image fails to load
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                      <div className="hidden absolute inset-0 items-center justify-center bg-gray-100">
+                        <ImageIcon className="w-8 h-8 text-gray-400" />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground truncate flex-1">
+                        {file.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="text-muted-foreground hover:text-destructive transition-colors ml-2"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                    {file.size > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  // Non-image file display
+                  <div className="flex items-center gap-2">
+                    <File className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm truncate block">{file.name}</span>
+                      {file.size > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-export default FileUpload; 
+export default FileUpload;

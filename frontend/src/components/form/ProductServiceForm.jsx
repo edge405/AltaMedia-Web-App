@@ -14,19 +14,23 @@ import TagInput from './TagInput';
 import FileUpload from './FileUpload';
 import AISuggestion from './AISuggestion';
 import CheckboxGroup from './CheckboxGroup';
-import { saveFormData, getFormData } from '@/utils/productServiceApi';
+import { saveFormData, getFormData, completeForm } from '@/utils/productServiceApi';
 import OrganizationForm from './OrganizationForm';
 
-const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) => {
+const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false, onComplete = null }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState({
         buildingType: 'product' // Default value
     });
+
+    // Ensure formData is always an object
+    const safeFormData = formData || { buildingType: 'product' };
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isNextLoading, setIsNextLoading] = useState(false);
     const [error, setError] = useState(null);
 
     const totalSteps = 5;
@@ -55,13 +59,17 @@ const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) 
                 console.log('👤 User ID:', user.id);
                 console.log('🔗 API Base URL:', import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api');
 
-                const response = await getFormData(user.id);
+                const response = await getFormData();
 
                 console.log('📥 API Response:', response);
 
-                if (response.success && response.data.formData) {
+                if (response.success && response.data && response.data.formData) {
                     console.log('✅ Found existing form data, loading...');
-                    setFormData(response.data.formData);
+                    const loadedData = response.data.formData || {};
+                    setFormData({
+                        buildingType: 'product',
+                        ...loadedData
+                    });
                     setCurrentStep(response.data.currentStep || 1);
                 } else {
                     console.log('📭 No existing form data found, starting fresh');
@@ -98,20 +106,18 @@ const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) 
     const updateFormData = (field, value) => {
         console.log(`Field change: ${field} =`, value);
 
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
+        setFormData(prev => {
+            const currentData = prev || { buildingType: 'product' };
+            return {
+                ...currentData,
+                [field]: value
+            };
+        });
 
         // If building type is changing, notify parent component
         if (field === 'buildingType' && onFormTypeChange) {
             onFormTypeChange(value);
         }
-
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
     };
 
     const nextStep = async () => {
@@ -121,7 +127,7 @@ const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) 
             return;
         }
 
-        setIsSaving(true);
+        setIsNextLoading(true);
         setError(null);
 
         try {
@@ -130,16 +136,17 @@ const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) 
             console.log('Step Name:', steps[currentStep - 1]);
             console.log('User ID:', user.id);
             console.log('Form Data:', formData);
+            console.log('Form Data Keys:', Object.keys(formData));
+            console.log('Form Data Values:', Object.values(formData));
             console.log('🔗 API Base URL:', import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api');
             console.log('========================');
 
-            const response = await saveFormData(user.id, formData, currentStep);
+            const response = await saveFormData(formData || { buildingType: 'product' }, currentStep);
 
             console.log('💾 Save response:', response);
 
             if (response.success) {
                 console.log('✅ Step data saved successfully');
-                toast.success(`Step ${currentStep} saved successfully!`);
 
                 if (currentStep < totalSteps) {
                     setCurrentStep(currentStep + 1);
@@ -155,10 +162,19 @@ const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) 
                 stack: err.stack,
                 response: err.response?.data
             });
-            setError(err.message || 'Failed to save your progress. Please try again.');
-            toast.error('Failed to save progress. Please try again.');
+
+            // Show more specific error message
+            let errorMessage = 'Failed to save your progress. Please try again.';
+            if (err.response?.data?.message) {
+                errorMessage = err.response.data.message;
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            setError(errorMessage);
+            toast.error(errorMessage);
         } finally {
-            setIsSaving(false);
+            setIsNextLoading(false);
         }
     };
 
@@ -188,25 +204,51 @@ const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) 
         try {
             console.log('Completing form with data:', formData);
 
-            const response = await saveFormData(user.id, formData, totalSteps);
+            const response = await saveFormData(formData || { buildingType: 'product' }, totalSteps);
 
             console.log('💾 Final save response:', response);
 
             if (response.success) {
-                console.log('✅ Form completed successfully');
-                setIsSubmitted(true);
-                toast.success('🎉 Product/Service form completed successfully! Your brand identity is ready.');
+                console.log('✅ Form data saved successfully');
+
+                // Mark form as completed
+                try {
+                    await completeForm();
+                    console.log('✅ Form marked as completed');
+                } catch (completeError) {
+                    console.error('❌ Error marking form as completed:', completeError);
+                    // Continue anyway since the data was saved
+                }
 
                 console.log('=== FORM COMPLETED SUCCESSFULLY ===');
                 console.log('All data logged above');
                 console.log('===============================');
+
+                // If onComplete callback is provided, call it immediately
+                if (onComplete) {
+                    onComplete();
+                }
             } else {
                 throw new Error(response.message || 'Failed to complete form');
             }
         } catch (err) {
             console.error('❌ Error completing form:', err);
-            setError(err.message || 'Failed to submit form. Please try again.');
-            toast.error('Failed to submit form. Please try again.');
+            console.error('❌ Error details:', {
+                message: err.message,
+                stack: err.stack,
+                response: err.response?.data
+            });
+
+            // Show more specific error message
+            let errorMessage = 'Failed to submit form. Please try again.';
+            if (err.response?.data?.message) {
+                errorMessage = err.response.data.message;
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            setError(errorMessage);
+            toast.error(errorMessage);
         } finally {
             setIsSaving(false);
         }
@@ -222,7 +264,7 @@ const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) 
     };
 
     // If building type is "organization", render the OrganizationForm component
-    if (formData.buildingType === 'organization') {
+    if (safeFormData.buildingType === 'organization') {
         return <OrganizationForm onFormTypeChange={(type) => {
             updateFormData('buildingType', type);
             setCurrentStep(1); // Reset to first step
@@ -232,9 +274,9 @@ const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) 
     const renderStep1 = () => (
         <div className="space-y-8">
             <FormField label="What are you building?" type="Dropdown" required>
-                <Select value={formData.buildingType} onValueChange={(value) => updateFormData('buildingType', value)}>
-                    <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                        <SelectValue placeholder="Select what you're building" />
+                <Select value={safeFormData.buildingType} onValueChange={(value) => updateFormData('buildingType', value)} disabled>
+                    <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed">
+                        <SelectValue placeholder="Specific Product/Service (Locked)" />
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                         <SelectItem value="business">Business/Company</SelectItem>
@@ -242,11 +284,14 @@ const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) 
                         <SelectItem value="organization">Organization/Brand/Page</SelectItem>
                     </SelectContent>
                 </Select>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    🔒 Form type is locked to ensure proper form completion flow
+                </p>
             </FormField>
 
             <FormField label="What's the name of your product or service?" type="Short Text" required>
                 <Input
-                    value={formData.productName || ''}
+                    value={safeFormData.productName || ''}
                     onChange={(e) => updateFormData('productName', e.target.value)}
                     placeholder="Enter your product or service name"
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
@@ -256,7 +301,7 @@ const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) 
             <FormField label="Describe your product or service in one sentence." type="Short Text" required aiSuggestions>
                 <div className="space-y-4">
                     <Input
-                        value={formData.productDescription || ''}
+                        value={safeFormData.productDescription || ''}
                         onChange={(e) => updateFormData('productDescription', e.target.value)}
                         placeholder="Describe your product or service in one sentence"
                         className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
@@ -624,19 +669,34 @@ const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) 
                 </div>
             )}
 
-            <ProgressBar
-                currentStep={currentStep}
-                totalSteps={totalSteps}
-                steps={steps}
-            />
+            <div className={`transition-opacity duration-300 ${isNextLoading ? 'opacity-50' : 'opacity-100'}`}>
+                <ProgressBar
+                    currentStep={currentStep}
+                    totalSteps={totalSteps}
+                    steps={steps}
+                />
+            </div>
 
-            <div className="rounded-xl border-2 border-gray-200 dark:border-gray-600 shadow-lg bg-white dark:bg-gray-800">
+            <div className="rounded-xl border-2 border-gray-200 dark:border-gray-600 shadow-lg bg-white dark:bg-gray-800 relative">
+                {isNextLoading && (
+                    <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+                        <div className="flex flex-col items-center gap-3">
+                            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                Saving your progress...
+                            </p>
+                        </div>
+                    </div>
+                )}
                 <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-600">
-                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-100">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
                         Step {currentStep}: {steps[currentStep - 1]}
+                        {isNextLoading && (
+                            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                        )}
                     </h2>
                 </div>
-                <div className="p-4 sm:p-6">
+                <div className={`p-4 sm:p-6 ${isNextLoading ? 'pointer-events-none' : ''}`}>
                     {renderCurrentStep()}
                 </div>
             </div>
@@ -682,13 +742,13 @@ const ProductServiceForm = ({ onFormTypeChange = () => { }, embedded = false }) 
                     ) : (
                         <Button
                             onClick={nextStep}
-                            disabled={currentStep === totalSteps || isSaving}
+                            disabled={currentStep === totalSteps || isNextLoading}
                             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
                         >
-                            {isSaving ? (
+                            {isNextLoading ? (
                                 <>
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                    Saving...
+                                    Loading...
                                 </>
                             ) : (
                                 <>

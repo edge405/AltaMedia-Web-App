@@ -8,7 +8,9 @@ class ApiService {
     if (import.meta.env.PROD) {
       this.baseURL = '/api';
     } else {
-      this.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+      // Check if VITE_API_BASE_URL already includes /api
+      const envUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      this.baseURL = envUrl.endsWith('/api') ? envUrl : `${envUrl}/api`;
     }
     
     console.log('Final baseURL:', this.baseURL);
@@ -67,6 +69,48 @@ class ApiService {
       method: 'PUT',
       body: JSON.stringify(body),
     });
+  }
+
+  // POST request with FormData (for file uploads)
+  async postFormData(endpoint, formData) {
+    const url = `${this.baseURL}${endpoint}`;
+    const token = localStorage.getItem('authToken');
+    
+    console.log('postFormData called with:', {
+      url,
+      hasToken: !!token,
+      formDataEntries: Array.from(formData.entries()).map(([key, value]) => 
+        [key, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value]
+      )
+    });
+    
+    const config = {
+      method: 'POST',
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+        // Don't set Content-Type for FormData - browser will set it automatically with boundary
+      },
+      body: formData,
+    };
+
+    try {
+      console.log('Making fetch request to:', url);
+      const response = await fetch(url, config);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
   }
 
   // PUT request with FormData (for file uploads)
@@ -262,6 +306,67 @@ class ApiService {
 
   async getAllBrandKitForms() {
     return this.get('/brandkit/forms/admin/all');
+  }
+
+
+
+  // Client Request methods
+  async getClientRequests() {
+    return this.get('/client-requests');
+  }
+
+  async getClientRequestById(id) {
+    return this.get(`/client-requests/${id}`);
+  }
+
+  async createClientRequest(requestData) {
+    return this.post('/client-requests', requestData);
+  }
+
+  async getAllClientRequests() {
+    return this.get('/client-requests/admin');
+  }
+
+  async getClientRequestByIdAdmin(id) {
+    return this.get(`/client-requests/admin/${id}`);
+  }
+
+  async updateClientRequest(id, updateData) {
+    return this.put(`/client-requests/admin/${id}`, updateData);
+  }
+
+  // Organization methods
+  async getOrganizationForms() {
+    return this.get('/organization/data');
+  }
+
+  async getOrganizationFormById(id) {
+    return this.get(`/organization/data/${id}`);
+  }
+
+  async createOrganizationForm(formData) {
+    return this.post('/organization/save', formData);
+  }
+
+  async updateOrganizationForm(id, formData) {
+    return this.put(`/organization/save/${id}`, formData);
+  }
+
+  async getAllOrganizationForms() {
+    return this.get('/organization/admin/all');
+  }
+
+  // Export methods
+  async exportBrandKitData(userId, format = 'pdf') {
+    return this.get(`/brandkit/export/${userId}?format=${format}`);
+  }
+
+  async exportAllFormsData(userId, format = 'pdf') {
+    return this.get(`/brandkit/consolidate/${userId}?format=${format}`);
+  }
+
+  async downloadFormData(userId, formType, format = 'pdf') {
+    return this.get(`/forms/export/${formType}/${userId}?format=${format}`);
   }
 
   // Dashboard specific methods

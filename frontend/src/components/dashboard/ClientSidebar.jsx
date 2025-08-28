@@ -20,8 +20,12 @@ export default function ClientSidebar({
   sidebarOpen,
   setSidebarOpen,
   profileData,
-  formStatuses,
-  isLoadingForms,
+  formStatuses = {
+    knowingYou: { completed: false, currentStep: 0, totalSteps: 11 },
+    brandKitQuestionnaire: { completed: false, currentStep: 0, totalSteps: 9 },
+    organization: { completed: false, currentStep: 0, totalSteps: 4 }
+  },
+  isLoadingForms = false,
   logout,
   onProfileClick,
   showProfile
@@ -31,7 +35,7 @@ export default function ClientSidebar({
     { id: "package", label: "Package Details", icon: Package },
     { id: "deliverables", label: "Deliverables", icon: Download },
     { id: "brandkit", label: "BrandKit", icon: Palette },
-    { id: "analytics", label: "Analytics", icon: BarChart3 },
+    // { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "support", label: "Support", icon: MessageSquare },
   ];
 
@@ -86,8 +90,8 @@ export default function ClientSidebar({
                 size="sm"
                 onClick={onProfileClick}
                 className={`p-2 rounded-xl transition-all duration-200 ${showProfile
-                    ? 'bg-[#f7e833] text-black shadow-lg'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  ? 'bg-[#f7e833] text-black shadow-lg'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
                   }`}
                 title="Manage Profile"
               >
@@ -108,19 +112,19 @@ export default function ClientSidebar({
                     setSidebarOpen(false);
                   }}
                   className={`w-full flex items-center space-x-4 px-6 py-4 rounded-2xl text-left transition-all duration-200 ${activeSection === item.id || (showProfile && item.id === 'dashboard')
-                      ? 'bg-[#f7e833] text-black shadow-lg transform scale-105'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800 hover:scale-105'
+                    ? 'bg-[#f7e833] text-black shadow-lg transform scale-105'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800 hover:scale-105'
                     }`}
                 >
                   <Icon className={`w-6 h-6 ${activeSection === item.id || (showProfile && item.id === 'dashboard') ? 'text-black' : 'text-gray-400'}`} />
                   <span className="font-medium text-lg">{item.label}</span>
 
                   {/* BrandKit Status Indicator */}
-                  {item.id === 'brandkit' && !isLoadingForms && (
+                  {item.id === 'brandkit' && !isLoadingForms && formStatuses && formStatuses.knowingYou && formStatuses.brandKitQuestionnaire && formStatuses.organization && (
                     <div className="ml-auto">
-                      {formStatuses.knowingYou.completed || formStatuses.productService.completed || formStatuses.organization.completed ? (
+                      {(formStatuses.knowingYou.completed || formStatuses.brandKitQuestionnaire.completed || formStatuses.organization.completed) ? (
                         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      ) : formStatuses.knowingYou.currentStep > 0 || formStatuses.productService.currentStep > 0 || formStatuses.organization.currentStep > 0 ? (
+                      ) : (formStatuses.knowingYou.currentStep > 0 || formStatuses.brandKitQuestionnaire.currentStep > 0 || formStatuses.organization.currentStep > 0) ? (
                         <div className="w-3 h-3 bg-[#f7e833] rounded-full"></div>
                       ) : null}
                     </div>

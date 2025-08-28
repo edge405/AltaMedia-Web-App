@@ -10,17 +10,33 @@ const CheckboxGroup = ({
   onChange,
   className = ""
 }) => {
-  const [selectedValues, setSelectedValues] = useState(value);
+  // Ensure value is always an array
+  const safeValue = (() => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        // If it's not valid JSON, treat it as a single item
+        return value.trim() ? [value] : [];
+      }
+    }
+    return [];
+  })();
+
+  const [selectedValues, setSelectedValues] = useState(safeValue);
 
   useEffect(() => {
-    setSelectedValues(value);
-  }, [value]);
+    setSelectedValues(safeValue);
+  }, [safeValue]);
 
   const handleToggle = (option) => {
     const newValues = selectedValues.includes(option)
       ? selectedValues.filter(v => v !== option)
       : [...selectedValues, option];
-    
+
     setSelectedValues(newValues);
     onChange(newValues);
   };
@@ -76,7 +92,7 @@ const CheckboxGroup = ({
               onCheckedChange={() => handleToggle(option)}
               className="border-gray-300 dark:border-gray-600"
             />
-            <Label 
+            <Label
               htmlFor={`checkbox-${option}`}
               className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 cursor-pointer leading-tight"
             >

@@ -1,4 +1,4 @@
-const { supabase, supabaseAdmin } = require('../config/supabase');
+const { executeQuery } = require('../config/mysql');
 
 /**
  * Get user's package purchases with addons
@@ -9,86 +9,45 @@ const getUserPurchases = async (req, res) => {
     const userId = req.user.id;
 
     // Get all purchases with package details
-    const { data: purchases, error } = await supabase
-      .from('package_purchases')
-      .select(`
-        *,
-        packages:package_id (
-          id,
-          name,
-          description,
-          price,
-          duration_days
-        )
-      `)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+    const purchases = await executeQuery(`
+      SELECT pp.*, p.id as package_id, p.name as package_name, p.description as package_description, 
+             p.price as package_price, p.duration_days
+      FROM package_purchases pp
+      LEFT JOIN packages p ON pp.package_id = p.id
+      WHERE pp.user_id = ?
+      ORDER BY pp.created_at DESC
+    `, [userId]);
 
-    if (error) {
+    if (!purchases) {
       return res.status(500).json({
         success: false,
-        message: 'Failed to fetch purchases',
-        error: error.message
+        message: 'Failed to fetch purchases'
       });
     }
 
     // Get addons for each purchase and organize data with clear labels
     const purchasesWithAddons = await Promise.all(
       purchases.map(async (purchase) => {
-        const { data: addons, error: addonsError } = await supabase
-          .from('purchased_addons')
-          .select(`
-            id,
-            purchase_date,
-            amount_paid,
-            status,
-            created_at,
-            addons:addon_id (
-              id,
-              name,
-              description,
-              price_type,
-              base_price
-            )
-          `)
-          .eq('package_purchase_id', purchase.id);
-
-        if (addonsError) {
-          console.error('Error fetching addons for purchase:', purchase.id, addonsError);
-          return {
-            purchase_id: purchase.id,
-            purchase_info: {
-              purchase_date: purchase.purchase_date,
-              expiration_date: purchase.expiration_date,
-              status: purchase.status,
-              total_amount: purchase.total_amount,
-              created_at: purchase.created_at,
-              updated_at: purchase.updated_at
-            },
-            package_details: {
-              package_id: purchase.packages.id,
-              package_name: purchase.packages.name,
-              package_description: purchase.packages.description,
-              package_price: purchase.packages.price,
-              duration_days: purchase.packages.duration_days
-            },
-            features: purchase.features || [], // Include features from JSON
-            addons: []
-          };
-        }
+        const addons = await executeQuery(`
+          SELECT pa.*, a.id as addon_id, a.name as addon_name, a.description as addon_description,
+                 a.price_type, a.base_price
+          FROM purchased_addons pa
+          LEFT JOIN addons a ON pa.addon_id = a.id
+          WHERE pa.package_purchase_id = ?
+        `, [purchase.id]);
 
         // Organize addons with clear labeling
         const organizedAddons = (addons || []).map(addon => ({
           addon_purchase_id: addon.id,
           addon_details: {
-            addon_id: addon.addons.id,
-            addon_name: addon.addons.name,
-            addon_description: addon.addons.description,
-            price_type: addon.addons.price_type,
-            base_price: addon.addons.base_price
+            addon_id: addon.addon_id,
+            addon_name: addon.addon_name,
+            addon_description: addon.addon_description,
+            price_type: addon.price_type,
+            base_price: addon.base_price
           },
           purchase_info: {
-            amount_paid: addon.amount_paid,
+            amount_paid: addon.base_price,
             status: addon.status,
             purchase_date: addon.purchase_date,
             created_at: addon.created_at
@@ -106,13 +65,13 @@ const getUserPurchases = async (req, res) => {
             updated_at: purchase.updated_at
           },
           package_details: {
-            package_id: purchase.packages.id,
-            package_name: purchase.packages.name,
-            package_description: purchase.packages.description,
-            package_price: purchase.packages.price,
-            duration_days: purchase.packages.duration_days
+            package_id: purchase.package_id,
+            package_name: purchase.package_name,
+            package_description: purchase.package_description,
+            package_price: purchase.package_price,
+            duration_days: purchase.duration_days
           },
-          features: purchase.features || [], // Include features from JSON
+          features: purchase.features ? JSON.parse(purchase.features) : [], // Parse JSON features
           addons: organizedAddons
         };
       })
@@ -120,7 +79,7 @@ const getUserPurchases = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'User purchases retrieved successfully',
+      message: 'Purchases retrieved successfully',
       data: {
         user_id: userId,
         total_purchases: purchasesWithAddons.length,
@@ -138,7 +97,7 @@ const getUserPurchases = async (req, res) => {
 };
 
 /**
- * Get purchase by ID with addons
+ * Get purchase by ID with details
  * GET /api/purchases/:id
  */
 const getPurchaseById = async (req, res) => {
@@ -146,96 +105,80 @@ const getPurchaseById = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
-    // Get purchase details
-    const { data: purchase, error: purchaseError } = await supabase
-      .from('package_purchases')
-      .select(`
-        *,
-        packages:package_id (
-          id,
-          name,
-          description,
-          price,
-          duration_days
-        )
-      `)
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single();
+    // Get purchase with package details
+    const purchases = await executeQuery(`
+      SELECT pp.*, p.id as package_id, p.name as package_name, p.description as package_description,
+             p.price as package_price, p.duration_days
+      FROM package_purchases pp
+      LEFT JOIN packages p ON pp.package_id = p.id
+      WHERE pp.id = ? AND pp.user_id = ?
+    `, [id, userId]);
 
-    if (purchaseError || !purchase) {
+    if (!purchases || purchases.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Purchase not found'
       });
     }
 
-    // Get purchased addons
-    const { data: addons, error: addonsError } = await supabase
-      .from('purchased_addons')
-      .select(`
-        *,
-        addons:addon_id (
-          id,
-          name,
-          description,
-          price_type,
-          base_price
-        )
-      `)
-      .eq('package_purchase_id', id);
+    const purchase = purchases[0];
 
-    if (addonsError) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to fetch purchase addons'
-      });
-    }
+    // Get addons for this purchase
+    const addons = await executeQuery(`
+      SELECT pa.*, a.id as addon_id, a.name as addon_name, a.description as addon_description,
+             a.price_type, a.base_price
+      FROM purchased_addons pa
+      LEFT JOIN addons a ON pa.addon_id = a.id
+      WHERE pa.package_purchase_id = ?
+    `, [purchase.id]);
 
     // Organize addons with clear labeling
     const organizedAddons = (addons || []).map(addon => ({
       addon_purchase_id: addon.id,
       addon_details: {
-        addon_id: addon.addons.id,
-        addon_name: addon.addons.name,
-        addon_description: addon.addons.description,
-        price_type: addon.addons.price_type,
-        base_price: addon.addons.base_price
+        addon_id: addon.addon_id,
+        addon_name: addon.addon_name,
+        addon_description: addon.addon_description,
+        price_type: addon.price_type,
+        base_price: addon.base_price
       },
       purchase_info: {
-        amount_paid: addon.amount_paid,
+        amount_paid: addon.base_price,
         status: addon.status,
         purchase_date: addon.purchase_date,
         created_at: addon.created_at
       }
     }));
 
+    const purchaseWithDetails = {
+      purchase_id: purchase.id,
+      purchase_info: {
+        purchase_date: purchase.purchase_date,
+        expiration_date: purchase.expiration_date,
+        status: purchase.status,
+        total_amount: purchase.total_amount,
+        created_at: purchase.created_at,
+        updated_at: purchase.updated_at
+      },
+      package_details: {
+        package_id: purchase.package_id,
+        package_name: purchase.package_name,
+        package_description: purchase.package_description,
+        package_price: purchase.package_price,
+        duration_days: purchase.duration_days
+      },
+      features: purchase.features ? JSON.parse(purchase.features) : [],
+      addons: organizedAddons
+    };
+
     res.json({
       success: true,
-      message: 'Purchase details retrieved successfully',
-      data: {
-        purchase_id: purchase.id,
-        purchase_info: {
-          purchase_date: purchase.purchase_date,
-          expiration_date: purchase.expiration_date,
-          status: purchase.status,
-          total_amount: purchase.total_amount,
-          created_at: purchase.created_at,
-          updated_at: purchase.updated_at
-        },
-        package_details: {
-          package_id: purchase.packages.id,
-          package_name: purchase.packages.name,
-          package_description: purchase.packages.description,
-          package_price: purchase.packages.price,
-          duration_days: purchase.packages.duration_days
-        },
-        addons: organizedAddons
-      }
+      message: 'Purchase retrieved successfully',
+      data: purchaseWithDetails
     });
 
   } catch (error) {
-    console.error('Get purchase error:', error);
+    console.error('Get purchase by ID error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -244,141 +187,88 @@ const getPurchaseById = async (req, res) => {
 };
 
 /**
- * Create new package purchase
+ * Create a new purchase
  * POST /api/purchases
  */
 const createPurchase = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { package_id, addons } = req.body;
+    const { package_id, total_amount, features = [], addons = [] } = req.body;
 
-    // Get package details
-    const { data: package, error: packageError } = await supabase
-      .from('packages')
-      .select('*')
-      .eq('id', package_id)
-      .eq('is_active', true)
-      .single();
+    if (!package_id || !total_amount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: package_id, total_amount'
+      });
+    }
 
-    if (packageError || !package) {
+    // Get package details to calculate expiration date
+    const packages = await executeQuery(
+      'SELECT * FROM packages WHERE id = ?',
+      [package_id]
+    );
+
+    if (!packages || packages.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Package not found'
       });
     }
 
-    // Fetch package features
-    const { data: packageFeatures, error: featuresError } = await supabase
-      .from('package_features')
-      .select('*')
-      .eq('package_id', package_id)
-      .eq('is_active', true);
-
-    if (featuresError) {
-      console.error('Error fetching package features:', featuresError);
-    }
-
-    // Transform features into JSON structure for storage
-    // Note: package_features table doesn't have status, so we add it here
-    const featuresJson = (packageFeatures || []).map(feature => ({
-      feature_id: feature.id,
-      feature_name: feature.feature_name,
-      feature_description: feature.feature_description,
-      status: 'In Progress', // Default status when feature is purchased
-      is_active: feature.is_active,
-      created_at: feature.created_at,
-      purchase_date: new Date().toISOString() // When this feature was purchased
-    }));
-
-    // Calculate expiration date
+    const package = packages[0];
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + package.duration_days);
 
-    // Calculate total amount
-    let totalAmount = package.price;
+    // Create purchase
+    const purchaseResult = await executeQuery(`
+      INSERT INTO package_purchases (user_id, package_id, total_amount, expiration_date, features)
+      VALUES (?, ?, ?, ?, ?)
+    `, [userId, package_id, total_amount, expirationDate, JSON.stringify(features)]);
 
-    // Create purchase with features JSON
-    const { data: purchase, error: purchaseError } = await supabaseAdmin
-      .from('package_purchases')
-      .insert({
-        user_id: userId,
-        package_id: package_id,
-        expiration_date: expirationDate.toISOString().split('T')[0],
-        total_amount: totalAmount,
-        status: 'active',
-        features: featuresJson // Store features as JSON
-      })
-      .select()
-      .single();
+    const purchaseId = purchaseResult.insertId;
 
-    if (purchaseError) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to create purchase',
-        error: purchaseError.message
-      });
-    }
-
-    // Add addons if provided
+    // Create addon purchases if any
     if (addons && addons.length > 0) {
-      const addonData = [];
-      for (const addonId of addons) {
-        const { data: addon } = await supabase
-          .from('addons')
-          .select('*')
-          .eq('id', addonId)
-          .eq('is_active', true)
-          .single();
-
-        if (addon) {
-          addonData.push({
-            package_purchase_id: purchase.id,
-            addon_id: addonId,
-            amount_paid: addon.base_price,
-            status: 'active'
-          });
-          totalAmount += addon.base_price;
-        }
-      }
-
-      if (addonData.length > 0) {
-        await supabaseAdmin
-          .from('purchased_addons')
-          .insert(addonData);
-
-        // Update total amount
-        await supabaseAdmin
-          .from('package_purchases')
-          .update({ total_amount: totalAmount })
-          .eq('id', purchase.id);
+      for (const addon of addons) {
+        await executeQuery(`
+          INSERT INTO purchased_addons (user_id, addon_id, package_purchase_id, base_price, status)
+          VALUES (?, ?, ?, ?, ?)
+        `, [userId, addon.addon_id, purchaseId, addon.base_price, 'active']);
       }
     }
+
+    // Get the created purchase with details
+    const createdPurchases = await executeQuery(`
+      SELECT pp.*, p.id as package_id, p.name as package_name, p.description as package_description,
+             p.price as package_price, p.duration_days
+      FROM package_purchases pp
+      LEFT JOIN packages p ON pp.package_id = p.id
+      WHERE pp.id = ?
+    `, [purchaseId]);
+
+    const createdPurchase = createdPurchases[0];
 
     res.status(201).json({
       success: true,
       message: 'Purchase created successfully',
       data: {
-        purchase_id: purchase.id,
+        purchase_id: createdPurchase.id,
         purchase_info: {
-          purchase_date: purchase.purchase_date,
-          expiration_date: purchase.expiration_date,
-          status: purchase.status,
-          total_amount: totalAmount,
-          created_at: purchase.created_at,
-          updated_at: purchase.updated_at
+          purchase_date: createdPurchase.purchase_date,
+          expiration_date: createdPurchase.expiration_date,
+          status: createdPurchase.status,
+          total_amount: createdPurchase.total_amount,
+          created_at: createdPurchase.created_at,
+          updated_at: createdPurchase.updated_at
         },
         package_details: {
-          package_id: package.id,
-          package_name: package.name,
-          package_description: package.description,
-          package_price: package.price,
-          duration_days: package.duration_days
+          package_id: createdPurchase.package_id,
+          package_name: createdPurchase.package_name,
+          package_description: createdPurchase.package_description,
+          package_price: createdPurchase.package_price,
+          duration_days: createdPurchase.duration_days
         },
-        features: featuresJson, // Include features in response
-        addons: addons ? addons.map(addonId => ({
-          addon_id: addonId,
-          status: 'active'
-        })) : []
+        features: createdPurchase.features ? JSON.parse(createdPurchase.features) : []
       }
     });
 
@@ -392,43 +282,50 @@ const createPurchase = async (req, res) => {
 };
 
 /**
- * Cancel purchase
- * PUT /api/purchases/:id/cancel
+ * Update purchase status
+ * PUT /api/purchases/:id/status
  */
-const cancelPurchase = async (req, res) => {
+const updatePurchaseStatus = async (req, res) => {
   try {
     const { id } = req.params;
+    const { status } = req.body;
     const userId = req.user.id;
 
-    const { data: purchase, error } = await supabaseAdmin
-      .from('package_purchases')
-      .update({ status: 'cancelled' })
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select()
-      .single();
-
-    if (error || !purchase) {
-      return res.status(404).json({
+    if (!status) {
+      return res.status(400).json({
         success: false,
-        message: 'Purchase not found or already cancelled'
+        message: 'Status is required'
       });
     }
 
-    // Cancel associated addons
-    await supabaseAdmin
-      .from('purchased_addons')
-      .update({ status: 'cancelled' })
-      .eq('package_purchase_id', id);
+    const validStatuses = ['active', 'expired', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be one of: active, expired, cancelled'
+      });
+    }
+
+    const result = await executeQuery(`
+      UPDATE package_purchases 
+      SET status = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND user_id = ?
+    `, [status, id, userId]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Purchase not found'
+      });
+    }
 
     res.json({
       success: true,
-      message: 'Purchase cancelled successfully',
-      data: purchase
+      message: 'Purchase status updated successfully'
     });
 
   } catch (error) {
-    console.error('Cancel purchase error:', error);
+    console.error('Update purchase status error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -437,130 +334,33 @@ const cancelPurchase = async (req, res) => {
 };
 
 /**
- * Get all purchases with addons (Admin only)
- * GET /api/admin/purchases
+ * Get all purchases (Admin)
+ * GET /api/purchases/admin/all
  */
 const getAllPurchases = async (req, res) => {
   try {
-    // Get all purchases with package and user details
-    const { data: purchases, error } = await supabaseAdmin
-      .from('package_purchases')
-      .select(`
-        *,
-        packages:package_id (
-          id,
-          name,
-          description
-        ),
-        users:user_id (
-          id,
-          email
-        )
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      return res.status(500).json({
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
         success: false,
-        message: 'Failed to fetch purchases',
-        error: error.message
+        message: 'Access denied. Admin privileges required.'
       });
     }
 
-    // Get addons for each purchase and organize data with clear labels
-    const purchasesWithAddons = await Promise.all(
-      purchases.map(async (purchase) => {
-        const { data: addons, error: addonsError } = await supabaseAdmin
-          .from('purchased_addons')
-          .select(`
-            id,
-            purchase_date,
-            amount_paid,
-            status,
-            created_at,
-            addons:addon_id (
-              id,
-              name,
-              description,
-              price_type,
-              base_price
-            )
-          `)
-          .eq('package_purchase_id', purchase.id);
-
-        if (addonsError) {
-          console.error('Error fetching addons for purchase:', purchase.id, addonsError);
-          return {
-            purchase_id: purchase.id,
-            purchase_info: {
-              purchase_date: purchase.purchase_date,
-              expiration_date: purchase.expiration_date,
-              status: purchase.status,
-              total_amount: purchase.total_amount,
-              created_at: purchase.created_at,
-              updated_at: purchase.updated_at
-            },
-            user_details: {
-              user_id: purchase.users.id,
-              user_email: purchase.users.email
-            },
-            package_details: {
-              package_id: purchase.packages.id,
-              package_name: purchase.packages.name,
-              package_description: purchase.packages.description
-            },
-            addons: []
-          };
-        }
-
-        // Organize addons with clear labeling
-        const organizedAddons = (addons || []).map(addon => ({
-          addon_purchase_id: addon.id,
-          addon_details: {
-            addon_id: addon.addons.id,
-            addon_name: addon.addons.name,
-            addon_description: addon.addons.description,
-            price_type: addon.addons.price_type,
-            base_price: addon.addons.base_price
-          },
-          purchase_info: {
-            amount_paid: addon.amount_paid,
-            status: addon.status,
-            purchase_date: addon.purchase_date,
-            created_at: addon.created_at
-          }
-        }));
-
-        return {
-          purchase_id: purchase.id,
-          purchase_info: {
-            purchase_date: purchase.purchase_date,
-            expiration_date: purchase.expiration_date,
-            status: purchase.status,
-            total_amount: purchase.total_amount,
-            created_at: purchase.created_at,
-            updated_at: purchase.updated_at
-          },
-          user_details: {
-            user_id: purchase.users.id,
-            user_email: purchase.users.email
-          },
-          package_details: {
-            package_id: purchase.packages.id,
-            package_name: purchase.packages.name,
-            package_description: purchase.packages.description
-          },
-          addons: organizedAddons
-        };
-      })
-    );
+    const purchases = await executeQuery(`
+      SELECT pp.*, p.name as package_name, u.email as user_email, u.fullname as user_name
+      FROM package_purchases pp
+      LEFT JOIN packages p ON pp.package_id = p.id
+      LEFT JOIN users u ON pp.user_id = u.id
+      ORDER BY pp.created_at DESC
+    `);
 
     res.json({
       success: true,
       message: 'All purchases retrieved successfully',
       data: {
-        total_purchases: purchasesWithAddons.length,
-        purchases: purchasesWithAddons
+        total_purchases: purchases.length,
+        purchases: purchases
       }
     });
 
@@ -574,88 +374,90 @@ const getAllPurchases = async (req, res) => {
 };
 
 /**
- * Update feature status in a purchase
- * PUT /api/purchases/:id/features/:featureId/status
+ * Get purchases by user ID (Admin)
+ * GET /api/purchases/admin/user/:userId
  */
-const updatePurchaseFeatureStatus = async (req, res) => {
+const getPurchasesByUserId = async (req, res) => {
   try {
-    const { id: purchaseId, featureId } = req.params;
-    const { status } = req.body;
-    const userId = req.user.id;
+    const { userId } = req.params;
 
-    // Validate status
-    const validStatuses = ['active', 'inactive', 'pending', 'deprecated'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
         success: false,
-        message: 'Invalid status. Must be one of: active, inactive, pending, deprecated'
+        message: 'Access denied. Admin privileges required.'
       });
     }
 
-    // Get the purchase to verify ownership and get current features
-    const { data: purchase, error: purchaseError } = await supabase
-      .from('package_purchases')
-      .select('*')
-      .eq('id', purchaseId)
-      .eq('user_id', userId)
-      .single();
+    const purchases = await executeQuery(`
+      SELECT pp.*, p.name as package_name
+      FROM package_purchases pp
+      LEFT JOIN packages p ON pp.package_id = p.id
+      WHERE pp.user_id = ?
+      ORDER BY pp.created_at DESC
+    `, [userId]);
 
-    if (purchaseError || !purchase) {
+    res.json({
+      success: true,
+      message: 'User purchases retrieved successfully',
+      data: {
+        user_id: userId,
+        total_purchases: purchases.length,
+        purchases: purchases
+      }
+    });
+
+  } catch (error) {
+    console.error('Get purchases by user ID error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Delete purchase (Admin)
+ * DELETE /api/purchases/admin/:id
+ */
+const deletePurchase = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+
+    // Delete related addon purchases first
+    await executeQuery(
+      'DELETE FROM purchased_addons WHERE package_purchase_id = ?',
+      [id]
+    );
+
+    // Delete the purchase
+    const result = await executeQuery(
+      'DELETE FROM package_purchases WHERE id = ?',
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Purchase not found or access denied'
-      });
-    }
-
-    // Get current features
-    const currentFeatures = purchase.features || [];
-    
-    // Find and update the specific feature
-    const featureIndex = currentFeatures.findIndex(feature => feature.feature_id === parseInt(featureId));
-    
-    if (featureIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: 'Feature not found in this purchase'
-      });
-    }
-
-    // Update the feature status
-    currentFeatures[featureIndex].status = status;
-    currentFeatures[featureIndex].updated_at = new Date().toISOString();
-
-    // Update the purchase with the modified features
-    const { data: updatedPurchase, error: updateError } = await supabase
-      .from('package_purchases')
-      .update({ 
-        features: currentFeatures,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', purchaseId)
-      .select()
-      .single();
-
-    if (updateError) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to update feature status',
-        error: updateError.message
+        message: 'Purchase not found'
       });
     }
 
     res.json({
       success: true,
-      message: 'Feature status updated successfully',
-      data: {
-        purchase_id: purchaseId,
-        feature_id: featureId,
-        status: status,
-        updated_features: currentFeatures
-      }
+      message: 'Purchase deleted successfully'
     });
 
   } catch (error) {
-    console.error('Update feature status error:', error);
+    console.error('Delete purchase error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -667,7 +469,8 @@ module.exports = {
   getUserPurchases,
   getPurchaseById,
   createPurchase,
-  cancelPurchase,
+  updatePurchaseStatus,
   getAllPurchases,
-  updatePurchaseFeatureStatus
+  getPurchasesByUserId,
+  deletePurchase
 }; 

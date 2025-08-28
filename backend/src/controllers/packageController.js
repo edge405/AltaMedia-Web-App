@@ -1,4 +1,4 @@
-const { supabase, supabaseAdmin } = require('../config/supabase');
+const { executeQuery } = require('../config/mysql');
 
 /**
  * Get all active packages
@@ -6,45 +6,41 @@ const { supabase, supabaseAdmin } = require('../config/supabase');
  */
 const getAllPackages = async (req, res) => {
   try {
-    const { data: packages, error } = await supabase
-      .from('packages')
-      .select('*')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
+    const packages = await executeQuery(
+      'SELECT * FROM packages WHERE is_active = TRUE ORDER BY created_at DESC'
+    );
 
-    if (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to fetch packages',
-        error: error.message
+    if (packages.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No packages found',
+        data: {
+          total_packages: 0,
+          packages: []
+        }
       });
     }
 
     // Get features for all packages
     const packageIds = packages.map(pkg => pkg.id);
-    const { data: allFeatures, error: featuresError } = await supabase
-      .from('package_features')
-      .select('*')
-      .in('package_id', packageIds)
-      .eq('is_active', true);
-
-    if (featuresError) {
-      console.error('Features fetch error:', featuresError);
-    }
+    const placeholders = packageIds.map(() => '?').join(',');
+    const allFeatures = await executeQuery(
+      `SELECT * FROM package_features WHERE package_id IN (${placeholders}) AND is_active = TRUE`,
+      packageIds
+    );
 
     // Organize packages with clear labeling and features
     const labeledPackages = packages.map(package => {
       // Get features for this package
-      const packageFeatures = allFeatures ? allFeatures.filter(feature => feature.package_id === package.id) : [];
+      const packageFeatures = allFeatures.filter(feature => feature.package_id === package.id);
       
       // Organize features with clear labeling
-      // Note: package_features table doesn't have status, so we use a default
       const labeledFeatures = packageFeatures.map(feature => ({
         feature_id: feature.id,
         feature_info: {
           feature_name: feature.feature_name,
           feature_description: feature.feature_description,
-          status: 'active', // Default status for package features (no status column in table)
+          status: 'active', // Default status for package features
           is_active: feature.is_active,
           created_at: feature.created_at
         }
@@ -92,41 +88,33 @@ const getPackageById = async (req, res) => {
     const { id } = req.params;
 
     // Get package details
-    const { data: package, error: packageError } = await supabase
-      .from('packages')
-      .select('*')
-      .eq('id', id)
-      .eq('is_active', true)
-      .single();
+    const packages = await executeQuery(
+      'SELECT * FROM packages WHERE id = ? AND is_active = TRUE',
+      [id]
+    );
 
-    if (packageError || !package) {
+    if (packages.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Package not found'
       });
     }
 
-    // Get package features
-    const { data: features, error: featuresError } = await supabase
-      .from('package_features')
-      .select('*')
-      .eq('package_id', id)
-      .eq('is_active', true);
+    const package = packages[0];
 
-    if (featuresError) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to fetch package features'
-      });
-    }
+    // Get features for this package
+    const features = await executeQuery(
+      'SELECT * FROM package_features WHERE package_id = ? AND is_active = TRUE',
+      [id]
+    );
 
     // Organize features with clear labeling
-    const labeledFeatures = (features || []).map(feature => ({
+    const labeledFeatures = features.map(feature => ({
       feature_id: feature.id,
       feature_info: {
         feature_name: feature.feature_name,
         feature_description: feature.feature_description,
-        status: 'active', // Default status for package features (no status column in table)
+        status: 'active',
         is_active: feature.is_active,
         created_at: feature.created_at
       }
@@ -134,7 +122,7 @@ const getPackageById = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Package details retrieved successfully',
+      message: 'Package retrieved successfully',
       data: {
         package_id: package.id,
         package_info: {
@@ -151,7 +139,7 @@ const getPackageById = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get package error:', error);
+    console.error('Get package by ID error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -160,72 +148,56 @@ const getPackageById = async (req, res) => {
 };
 
 /**
- * Create new package (Admin only)
+ * Create a new package
  * POST /api/packages
  */
 const createPackage = async (req, res) => {
   try {
     const { name, description, price, duration_days, features } = req.body;
 
-    // Create package
-    const { data: package, error: packageError } = await supabaseAdmin
-      .from('packages')
-      .insert({
-        name,
-        description,
-        price,
-        duration_days,
-        is_active: true
-      })
-      .select()
-      .single();
-
-    if (packageError) {
-      return res.status(500).json({
+    // Validate required fields
+    if (!name || !price || !duration_days) {
+      return res.status(400).json({
         success: false,
-        message: 'Failed to create package',
-        error: packageError.message
+        message: 'Name, price, and duration_days are required'
       });
     }
 
-    // Create features if provided
-    if (features && features.length > 0) {
-      const featuresData = features.map(feature => ({
-        package_id: package.id,
-        feature_name: feature.name,
-        feature_description: feature.description,
-        // Note: package_features table doesn't have status column, so we don't include it
-        is_active: true
-      }));
+    // Create package
+    const result = await executeQuery(
+      'INSERT INTO packages (name, description, price, duration_days) VALUES (?, ?, ?, ?)',
+      [name, description, price, duration_days]
+    );
 
-      const { error: featuresError } = await supabaseAdmin
-        .from('package_features')
-        .insert(featuresData);
+    const packageId = result.insertId;
 
-      if (featuresError) {
-        console.error('Features creation error:', featuresError);
+    // Add features if provided
+    if (features && Array.isArray(features)) {
+      for (const feature of features) {
+        await executeQuery(
+          'INSERT INTO package_features (package_id, feature_name, feature_description) VALUES (?, ?, ?)',
+          [packageId, feature.feature_name, feature.feature_description]
+        );
       }
     }
+
+    // Get the created package with features
+    const [createdPackage] = await executeQuery(
+      'SELECT * FROM packages WHERE id = ?',
+      [packageId]
+    );
+
+    const packageFeatures = await executeQuery(
+      'SELECT * FROM package_features WHERE package_id = ?',
+      [packageId]
+    );
 
     res.status(201).json({
       success: true,
       message: 'Package created successfully',
       data: {
-        package_id: package.id,
-        package_info: {
-          name: package.name,
-          description: package.description,
-          price: package.price,
-          duration_days: package.duration_days,
-          is_active: package.is_active,
-          created_at: package.created_at,
-          updated_at: package.updated_at
-        },
-        features: features ? features.map(feature => ({
-          feature_name: feature.name,
-          feature_description: feature.description,
-          status: feature.status || 'active'
-        })) : []
+        package: createdPackage,
+        features: packageFeatures
       }
     });
 
@@ -239,7 +211,7 @@ const createPackage = async (req, res) => {
 };
 
 /**
- * Update package (Admin only)
+ * Update a package
  * PUT /api/packages/:id
  */
 const updatePackage = async (req, res) => {
@@ -247,40 +219,36 @@ const updatePackage = async (req, res) => {
     const { id } = req.params;
     const { name, description, price, duration_days, is_active } = req.body;
 
-    const { data: package, error } = await supabaseAdmin
-      .from('packages')
-      .update({
-        name,
-        description,
-        price,
-        duration_days,
-        is_active
-      })
-      .eq('id', id)
-      .select()
-      .single();
+    // Check if package exists
+    const existingPackages = await executeQuery(
+      'SELECT * FROM packages WHERE id = ?',
+      [id]
+    );
 
-    if (error || !package) {
+    if (existingPackages.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Package not found or update failed'
+        message: 'Package not found'
       });
     }
+
+    // Update package
+    const result = await executeQuery(
+      'UPDATE packages SET name = ?, description = ?, price = ?, duration_days = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [name, description, price, duration_days, is_active, id]
+    );
+
+    // Get updated package
+    const [updatedPackage] = await executeQuery(
+      'SELECT * FROM packages WHERE id = ?',
+      [id]
+    );
 
     res.json({
       success: true,
       message: 'Package updated successfully',
       data: {
-        package_id: package.id,
-        package_info: {
-          name: package.name,
-          description: package.description,
-          price: package.price,
-          duration_days: package.duration_days,
-          is_active: package.is_active,
-          created_at: package.created_at,
-          updated_at: package.updated_at
-        }
+        package: updatedPackage
       }
     });
 
@@ -294,25 +262,31 @@ const updatePackage = async (req, res) => {
 };
 
 /**
- * Delete package (Admin only)
+ * Delete a package (soft delete)
  * DELETE /api/packages/:id
  */
 const deletePackage = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { error } = await supabaseAdmin
-      .from('packages')
-      .delete()
-      .eq('id', id);
+    // Check if package exists
+    const existingPackages = await executeQuery(
+      'SELECT * FROM packages WHERE id = ?',
+      [id]
+    );
 
-    if (error) {
-      return res.status(500).json({
+    if (existingPackages.length === 0) {
+      return res.status(404).json({
         success: false,
-        message: 'Failed to delete package',
-        error: error.message
+        message: 'Package not found'
       });
     }
+
+    // Soft delete package
+    await executeQuery(
+      'UPDATE packages SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [id]
+    );
 
     res.json({
       success: true,
@@ -328,10 +302,156 @@ const deletePackage = async (req, res) => {
   }
 };
 
+/**
+ * Add feature to package
+ * POST /api/packages/:id/features
+ */
+const addFeatureToPackage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { feature_name, feature_description } = req.body;
+
+    // Check if package exists
+    const existingPackages = await executeQuery(
+      'SELECT * FROM packages WHERE id = ? AND is_active = TRUE',
+      [id]
+    );
+
+    if (existingPackages.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Package not found'
+      });
+    }
+
+    // Add feature
+    const result = await executeQuery(
+      'INSERT INTO package_features (package_id, feature_name, feature_description) VALUES (?, ?, ?)',
+      [id, feature_name, feature_description]
+    );
+
+    // Get the created feature
+    const [createdFeature] = await executeQuery(
+      'SELECT * FROM package_features WHERE id = ?',
+      [result.insertId]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Feature added successfully',
+      data: {
+        feature: createdFeature
+      }
+    });
+
+  } catch (error) {
+    console.error('Add feature error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Update package feature
+ * PUT /api/packages/:packageId/features/:featureId
+ */
+const updatePackageFeature = async (req, res) => {
+  try {
+    const { packageId, featureId } = req.params;
+    const { feature_name, feature_description, is_active } = req.body;
+
+    // Check if feature exists
+    const existingFeatures = await executeQuery(
+      'SELECT * FROM package_features WHERE id = ? AND package_id = ?',
+      [featureId, packageId]
+    );
+
+    if (existingFeatures.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Feature not found'
+      });
+    }
+
+    // Update feature
+    await executeQuery(
+      'UPDATE package_features SET feature_name = ?, feature_description = ?, is_active = ? WHERE id = ?',
+      [feature_name, feature_description, is_active, featureId]
+    );
+
+    // Get updated feature
+    const [updatedFeature] = await executeQuery(
+      'SELECT * FROM package_features WHERE id = ?',
+      [featureId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Feature updated successfully',
+      data: {
+        feature: updatedFeature
+      }
+    });
+
+  } catch (error) {
+    console.error('Update feature error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Delete package feature
+ * DELETE /api/packages/:packageId/features/:featureId
+ */
+const deletePackageFeature = async (req, res) => {
+  try {
+    const { packageId, featureId } = req.params;
+
+    // Check if feature exists
+    const existingFeatures = await executeQuery(
+      'SELECT * FROM package_features WHERE id = ? AND package_id = ?',
+      [featureId, packageId]
+    );
+
+    if (existingFeatures.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Feature not found'
+      });
+    }
+
+    // Soft delete feature
+    await executeQuery(
+      'UPDATE package_features SET is_active = FALSE WHERE id = ?',
+      [featureId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Feature deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Delete feature error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   getAllPackages,
   getPackageById,
   createPackage,
   updatePackage,
-  deletePackage
+  deletePackage,
+  addFeatureToPackage,
+  updatePackageFeature,
+  deletePackageFeature
 }; 

@@ -4,12 +4,13 @@ const {
   createComment, 
   getCommentsByFeature, 
   getCommentsByUser, 
-  getCommentsByFeatureAndUser,
+  getCommentById,
   updateComment, 
   deleteComment, 
-  getCommentById 
+  getAllComments,
+  deleteCommentAdmin
 } = require('../controllers/packageFeatureCommentController');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireRole } = require('../middleware/auth');
 
 /**
  * @route POST /api/package-feature-comments
@@ -33,31 +34,38 @@ router.get('/feature/:packageFeatureId', authenticateToken, getCommentsByFeature
 router.get('/user/:userId', authenticateToken, getCommentsByUser);
 
 /**
- * @route GET /api/package-feature-comments/feature/:packageFeatureId/user/:userId
- * @desc Get comments by feature ID and user ID
- * @access Private
- */
-router.get('/feature/:packageFeatureId/user/:userId', authenticateToken, getCommentsByFeatureAndUser);
-
-/**
- * @route GET /api/package-feature-comments/:commentId
+ * @route GET /api/package-feature-comments/:id
  * @desc Get a specific comment by ID
  * @access Private
  */
-router.get('/:commentId', authenticateToken, getCommentById);
+router.get('/:id', authenticateToken, getCommentById);
 
 /**
- * @route PUT /api/package-feature-comments/:commentId
+ * @route PUT /api/package-feature-comments/:id
  * @desc Update a comment
  * @access Private
  */
-router.put('/:commentId', authenticateToken, updateComment);
+router.put('/:id', authenticateToken, updateComment);
 
 /**
- * @route DELETE /api/package-feature-comments/:commentId
+ * @route DELETE /api/package-feature-comments/:id
  * @desc Delete a comment
  * @access Private
  */
-router.delete('/:commentId', authenticateToken, deleteComment);
+router.delete('/:id', authenticateToken, deleteComment);
+
+/**
+ * @route GET /api/package-feature-comments/admin/all
+ * @desc Get all comments (Admin)
+ * @access Private (Admin)
+ */
+router.get('/admin/all', authenticateToken, requireRole(['admin']), getAllComments);
+
+/**
+ * @route DELETE /api/package-feature-comments/admin/:id
+ * @desc Delete comment (Admin)
+ * @access Private (Admin)
+ */
+router.delete('/admin/:id', authenticateToken, requireRole(['admin']), deleteCommentAdmin);
 
 module.exports = router;

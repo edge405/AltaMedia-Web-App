@@ -9,21 +9,22 @@ import {
   Building
 } from 'lucide-react';
 import KnowingYouForm from '@/components/form/KnowingYouForm';
-import ProductServiceForm from '@/components/form/ProductServiceForm';
+import BrandKitQuestionnaire from '@/components/form/BrandKitQuestionnaire';
 import OrganizationForm from '@/components/form/OrganizationForm';
 
 export default function BrandKitSection({
   isLoadingForms,
   formStatuses,
   currentForm,
-  onFormTypeChange
+  onFormTypeChange,
+  onRefreshStatuses
 }) {
   // If a specific form is selected, render that form
   if (currentForm) {
     const formComponents = {
-      'business': <KnowingYouForm onFormTypeChange={onFormTypeChange} initialFormType="business" embedded={true} />,
-      'product': <ProductServiceForm onFormTypeChange={onFormTypeChange} embedded={true} />,
-      'organization': <OrganizationForm onFormTypeChange={onFormTypeChange} embedded={true} />
+      'business': <KnowingYouForm onFormTypeChange={onFormTypeChange} initialFormType="business" embedded={true} onComplete={() => { onFormTypeChange(null); onRefreshStatuses && onRefreshStatuses(); }} onRefreshStatuses={onRefreshStatuses} />,
+      'product': <BrandKitQuestionnaire onFormTypeChange={onFormTypeChange} embedded={true} onComplete={() => { onFormTypeChange(null); onRefreshStatuses && onRefreshStatuses(); }} onRefreshStatuses={onRefreshStatuses} />,
+      'organization': <OrganizationForm onFormTypeChange={onFormTypeChange} embedded={true} onComplete={() => { onFormTypeChange(null); onRefreshStatuses && onRefreshStatuses(); }} onRefreshStatuses={onRefreshStatuses} />
     };
 
     return (
@@ -91,7 +92,7 @@ export default function BrandKitSection({
                     {formStatuses.knowingYou.completed
                       ? 'Completed'
                       : formStatuses.knowingYou.currentStep > 0
-                        ? `${Math.round((formStatuses.knowingYou.currentStep / formStatuses.knowingYou.totalSteps) * 100)}%`
+                        ? 'In Progress'
                         : 'Not Started'
                     }
                   </Badge>
@@ -128,7 +129,7 @@ export default function BrandKitSection({
                 </Button>
               </div>
 
-              {/* Product Service Form */}
+              {/* BrandKit Questionnaire Form */}
               <div className="border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-shadow duration-200">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-4">
@@ -136,50 +137,51 @@ export default function BrandKitSection({
                       <Package className="w-6 h-6 text-purple-600" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">Product/Service Form</h3>
+                      <h3 className="text-lg font-bold text-gray-900">BrandKit Questionnaire</h3>
                       <p className="text-sm text-gray-500">Specific Product/Service Brand Identity</p>
                     </div>
                   </div>
-                  <Badge className={`px-3 py-1 rounded-full text-sm font-bold ${formStatuses.productService.completed
+                  <Badge className={`px-3 py-1 rounded-full text-sm font-bold ${formStatuses.brandKitQuestionnaire.completed
                     ? 'bg-green-500 text-white'
-                    : formStatuses.productService.currentStep > 0
+                    : formStatuses.brandKitQuestionnaire.currentStep > 0
                       ? 'bg-[#f7e833] text-black'
                       : 'bg-gray-300 text-gray-600'
                     }`}>
-                    {formStatuses.productService.completed
+                    {formStatuses.brandKitQuestionnaire.completed
                       ? 'Completed'
-                      : formStatuses.productService.currentStep > 0
-                        ? `${Math.round((formStatuses.productService.currentStep / formStatuses.productService.totalSteps) * 100)}%`
+                      : formStatuses.brandKitQuestionnaire.currentStep > 0
+                        ? 'In Progress'
                         : 'Not Started'
                     }
                   </Badge>
+
                 </div>
 
                 <div className="space-y-3 mb-4">
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Progress</span>
                     <span className="font-bold text-gray-900">
-                      Step {formStatuses.productService.currentStep} of {formStatuses.productService.totalSteps}
+                      Step {formStatuses.brandKitQuestionnaire.currentStep} of {formStatuses.brandKitQuestionnaire.totalSteps}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-purple-500 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${(formStatuses.productService.currentStep / formStatuses.productService.totalSteps) * 100}%` }}
+                      style={{ width: `${(formStatuses.brandKitQuestionnaire.currentStep / formStatuses.brandKitQuestionnaire.totalSteps) * 100}%` }}
                     ></div>
                   </div>
                 </div>
 
                 <Button
                   onClick={() => onFormTypeChange('product')}
-                  className={`w-full py-3 rounded-xl font-semibold transition-all duration-200 ${formStatuses.productService.completed
+                  className={`w-full py-3 rounded-xl font-semibold transition-all duration-200 ${formStatuses.brandKitQuestionnaire.completed
                     ? 'bg-green-100 text-green-700 hover:bg-green-200'
                     : 'bg-purple-600 hover:bg-purple-700 text-white'
                     }`}
                 >
-                  {formStatuses.productService.completed
+                  {formStatuses.brandKitQuestionnaire.completed
                     ? 'View Completed Form'
-                    : formStatuses.productService.currentStep === 0
+                    : formStatuses.brandKitQuestionnaire.currentStep === 0
                       ? 'Start Form'
                       : 'Continue Form'
                   }
@@ -207,7 +209,7 @@ export default function BrandKitSection({
                     {formStatuses.organization.completed
                       ? 'Completed'
                       : formStatuses.organization.currentStep > 0
-                        ? `${Math.round((formStatuses.organization.currentStep / formStatuses.organization.totalSteps) * 100)}%`
+                        ? 'In Progress'
                         : 'Not Started'
                     }
                   </Badge>
@@ -256,9 +258,9 @@ export default function BrandKitSection({
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-600">
-                      {formStatuses.productService.completed ? '✓' : formStatuses.productService.currentStep}
+                      {formStatuses.brandKitQuestionnaire.completed ? '✓' : formStatuses.brandKitQuestionnaire.currentStep}
                     </div>
-                    <div className="text-sm text-gray-600">Product/Service</div>
+                    <div className="text-sm text-gray-600">BrandKit Questionnaire</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-orange-600">

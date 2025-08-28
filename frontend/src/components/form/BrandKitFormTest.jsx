@@ -44,12 +44,12 @@ const BrandKitFormTest = () => {
             }
         }, 5000);
 
-        alert(`Step ${step} data logged! Check console and yellow box.`);
+        console.log(`Step ${step} data logged! Check console and yellow box.`);
 
         if (step < 3) {
             setStep(step + 1);
         } else {
-            alert('Form complete! Final data logged to console.');
+            console.log('Form complete! Final data logged to console.');
         }
     };
 

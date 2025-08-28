@@ -4,9 +4,10 @@ const {
   getUserPurchases, 
   getPurchaseById, 
   createPurchase, 
-  cancelPurchase,
+  updatePurchaseStatus,
   getAllPurchases,
-  updatePurchaseFeatureStatus
+  getPurchasesByUserId,
+  deletePurchase
 } = require('../controllers/purchaseController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
@@ -32,24 +33,31 @@ router.get('/:id', authenticateToken, getPurchaseById);
 router.post('/', authenticateToken, createPurchase);
 
 /**
- * @route   PUT /api/purchases/:id/cancel
- * @desc    Cancel purchase
+ * @route   PUT /api/purchases/:id/status
+ * @desc    Update purchase status
  * @access  Private
  */
-router.put('/:id/cancel', authenticateToken, cancelPurchase);
+router.put('/:id/status', authenticateToken, updatePurchaseStatus);
 
 /**
- * @route   GET /api/admin/purchases
+ * @route   GET /api/purchases/admin/all
  * @desc    Get all purchases (Admin only)
  * @access  Admin only
  */
 router.get('/admin/all', authenticateToken, requireRole(['admin']), getAllPurchases);
 
 /**
- * @route   PUT /api/purchases/:id/features/:featureId/status
- * @desc    Update feature status in a purchase
- * @access  Private
+ * @route   GET /api/purchases/admin/user/:userId
+ * @desc    Get purchases by user ID (Admin only)
+ * @access  Admin only
  */
-router.put('/:id/features/:featureId/status', authenticateToken, updatePurchaseFeatureStatus);
+router.get('/admin/user/:userId', authenticateToken, requireRole(['admin']), getPurchasesByUserId);
+
+/**
+ * @route   DELETE /api/purchases/admin/:id
+ * @desc    Delete purchase (Admin only)
+ * @access  Admin only
+ */
+router.delete('/admin/:id', authenticateToken, requireRole(['admin']), deletePurchase);
 
 module.exports = router; 

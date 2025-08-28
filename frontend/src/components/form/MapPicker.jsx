@@ -14,10 +14,22 @@ const MapPicker = ({ value, onChange, placeholder }) => {
   useEffect(() => {
     if (value) {
       try {
-        const parsed = JSON.parse(value);
-        setPlaceName(parsed.placeName || parsed.fullAddress || value);
-        if (parsed.coordinates) {
-          setSelectedLocation(parsed.coordinates);
+        // If value is already a string (address), use it directly
+        if (typeof value === 'string') {
+          setPlaceName(value);
+        } else if (typeof value === 'object') {
+          // If it's an object, extract the address
+          setPlaceName(value.address || value.placeName || value.fullAddress || JSON.stringify(value));
+          if (value.coordinates) {
+            setSelectedLocation(value.coordinates);
+          }
+        } else {
+          // Try to parse as JSON
+          const parsed = JSON.parse(value);
+          setPlaceName(parsed.address || parsed.placeName || parsed.fullAddress || value);
+          if (parsed.coordinates) {
+            setSelectedLocation(parsed.coordinates);
+          }
         }
       } catch {
         // If not JSON, treat as place name

@@ -16,7 +16,11 @@ const FIELD_TYPES = {
     'brandElements', 'fileFormats', 'interactionMethods', 'successMetrics',
     'cultureWords', 'brandTone',
     // OrganizationForm specific fields
-    'targetPlatforms', 'contentTypes', 'deliverables'
+    'targetPlatforms', 'contentTypes', 'deliverables',
+    // BrandKit Questionnaire specific fields
+    'competitors', 'brandKitUse', 'templates', 'internalAssets', 'fileFormats',
+    'brandVoice', 'communicationPerception', 'imageryStyle', 'fontTypes', 'fontStyles',
+    'sourceFiles', 'requiredFormats', 'brandVibe', 'brandWords', 'brandAvoidWords'
   ],
   
   // Short text fields - brief, concise responses
@@ -24,12 +28,14 @@ const FIELD_TYPES = {
     'businessName', 'businessEmail', 'contactNumber', 'yearStarted',
     'reason1', 'reason2', 'reason3', 'brandSoul', 'primaryGoal',
     'longTermGoal', 'timeline', 'approver', 'buildingType',
-    'hasProventousId', 'proventousId', 'preferredContact','businessDescription', 'businessStage',
+    'hasProventousId', 'proventousId', 'preferredContact', 'businessDescription', 'businessStage',
     'desiredEmotion', 'spendingType', 'hasLogo',
     // ProductService specific fields
     'productName', 'productDescription',
     // OrganizationForm specific fields
-    'organizationName', 'mainContact'
+    'organizationName', 'mainContact',
+    // BrandKit Questionnaire specific fields
+    'brandName', 'brandDescription', 'inspirationBrand', 'tagline'
   ],
   
   // Long text fields - detailed, conversational responses
@@ -45,7 +51,11 @@ const FIELD_TYPES = {
     // ProductService specific fields
     'missionStory', 'targetAudienceProfile', 'competitors',
     // OrganizationForm specific fields
-    'socialMediaGoals', 'brandUniqueness', 'additionalInfo'
+    'socialMediaGoals', 'brandUniqueness', 'additionalInfo',
+    // BrandKit Questionnaire specific fields
+    'primaryCustomers', 'unfairAdvantage', 'customerMiss', 'problemSolved',
+    'competitorLikes', 'competitorDislikes', 'brandDifferentiation',
+    'admiredBrands', 'inspirationBrands', 'legalConsiderations', 'mission', 'vision'
   ]
 };
 
@@ -97,7 +107,48 @@ const extractBusinessContext = (formData) => {
     contentTypes: Array.isArray(formData.contentTypes) ? formData.contentTypes.join(', ') : formData.contentTypes || '',
     deliverables: Array.isArray(formData.deliverables) ? formData.deliverables.join(', ') : formData.deliverables || '',
     mainContact: formData.mainContact || '',
-    additionalInfo: formData.additionalInfo || ''
+    additionalInfo: formData.additionalInfo || '',
+    // BrandKit Questionnaire specific context
+    brandName: formData.brandName || '',
+    brandDescription: formData.brandDescription || '',
+    primaryCustomers: formData.primaryCustomers || '',
+    unfairAdvantage: formData.unfairAdvantage || '',
+    customerMiss: formData.customerMiss || '',
+    problemSolved: formData.problemSolved || '',
+    competitorLikes: formData.competitorLikes || '',
+    competitorDislikes: formData.competitorDislikes || '',
+    brandDifferentiation: formData.brandDifferentiation || '',
+    admiredBrands: formData.admiredBrands || '',
+    inspirationBrand: formData.inspirationBrand || '',
+    communicationPerception: Array.isArray(formData.communicationPerception) ? formData.communicationPerception.join(', ') : formData.communicationPerception || '',
+    brandLogo: formData.brandLogo || '',
+    logoRedesign: formData.logoRedesign || '',
+    hasExistingColors: formData.hasExistingColors || '',
+    existingColors: formData.existingColors || '',
+    preferredColors: formData.preferredColors || '',
+    colorsToAvoid: formData.colorsToAvoid || '',
+    imageryStyle: Array.isArray(formData.imageryStyle) ? formData.imageryStyle.join(', ') : formData.imageryStyle || '',
+    fontTypes: Array.isArray(formData.fontTypes) ? formData.fontTypes.join(', ') : formData.fontTypes || '',
+    fontStyles: Array.isArray(formData.fontStyles) ? formData.fontStyles.join(', ') : formData.fontStyles || '',
+    legalConsiderations: formData.legalConsiderations || '',
+    sourceFiles: Array.isArray(formData.sourceFiles) ? formData.sourceFiles.join(', ') : formData.sourceFiles || '',
+    requiredFormats: Array.isArray(formData.requiredFormats) ? formData.requiredFormats.join(', ') : formData.requiredFormats || '',
+    referenceMaterials: formData.referenceMaterials || '',
+    inspirationBrands: formData.inspirationBrands || '',
+    brandVibe: Array.isArray(formData.brandVibe) ? formData.brandVibe.join(', ') : formData.brandVibe || '',
+    brandWords: Array.isArray(formData.brandWords) ? formData.brandWords.join(', ') : formData.brandWords || '',
+    brandAvoidWords: Array.isArray(formData.brandAvoidWords) ? formData.brandAvoidWords.join(', ') : formData.brandAvoidWords || '',
+    tagline: formData.tagline || '',
+    mission: formData.mission || '',
+    vision: formData.vision || '',
+    coreValues: formData.coreValues || '',
+    hasWebPage: formData.hasWebPage || '',
+    webPageUpload: formData.webPageUpload || '',
+    wantWebPage: formData.wantWebPage || '',
+    templates: Array.isArray(formData.templates) ? formData.templates.join(', ') : formData.templates || '',
+    internalAssets: Array.isArray(formData.internalAssets) ? formData.internalAssets.join(', ') : formData.internalAssets || '',
+    culturalAdaptation: formData.culturalAdaptation || '',
+    brandVoice: Array.isArray(formData.brandVoice) ? formData.brandVoice.join(', ') : formData.brandVoice || ''
   };
   
   return context;
@@ -105,10 +156,10 @@ const extractBusinessContext = (formData) => {
 
 // Check if we have sufficient context data
 const hasSufficientContext = (context) => {
-  const requiredFields = ['businessName', 'industry', 'businessType'];
+  const requiredFields = ['businessName', 'industry', 'businessType', 'brandName'];
   const hasRequired = requiredFields.some(field => context[field] && context[field].trim() !== '');
   
-  const optionalFields = ['mission', 'vision', 'targetAudience', 'brandDescription', 'behindBrand'];
+  const optionalFields = ['mission', 'vision', 'targetAudience', 'brandDescription', 'behindBrand', 'primaryCustomers', 'problemSolved', 'unfairAdvantage'];
   const hasOptional = optionalFields.some(field => context[field] && context[field].trim() !== '');
   
   return hasRequired || hasOptional;
@@ -166,6 +217,46 @@ Business Context:
 - Deliverables: ${businessContext.deliverables}
 - Main Contact: ${businessContext.mainContact}
 - Additional Info: ${businessContext.additionalInfo}
+- Brand Name: ${businessContext.brandName}
+- Brand Description: ${businessContext.brandDescription}
+- Primary Customers: ${businessContext.primaryCustomers}
+- Unfair Advantage: ${businessContext.unfairAdvantage}
+- Customer Miss: ${businessContext.customerMiss}
+- Problem Solved: ${businessContext.problemSolved}
+- Competitor Likes: ${businessContext.competitorLikes}
+- Competitor Dislikes: ${businessContext.competitorDislikes}
+- Brand Differentiation: ${businessContext.brandDifferentiation}
+- Admired Brands: ${businessContext.admiredBrands}
+- Inspiration Brand: ${businessContext.inspirationBrand}
+- Communication Perception: ${businessContext.communicationPerception}
+- Brand Logo: ${businessContext.brandLogo}
+- Logo Redesign: ${businessContext.logoRedesign}
+- Has Existing Colors: ${businessContext.hasExistingColors}
+- Existing Colors: ${businessContext.existingColors}
+- Preferred Colors: ${businessContext.preferredColors}
+- Colors to Avoid: ${businessContext.colorsToAvoid}
+- Imagery Style: ${businessContext.imageryStyle}
+- Font Types: ${businessContext.fontTypes}
+- Font Styles: ${businessContext.fontStyles}
+- Legal Considerations: ${businessContext.legalConsiderations}
+- Source Files: ${businessContext.sourceFiles}
+- Required Formats: ${businessContext.requiredFormats}
+- Reference Materials: ${businessContext.referenceMaterials}
+- Inspiration Brands: ${businessContext.inspirationBrands}
+- Brand Vibe: ${businessContext.brandVibe}
+- Brand Words: ${businessContext.brandWords}
+- Brand Avoid Words: ${businessContext.brandAvoidWords}
+- Tagline: ${businessContext.tagline}
+- Mission: ${businessContext.mission}
+- Vision: ${businessContext.vision}
+- Core Values: ${businessContext.coreValues}
+- Has Web Page: ${businessContext.hasWebPage}
+- Web Page Upload: ${businessContext.webPageUpload}
+- Want Web Page: ${businessContext.wantWebPage}
+- Templates: ${businessContext.templates}
+- Internal Assets: ${businessContext.internalAssets}
+- Cultural Adaptation: ${businessContext.culturalAdaptation}
+- Brand Voice: ${businessContext.brandVoice}
 `;
 
   // Field-specific prompts with fallback strategies
@@ -180,8 +271,8 @@ Business Context:
       ? `Based on the business context, write a visionary statement that describes the future this business wants to create. Make it aspirational and forward-looking.`
       : `Write a visionary statement that describes the future a business wants to create. Focus on innovation, growth, and positive change. Make it aspirational and forward-looking.`,
     
-    // Brand Description
-    brandDescription: hasContext
+    // Business Description
+    businessDescription: hasContext
       ? `Based on the business context, write a concise, powerful one-sentence description of what this business does. Make it memorable and compelling.`
       : `Write a concise, powerful one-sentence description of what a business does. Focus on the core value proposition and make it memorable and compelling.`,
     
@@ -421,6 +512,119 @@ Business Context:
     additionalInfo: hasContext
       ? `Based on the business context, provide additional insights or considerations that would be valuable for understanding this organization's social media needs. Focus on unique aspects, challenges, or opportunities.`
       : `Provide additional insights or considerations that would be valuable for understanding an organization's social media needs. Focus on unique aspects, challenges, or opportunities.`,
+    
+    // BrandKit Questionnaire specific fields
+    brandName: hasContext
+      ? `Based on the business context, suggest a compelling brand name that reflects the brand's personality, values, and target audience. Make it memorable, unique, and aligned with the brand's mission.`
+      : `Suggest a compelling brand name that reflects the brand's personality, values, and target audience. Make it memorable, unique, and professional.`,
+    
+    brandDescription: hasContext
+      ? `Based on the business context, write a compelling one-sentence description of this brand that captures its essence, personality, and value proposition. Make it memorable and authentic.`
+      : `Write a compelling one-sentence description of a brand that captures its essence, personality, and value proposition. Make it memorable and authentic.`,
+    
+    primaryCustomers: hasContext
+      ? `Based on the business context, describe the primary customers in detail including demographics, psychographics, behaviors, and pain points. Be specific about who this brand serves.`
+      : `Describe the primary customers in detail including demographics, psychographics, behaviors, and pain points. Be specific about who the brand serves.`,
+    
+    unfairAdvantage: hasContext
+      ? `Based on the business context, describe what makes this brand unique versus competitors - their 'unfair advantage' that sets them apart in the market.`
+      : `Describe what makes a brand unique versus competitors - their 'unfair advantage' that sets them apart in the market.`,
+    
+    customerMiss: hasContext
+      ? `Based on the business context, describe what customers would miss most if this brand disappeared tomorrow. Focus on the emotional and practical value provided.`
+      : `Describe what customers would miss most if a brand disappeared tomorrow. Focus on the emotional and practical value provided.`,
+    
+    problemSolved: hasContext
+      ? `Based on the business context, describe the specific problem this brand solves for its customers. Be clear about the pain points and how the brand addresses them.`
+      : `Describe the specific problem a brand solves for its customers. Be clear about the pain points and how the brand addresses them.`,
+    
+    competitors: hasContext
+      ? `Based on the business context, suggest the top 3 competitors in this market. Consider direct competitors and similar brands that customers might compare to. Return only the competitor names as comma-separated tags.`
+      : `Suggest the top 3 competitors in a market. Consider direct competitors and similar brands that customers might compare to. Return only the competitor names as comma-separated tags.`,
+    
+    competitorLikes: hasContext
+      ? `Based on the business context, describe what aspects of competitor branding are admirable or effective. Focus on design, messaging, and customer experience elements.`
+      : `Describe what aspects of competitor branding are admirable or effective. Focus on design, messaging, and customer experience elements.`,
+    
+    competitorDislikes: hasContext
+      ? `Based on the business context, describe what aspects of competitor branding are ineffective or off-putting. Focus on areas where this brand could differentiate.`
+      : `Describe what aspects of competitor branding are ineffective or off-putting. Focus on areas where a brand could differentiate.`,
+    
+    brandDifferentiation: hasContext
+      ? `Based on the business context, describe how this brand should stand apart from competitors. Focus on unique positioning, messaging, and visual identity approaches.`
+      : `Describe how a brand should stand apart from competitors. Focus on unique positioning, messaging, and visual identity approaches.`,
+    
+    admiredBrands: hasContext
+      ? `Based on the business context, describe which brands are admired for their tone of voice and why. Focus on communication style and brand personality.`
+      : `Describe which brands are admired for their tone of voice and why. Focus on communication style and brand personality.`,
+    
+    inspirationBrand: hasContext
+      ? `Based on the business context, suggest an inspiration brand that could be imported or referenced. Consider brands with similar values, audience, or aesthetic.`
+      : `Suggest an inspiration brand that could be imported or referenced. Consider brands with similar values, audience, or aesthetic.`,
+    
+    brandVoice: hasContext
+      ? `Based on the business context, suggest 4-5 personality traits that describe how this brand should speak and communicate. Return only the traits as comma-separated tags.`
+      : `Suggest 4-5 personality traits that describe how a brand should speak and communicate. Consider formal, casual, witty, professional, playful, authoritative, friendly, sophisticated. Return only the traits as comma-separated tags.`,
+    
+    communicationPerception: hasContext
+      ? `Based on the business context, suggest 4-5 characteristics for how the audience should perceive communications. Return only the characteristics as comma-separated tags.`
+      : `Suggest 4-5 characteristics for how the audience should perceive communications. Consider authoritative, friendly, quirky, luxurious, approachable, professional, innovative, trustworthy. Return only the characteristics as comma-separated tags.`,
+    
+    imageryStyle: hasContext
+      ? `Based on the business context, suggest 4-5 visual imagery/photography styles that fit this brand. Return only the styles as comma-separated tags.`
+      : `Suggest 4-5 visual imagery/photography styles that fit a brand. Consider minimalist, vibrant, nostalgic, futuristic, natural, bold, elegant, playful, professional. Return only the styles as comma-separated tags.`,
+    
+    fontTypes: hasContext
+      ? `Based on the business context, suggest 3-4 font type preferences. Return only the types as comma-separated tags.`
+      : `Suggest 3-4 font type preferences. Consider serif, sans-serif, script, display, monospace. Return only the types as comma-separated tags.`,
+    
+    fontStyles: hasContext
+      ? `Based on the business context, suggest 3-4 font style preferences. Return only the styles as comma-separated tags.`
+      : `Suggest 3-4 font style preferences. Consider modern, classic, playful, professional, elegant. Return only the styles as comma-separated tags.`,
+    
+    legalConsiderations: hasContext
+      ? `Based on the business context, describe any brand compliance or legal considerations that should be noted. Consider trademarked elements, restricted iconography, or industry regulations.`
+      : `Describe any brand compliance or legal considerations that should be noted. Consider trademarked elements, restricted iconography, or industry regulations.`,
+    
+    sourceFiles: hasContext
+      ? `Based on the business context, suggest 3-4 source file formats needed for deliverables. Return only the formats as comma-separated tags.`
+      : `Suggest 3-4 source file formats needed for deliverables. Consider AI, PSD, Figma, Sketch, XD. Return only the formats as comma-separated tags.`,
+    
+    requiredFormats: hasContext
+      ? `Based on the business context, suggest 4-5 specific file formats required for deliverables. Return only the formats as comma-separated tags.`
+      : `Suggest 4-5 specific file formats required for deliverables. Consider PNG, SVG, PDF, JPG, EPS, TIFF. Return only the formats as comma-separated tags.`,
+    
+    inspirationBrands: hasContext
+      ? `Based on the business context, describe brands outside this industry that provide inspiration. Focus on brands with similar values, aesthetic, or approach.`
+      : `Describe brands outside the industry that provide inspiration. Focus on brands with similar values, aesthetic, or approach.`,
+    
+    brandVibe: hasContext
+      ? `Based on the business context, suggest 4-5 words that describe the 'vibe' this brand is chasing. Return only the words as comma-separated tags.`
+      : `Suggest 4-5 words that describe the 'vibe' a brand is chasing. Consider luxury, eco-friendly, tech-forward, approachable, youthful, professional, creative, minimalist, bold. Return only the words as comma-separated tags.`,
+    
+    brandWords: hasContext
+      ? `Based on the business context, suggest 3 words that people should use to describe this brand. Return only the words as comma-separated tags.`
+      : `Suggest 3 words that people should use to describe a brand. Consider innovative, trustworthy, creative, professional, friendly, bold, elegant, reliable. Return only the words as comma-separated tags.`,
+    
+    brandAvoidWords: hasContext
+      ? `Based on the business context, suggest 3 words that people should never use to describe this brand. Return only the words as comma-separated tags.`
+      : `Suggest 3 words that people should never use to describe a brand. Consider cheap, unreliable, boring, unprofessional, confusing, outdated. Return only the words as comma-separated tags.`,
+    
+    tagline: hasContext
+      ? `Based on the business context, suggest a compelling tagline or slogan that captures the brand's essence and value proposition. Make it memorable and authentic.`
+      : `Suggest a compelling tagline or slogan that captures the brand's essence and value proposition. Make it memorable and authentic.`,
+    
+    mission: hasContext
+      ? `Based on the business context, write a compelling mission statement that captures the essence of what this brand does and why it exists. Make it inspiring and authentic.`
+      : `Write a compelling mission statement that captures the essence of what a brand does and why it exists. Make it inspiring and authentic.`,
+    
+    vision: hasContext
+      ? `Based on the business context, write a visionary statement that describes the future this brand wants to create. Make it aspirational and forward-looking.`
+      : `Write a visionary statement that describes the future a brand wants to create. Make it aspirational and forward-looking.`,
+    
+    coreValues: hasContext
+      ? `Based on the business context, suggest 3-5 core values that should always be reflected in this brand. Return only the values as comma-separated tags.`
+      : `Suggest 3-5 core values that should always be reflected in a brand. Consider innovation, integrity, excellence, customer-first, collaboration, transparency, sustainability. Return only the values as comma-separated tags.`,
     
     // Default for any other field
     default: hasContext

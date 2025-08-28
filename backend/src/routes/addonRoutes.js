@@ -6,7 +6,9 @@ const {
   createAddon, 
   updateAddon, 
   deleteAddon,
-  getUserAddons
+  addFeatureToAddon,
+  updateAddonFeature,
+  deleteAddonFeature
 } = require('../controllers/addonController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
@@ -16,13 +18,6 @@ const { authenticateToken, requireRole } = require('../middleware/auth');
  * @access  Public
  */
 router.get('/', getAllAddons);
-
-/**
- * @route   GET /api/addons/user
- * @desc    Get current user's purchased addons
- * @access  Private
- */
-router.get('/user', authenticateToken, getUserAddons);
 
 /**
  * @route   GET /api/addons/:id
@@ -51,5 +46,26 @@ router.put('/:id', authenticateToken, requireRole(['admin']), updateAddon);
  * @access  Admin only
  */
 router.delete('/:id', authenticateToken, requireRole(['admin']), deleteAddon);
+
+/**
+ * @route   POST /api/addons/:id/features
+ * @desc    Add feature to addon
+ * @access  Admin only
+ */
+router.post('/:id/features', authenticateToken, requireRole(['admin']), addFeatureToAddon);
+
+/**
+ * @route   PUT /api/addons/:addonId/features/:featureId
+ * @desc    Update addon feature
+ * @access  Admin only
+ */
+router.put('/:addonId/features/:featureId', authenticateToken, requireRole(['admin']), updateAddonFeature);
+
+/**
+ * @route   DELETE /api/addons/:addonId/features/:featureId
+ * @desc    Delete addon feature
+ * @access  Admin only
+ */
+router.delete('/:addonId/features/:featureId', authenticateToken, requireRole(['admin']), deleteAddonFeature);
 
 module.exports = router; 

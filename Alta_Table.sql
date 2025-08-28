@@ -22,19 +22,6 @@ CREATE TABLE public.addons (
   updated_at timestamp without time zone DEFAULT now(),
   CONSTRAINT addons_pkey PRIMARY KEY (id)
 );
-CREATE TABLE public.purchased_package_with_features (
-  id integer NOT NULL DEFAULT nextval('purchased_package_with_features_id_seq'::regclass),
-  user_id bigint NOT NULL,
-  purchase_date timestamp without time zone DEFAULT now(),
-  expiration_date date NOT NULL,
-  status character varying DEFAULT 'active'::character varying,
-  total_amount numeric NOT NULL CHECK (total_amount >= 0::numeric),
-  features jsonb NOT NULL,
-  created_at timestamp without time zone DEFAULT now(),
-  updated_at timestamp without time zone DEFAULT now(),
-  CONSTRAINT purchased_package_with_features_pkey PRIMARY KEY (id),
-  CONSTRAINT fk_ppwf_user FOREIGN KEY (user_id) REFERENCES public.users(id)
-);
 CREATE TABLE public.company_brand_kit_forms (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   user_id bigint,
@@ -250,6 +237,7 @@ CREATE TABLE public.purchased_package_with_features (
   features jsonb NOT NULL,
   created_at timestamp without time zone DEFAULT now(),
   updated_at timestamp without time zone DEFAULT now(),
+  package_name character varying NOT NULL DEFAULT ''::character varying,
   CONSTRAINT purchased_package_with_features_pkey PRIMARY KEY (id),
   CONSTRAINT fk_ppwf_user FOREIGN KEY (user_id) REFERENCES public.users(id)
 );

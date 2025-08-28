@@ -4,8 +4,10 @@ const {
   getUserAddonPurchases, 
   getAddonPurchaseById, 
   createAddonPurchase, 
-  cancelAddonPurchase,
-  getAllAddonPurchases
+  updateAddonPurchaseStatus,
+  getAllAddonPurchases,
+  getAddonPurchasesByUserId,
+  deleteAddonPurchase
 } = require('../controllers/addonPurchaseController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
@@ -31,17 +33,31 @@ router.get('/:id', authenticateToken, getAddonPurchaseById);
 router.post('/', authenticateToken, createAddonPurchase);
 
 /**
- * @route   PUT /api/addon-purchases/:id/cancel
- * @desc    Cancel addon purchase
+ * @route   PUT /api/addon-purchases/:id/status
+ * @desc    Update addon purchase status
  * @access  Private
  */
-router.put('/:id/cancel', authenticateToken, cancelAddonPurchase);
+router.put('/:id/status', authenticateToken, updateAddonPurchaseStatus);
 
 /**
- * @route   GET /api/admin/addon-purchases
+ * @route   GET /api/addon-purchases/admin/all
  * @desc    Get all addon purchases (Admin only)
  * @access  Admin only
  */
 router.get('/admin/all', authenticateToken, requireRole(['admin']), getAllAddonPurchases);
+
+/**
+ * @route   GET /api/addon-purchases/admin/user/:userId
+ * @desc    Get addon purchases by user ID (Admin only)
+ * @access  Admin only
+ */
+router.get('/admin/user/:userId', authenticateToken, requireRole(['admin']), getAddonPurchasesByUserId);
+
+/**
+ * @route   DELETE /api/addon-purchases/admin/:id
+ * @desc    Delete addon purchase (Admin only)
+ * @access  Admin only
+ */
+router.delete('/admin/:id', authenticateToken, requireRole(['admin']), deleteAddonPurchase);
 
 module.exports = router; 

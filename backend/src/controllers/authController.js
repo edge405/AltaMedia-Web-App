@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { supabase, supabaseAdmin } = require('../config/supabase');
+const { executeQuery, executeTransaction } = require('../config/mysql');
+const { v4: uuidv4 } = require('uuid');
 
 /**
  * User registration
@@ -8,16 +9,15 @@ const { supabase, supabaseAdmin } = require('../config/supabase');
  */
 const register = async (req, res) => {
   try {
-    const { email, password, fullname, phone_number, address } = req.body;
+    const { email, password, fullname, role, phone_number, address } = req.body;
 
     // Check if user already exists in our users table
-    const { data: existingUser, error: checkError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single();
+    const existingUsers = await executeQuery(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
 
-    if (existingUser) {
+    if (existingUsers.length > 0) {
       return res.status(400).json({
         success: false,
         message: 'User with this email already exists'
@@ -25,25 +25,19 @@ const register = async (req, res) => {
     }
 
     // Create user in our users table
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('users')
-      .insert({
-        email,
-        password: await bcrypt.hash(password, 10),
-        fullname,
-        phone_number,
-        address
-      })
-      .select('id, email, fullname, phone_number, address, created_at')
-      .single();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await executeQuery(
+      'INSERT INTO users (email, password, fullname, role, phone_number, address) VALUES (?, ?, ?, ?, ?, ?)',
+      [email, hashedPassword, fullname, role, phone_number, address]
+    );
 
-    if (profileError) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to create user profile',
-        error: profileError.message
-      });
-    }
+    const userId = result.insertId;
+
+    // Get the created user
+    const [profile] = await executeQuery(
+      'SELECT id, email, fullname, role, phone_number, address, created_at FROM users WHERE id = ?',
+      [userId]
+    );
 
     // Generate JWT token
     const token = jwt.sign(
@@ -65,6 +59,7 @@ const register = async (req, res) => {
           fullname: profile.fullname,
           phone_number: profile.phone_number,
           address: profile.address,
+          role: profile.role,
           createdAt: profile.created_at
         },
         token
@@ -89,22 +84,23 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     // Get user from our users table
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id, email, password, fullname, phone_number, address, role, created_at')
-      .eq('email', email)
-      .single();
+    const users = await executeQuery(
+      'SELECT id, email, password, fullname, phone_number, address, role, created_at FROM users WHERE email = ?',
+      [email]
+    );
 
-    if (userError || !user) {
+    if (users.length === 0) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
 
+    const user = users[0];
+
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
@@ -115,7 +111,8 @@ const login = async (req, res) => {
     const token = jwt.sign(
       { 
         userId: user.id, 
-        email: user.email
+        email: user.email,
+        role: user.role
       },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN }
@@ -127,11 +124,11 @@ const login = async (req, res) => {
       data: {
         user: {
           id: user.id,
-          role: user.role,
           email: user.email,
           fullname: user.fullname,
           phone_number: user.phone_number,
           address: user.address,
+          role: user.role,
           createdAt: user.created_at
         },
         token
@@ -148,56 +145,38 @@ const login = async (req, res) => {
 };
 
 /**
- * User logout
- * POST /api/auth/logout
- */
-const logout = async (req, res) => {
-  try {
-    // For now, just return success since we don't have token blacklisting
-    // In a production environment, you might want to implement token blacklisting
-    res.json({
-      success: true,
-      message: 'Logout successful'
-    });
-
-  } catch (error) {
-    console.error('Logout error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-};
-
-/**
- * Get current user profile
+ * Get user profile
  * GET /api/auth/profile
  */
 const getProfile = async (req, res) => {
   try {
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('id, email, fullname, phone_number, address, created_at, updated_at')
-      .eq('id', req.user.id)
-      .single();
+    const userId = req.user.id;
 
-    if (error || !user) {
+    const users = await executeQuery(
+      'SELECT id, email, fullname, phone_number, address, role, created_at, updated_at FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (users.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
+    const user = users[0];
+
     res.json({
       success: true,
       data: {
-        id: user.id,
-        email: user.email,
-        fullname: user.fullname,
-        phone_number: user.phone_number,
-        address: user.address,
-        createdAt: user.created_at,
-        updatedAt: user.updated_at
+          id: user.id,
+          email: user.email,
+          fullname: user.fullname,
+          phone_number: user.phone_number,
+          address: user.address,
+          role: user.role,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at
       }
     });
 
@@ -211,117 +190,51 @@ const getProfile = async (req, res) => {
 };
 
 /**
- * Refresh token
- * POST /api/auth/refresh
- */
-const refreshToken = async (req, res) => {
-  try {
-    const { refreshToken } = req.body;
-
-    if (!refreshToken) {
-      return res.status(400).json({
-        success: false,
-        message: 'Refresh token required'
-      });
-    }
-
-    // Verify refresh token
-    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
-    
-    // Get user data
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('id, email')
-      .eq('id', decoded.userId)
-      .single();
-
-    if (error || !user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid refresh token'
-      });
-    }
-
-    // Generate new access token
-    const newToken = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
-    );
-
-    res.json({
-      success: true,
-      data: {
-        token: newToken
-      }
-    });
-
-  } catch (error) {
-    console.error('Refresh token error:', error);
-    res.status(401).json({
-      success: false,
-      message: 'Invalid refresh token'
-    });
-  }
-};
-
-/**
- * Edit user profile
+ * Update user profile
  * PUT /api/auth/profile
  */
-const editProfile = async (req, res) => {
+const updateProfile = async (req, res) => {
   try {
+    const userId = req.user.id;
     const { fullname, phone_number, address } = req.body;
 
-    // Validate that at least one field is provided
-    if (!fullname && !phone_number && !address) {
-      return res.status(400).json({
-        success: false,
-        message: 'At least one field (fullname, phone_number, or address) must be provided'
-      });
-    }
+    const result = await executeQuery(
+      'UPDATE users SET fullname = ?, phone_number = ?, address = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [fullname, phone_number, address, userId]
+    );
 
-    // Prepare update data
-    const updateData = {};
-    if (fullname !== undefined) updateData.fullname = fullname;
-    if (phone_number !== undefined) updateData.phone_number = phone_number;
-    if (address !== undefined) updateData.address = address;
-    updateData.updated_at = new Date().toISOString();
-
-    // Update user profile
-    const { data: user, error } = await supabase
-      .from('users')
-      .update(updateData)
-      .eq('id', req.user.id)
-      .select('id, email, fullname, phone_number, address, created_at, updated_at')
-      .single();
-
-    if (error || !user) {
+    if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'User not found or update failed'
+        message: 'User not found'
       });
     }
+
+    // Get updated user
+    const [updatedUser] = await executeQuery(
+      'SELECT id, email, fullname, phone_number, address, role, created_at, updated_at FROM users WHERE id = ?',
+      [userId]
+    );
 
     res.json({
       success: true,
       message: 'Profile updated successfully',
       data: {
-        id: user.id,
-        email: user.email,
-        fullname: user.fullname,
-        phone_number: user.phone_number,
-        address: user.address,
-        createdAt: user.created_at,
-        updatedAt: user.updated_at
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          fullname: updatedUser.fullname,
+          phone_number: updatedUser.phone_number,
+          address: updatedUser.address,
+          role: updatedUser.role,
+          createdAt: updatedUser.created_at,
+          updatedAt: updatedUser.updated_at
+        }
       }
     });
 
   } catch (error) {
-    console.error('Edit profile error:', error);
+    console.error('Update profile error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -330,42 +243,28 @@ const editProfile = async (req, res) => {
 };
 
 /**
- * Edit user password
- * PUT /api/auth/password
+ * Change password
+ * PUT /api/auth/change-password
  */
-const editPassword = async (req, res) => {
+const changePassword = async (req, res) => {
   try {
+    const userId = req.user.id;
     const { currentPassword, newPassword } = req.body;
 
-    // Validate required fields
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: 'Both currentPassword and newPassword are required'
-      });
-    }
+    // Get current user
+    const users = await executeQuery(
+      'SELECT password FROM users WHERE id = ?',
+      [userId]
+    );
 
-    // Validate new password length
-    if (newPassword.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: 'New password must be at least 6 characters long'
-      });
-    }
-
-    // Get current user with password
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id, email, password')
-      .eq('id', req.user.id)
-      .single();
-
-    if (userError || !user) {
+    if (users.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
+
+    const user = users[0];
 
     // Verify current password
     const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
@@ -380,28 +279,89 @@ const editPassword = async (req, res) => {
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
     // Update password
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({
-        password: hashedNewPassword,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', req.user.id);
+    const result = await executeQuery(
+      'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [hashedNewPassword, userId]
+    );
 
-    if (updateError) {
-      return res.status(500).json({
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
         success: false,
-        message: 'Failed to update password'
+        message: 'User not found'
       });
     }
 
     res.json({
       success: true,
-      message: 'Password updated successfully'
+      message: 'Password changed successfully'
     });
 
   } catch (error) {
-    console.error('Edit password error:', error);
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Verify token
+ * GET /api/auth/verify
+ */
+const verifyToken = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const users = await executeQuery(
+      'SELECT id, email, fullname, role FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token'
+      });
+    }
+
+    const user = users[0];
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          fullname: user.fullname,
+          role: user.role
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Verify token error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Logout (client-side token removal)
+ * POST /api/auth/logout
+ */
+const logout = async (req, res) => {
+  try {
+    // Since JWT tokens are stateless, we just return a success message
+    // The client should remove the token from storage
+    res.json({
+      success: true,
+      message: 'Logout successful'
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -412,9 +372,9 @@ const editPassword = async (req, res) => {
 module.exports = {
   register,
   login,
-  logout,
   getProfile,
-  refreshToken,
-  editProfile,
-  editPassword
+  updateProfile,
+  changePassword,
+  verifyToken,
+  logout
 };

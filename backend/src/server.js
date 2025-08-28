@@ -5,6 +5,9 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 require('dotenv').config();
 
+// Import MySQL configuration
+const { initializePool, testConnection } = require('./config/mysql');
+
 // Import routes
 const authRoutes = require('./routes/authRoutes');
 const packageRoutes = require('./routes/packageRoutes');
@@ -13,18 +16,43 @@ const purchaseRoutes = require('./routes/purchaseRoutes');
 const addonPurchaseRoutes = require('./routes/addonPurchaseRoutes');
 const packagePurchaseRoutes = require('./routes/packagePurchaseRoutes');
 const brandKitRoutes = require('./routes/brandKitRoutes');
-const productServiceRoutes = require('./routes/productServiceRoutes');
+const brandKitConsolidationRoutes = require('./routes/brandKitConsolidationRoutes');
+const brandKitQuestionnaireRoutes = require('./routes/brandKitQuestionnaireRoutes');
 const organizationRoutes = require('./routes/organizationRoutes');
 const packageFeatureCommentRoutes = require('./routes/packageFeatureCommentRoutes');
 const aiSuggestionsRoutes = require('./routes/aiSuggestionsRoutes');
 const emailRoutes = require('./routes/emailRoutes');
 const userPackageRoutes = require('./routes/userPackageRoutes');
+const deliverableRoutes = require('./routes/deliverableRoutes');
+const revisionRequestRoutes = require('./routes/revisionRequestRoutes');
+const clientRequestRoutes = require('./routes/clientRequestRoutes');
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Initialize MySQL connection pool
+const initializeDatabase = async () => {
+  try {
+    console.log('🔄 Initializing MySQL connection pool...');
+    await initializePool();
+    
+    console.log('🔄 Testing MySQL connection...');
+    const isConnected = await testConnection();
+    
+    if (isConnected) {
+      console.log('✅ MySQL database connection established successfully');
+    } else {
+      console.error('❌ Failed to connect to MySQL database');
+      process.exit(1);
+    }
+  } catch (error) {
+    console.error('❌ Database initialization error:', error);
+    process.exit(1);
+  }
+};
 
 // Security middleware
 app.use(helmet({
@@ -68,7 +96,8 @@ app.get('/health', (req, res) => {
     success: true,
     message: 'AltaMedia Client Dashboard Backend is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    database: 'MySQL'
   });
 });
 
@@ -80,12 +109,16 @@ app.use('/api/purchases', purchaseRoutes);
 app.use('/api/addon-purchases', addonPurchaseRoutes);
 app.use('/api/package-purchases', packagePurchaseRoutes);
 app.use('/api/brandkit', brandKitRoutes);
-app.use('/api/productservice', productServiceRoutes);
+app.use('/api/brandkit', brandKitConsolidationRoutes);
 app.use('/api/organization', organizationRoutes);
 app.use('/api/package-feature-comments', packageFeatureCommentRoutes);
 app.use('/api/ai-suggestions', aiSuggestionsRoutes);
+app.use('/api/brandkit-questionnaire', brandKitQuestionnaireRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/user-package', userPackageRoutes);
+app.use('/api/deliverables', deliverableRoutes);
+app.use('/api/revision-requests', revisionRequestRoutes);
+app.use('/api/client-requests', clientRequestRoutes);
 
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
@@ -99,22 +132,34 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
-});
+const startServer = async () => {
+  try {
+    // Initialize database connection
+    await initializeDatabase();
+    
+    // Start the server
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🗄️  Database: MySQL`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  process.exit(0);
-});
-
+// Handle graceful shutdown
 process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
+  console.log('\n🔄 Shutting down server gracefully...');
   process.exit(0);
 });
 
-module.exports = app; 
+process.on('SIGTERM', () => {
+  console.log('\n🔄 Shutting down server gracefully...');
+  process.exit(0);
+});
+
+// Start the server
+startServer(); 

@@ -8,6 +8,7 @@ import { Eye, EyeOff, Mail, Lock, Moon, Sun, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import AltamediaLogo from "../components/AltamediaLogo.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import authService from "../utils/authService.js";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -65,7 +66,17 @@ export default function Login() {
         const result = await login(formData.email, formData.password);
 
         if (result.success) {
-          navigate("/client-portal");
+          // Redirect based on user role
+          const currentUser = authService.getCurrentUser();
+          console.log('Login successful - User:', currentUser);
+
+          if (currentUser && currentUser.role === 'admin') {
+            console.log('Admin user logged in - redirecting to admin dashboard');
+            navigate("/admin/dashboard");
+          } else {
+            console.log('Regular user logged in - redirecting to client portal');
+            navigate("/client-portal");
+          }
         }
       }
     } catch (error) {

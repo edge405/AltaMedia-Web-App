@@ -111,6 +111,7 @@ export const transformToDatabaseFormat = (frontendData) => {
     businessName: 'business_name',
     contactNumber: 'contact_number',
     preferredContact: 'preferred_contact',
+    industry: 'industry',
     yearStarted: 'year_started',
     primaryLocation: 'primary_location',
     behindBrand: 'behind_brand',
@@ -130,8 +131,14 @@ export const transformToDatabaseFormat = (frontendData) => {
     cultureWords: 'culture_words',
     teamTraditions: 'team_traditions',
     teamHighlights: 'team_highlights',
+    reason1: 'reason1',
+    reason2: 'reason2',
+    reason3: 'reason3',
     brandSoul: 'brand_soul',
     brandTone: 'brand_tone',
+    brand1: 'brand1',
+    brand2: 'brand2',
+    brand3: 'brand3',
     brandAvoid: 'brand_avoid',
     missionStatement: 'mission_statement',
     longTermVision: 'long_term_vision',
@@ -160,13 +167,28 @@ export const transformToDatabaseFormat = (frontendData) => {
     targetInterests: 'target_interests',
     currentInterests: 'current_interests',
     specialNotes: 'special_notes',
+    timeline: 'timeline',
     approver: 'approver',
     referenceMaterials: 'reference_materials',
     spendingType: 'spending_type',
     secondaryAudience: 'secondary_audience',
     emotionalGoal: 'emotional_goal',
     cultureDescription: 'culture_description',
-    businessStage: 'business_stage'
+    businessStage: 'business_stage',
+    purchaseMotivators: 'purchase_motivators',
+    hasSocialMedia: 'has_social_media',
+    socialMediaPlatforms: 'social_media_platforms',
+    facebookUrl: 'facebook_url',
+    instagramUrl: 'instagram_url',
+    twitterUrl: 'twitter_url',
+    linkedinUrl: 'linkedin_url',
+    tiktokUrl: 'tiktok_url',
+    youtubeUrl: 'youtube_url',
+    pinterestUrl: 'pinterest_url',
+    snapchatUsername: 'snapchat_username',
+    otherSocialMediaUrls: 'other_social_media_urls',
+    wantToCreateSocialMedia: 'want_to_create_social_media',
+    desiredSocialMediaPlatforms: 'desired_social_media_platforms'
   };
 
   for (const [frontendKey, value] of Object.entries(frontendData)) {
@@ -210,6 +232,7 @@ export const transformToFrontendFormat = (dbData) => {
     business_name: 'businessName',
     contact_number: 'contactNumber',
     preferred_contact: 'preferredContact',
+    industry: 'industry',
     year_started: 'yearStarted',
     primary_location: 'primaryLocation',
     behind_brand: 'behindBrand',
@@ -229,8 +252,14 @@ export const transformToFrontendFormat = (dbData) => {
     culture_words: 'cultureWords',
     team_traditions: 'teamTraditions',
     team_highlights: 'teamHighlights',
+    reason1: 'reason1',
+    reason2: 'reason2',
+    reason3: 'reason3',
     brand_soul: 'brandSoul',
     brand_tone: 'brandTone',
+    brand1: 'brand1',
+    brand2: 'brand2',
+    brand3: 'brand3',
     brand_avoid: 'brandAvoid',
     mission_statement: 'missionStatement',
     long_term_vision: 'longTermVision',
@@ -259,13 +288,28 @@ export const transformToFrontendFormat = (dbData) => {
     target_interests: 'targetInterests',
     current_interests: 'currentInterests',
     special_notes: 'specialNotes',
+    timeline: 'timeline',
     approver: 'approver',
     reference_materials: 'referenceMaterials',
     spending_type: 'spendingType',
     secondary_audience: 'secondaryAudience',
     emotional_goal: 'emotionalGoal',
     culture_description: 'cultureDescription',
-    business_stage: 'businessStage'
+    business_stage: 'businessStage',
+    purchase_motivators: 'purchaseMotivators',
+    has_social_media: 'hasSocialMedia',
+    social_media_platforms: 'socialMediaPlatforms',
+    facebook_url: 'facebookUrl',
+    instagram_url: 'instagramUrl',
+    twitter_url: 'twitterUrl',
+    linkedin_url: 'linkedinUrl',
+    tiktok_url: 'tiktokUrl',
+    youtube_url: 'youtubeUrl',
+    pinterest_url: 'pinterestUrl',
+    snapchat_username: 'snapchatUsername',
+    other_social_media_urls: 'otherSocialMediaUrls',
+    want_to_create_social_media: 'wantToCreateSocialMedia',
+    desired_social_media_platforms: 'desiredSocialMediaPlatforms'
   };
 
   for (const [dbKey, value] of Object.entries(dbData)) {
@@ -273,7 +317,33 @@ export const transformToFrontendFormat = (dbData) => {
     
     if (value !== undefined && value !== null) {
       // Handle special cases
-      if (dbKey === 'primary_location' && typeof value === 'string') {
+      if (dbKey === 'primary_location') {
+        if (typeof value === 'string') {
+          try {
+            const parsed = JSON.parse(value);
+            // For MapPicker, we want to display the address as a string
+            transformed[frontendKey] = parsed.address || parsed.placeName || parsed.fullAddress || value;
+          } catch (e) {
+            transformed[frontendKey] = value;
+          }
+        } else if (typeof value === 'object') {
+          // If it's already an object, extract the address
+          transformed[frontendKey] = value.address || value.placeName || value.fullAddress || JSON.stringify(value);
+        } else {
+          transformed[frontendKey] = value;
+        }
+      } else if (dbKey === 'year_started') {
+        // Convert number to string for Select component
+        transformed[frontendKey] = value ? value.toString() : '';
+      } else if (typeof value === 'string' && (value.startsWith('[') && value.endsWith(']'))) {
+        // Try to parse JSON strings back to arrays
+        try {
+          transformed[frontendKey] = JSON.parse(value);
+        } catch (e) {
+          transformed[frontendKey] = value;
+        }
+      } else if (typeof value === 'string' && (value.startsWith('{') && value.endsWith('}'))) {
+        // Try to parse JSON objects
         try {
           transformed[frontendKey] = JSON.parse(value);
         } catch (e) {

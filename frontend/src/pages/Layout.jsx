@@ -95,8 +95,14 @@ export default function Layout({ children, currentPageName, isDarkMode: parentIs
         toast.success("Navigating to Profile");
         break;
       case 'client-portal':
-        navigate("/client-portal");
-        toast.success("Navigating to Client Portal");
+        // Check user role before navigating to client portal
+        if (user && user.role === 'admin') {
+          toast.error("Admin users cannot access the client portal");
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/client-portal");
+          toast.success("Navigating to Client Portal");
+        }
         break;
       case 'settings':
         toast.info("Settings page - Coming soon");

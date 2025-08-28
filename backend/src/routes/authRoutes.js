@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, logout, getProfile, refreshToken, editProfile, editPassword } = require('../controllers/authController');
+const { register, login, logout, getProfile, updateProfile, changePassword, verifyToken } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
 const { loginValidation, registerValidation } = require('../middleware/validation');
 
@@ -33,24 +33,24 @@ router.post('/logout', authenticateToken, logout);
 router.get('/profile', authenticateToken, getProfile);
 
 /**
- * @route   POST /api/auth/refresh
- * @desc    Refresh access token
- * @access  Public
+ * @route   GET /api/auth/verify
+ * @desc    Verify JWT token
+ * @access  Private
  */
-router.post('/refresh', refreshToken);
+router.get('/verify', authenticateToken, verifyToken);
 
 /**
  * @route   PUT /api/auth/profile
  * @desc    Edit current user profile
  * @access  Private
  */
-router.put('/profile', authenticateToken, editProfile);
+router.put('/profile', authenticateToken, updateProfile);
 
 /**
  * @route   PUT /api/auth/password
  * @desc    Edit current user password
  * @access  Private
  */
-router.put('/password', authenticateToken, editPassword);
+router.put('/password', authenticateToken, changePassword);
 
 module.exports = router;

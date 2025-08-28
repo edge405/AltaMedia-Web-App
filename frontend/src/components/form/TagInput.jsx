@@ -6,16 +6,32 @@ import { Button } from "@/components/ui/button";
 const TagInput = ({ value, onChange, placeholder, suggestions = [] }) => {
   const [inputValue, setInputValue] = useState("");
 
+  // Ensure value is always an array
+  const safeValue = (() => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        // If it's not valid JSON, treat it as a single item
+        return value.trim() ? [value] : [];
+      }
+    }
+    return [];
+  })();
+
   const addTag = (tag) => {
     const trimmedTag = tag.trim();
-    if (trimmedTag && !value.includes(trimmedTag)) {
-      onChange([...value, trimmedTag]);
+    if (trimmedTag && !safeValue.includes(trimmedTag)) {
+      onChange([...safeValue, trimmedTag]);
       setInputValue("");
     }
   };
 
   const removeTag = (tagToRemove) => {
-    onChange(value.filter(tag => tag !== tagToRemove));
+    onChange(safeValue.filter(tag => tag !== tagToRemove));
   };
 
   const handleKeyDown = (e) => {
@@ -44,10 +60,10 @@ const TagInput = ({ value, onChange, placeholder, suggestions = [] }) => {
           <Plus className="w-4 h-4" />
         </Button>
       </div>
-      
-      {value.length > 0 && (
+
+      {safeValue.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {value.map((tag, index) => (
+          {safeValue.map((tag, index) => (
             <span
               key={index}
               className="inline-flex items-center gap-1 sm:gap-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 sm:px-3 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-medium shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 tag-hover"
@@ -64,7 +80,7 @@ const TagInput = ({ value, onChange, placeholder, suggestions = [] }) => {
           ))}
         </div>
       )}
-      
+
       {suggestions.length > 0 && (
         <div className="space-y-2 sm:space-y-3">
           <p className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">💡 Suggestions:</p>

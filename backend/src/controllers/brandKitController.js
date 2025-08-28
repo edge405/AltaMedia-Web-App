@@ -1,12 +1,12 @@
-const { supabase } = require('../config/supabase');
-const { executeQuery, executeTransaction } = require('../config/mariadb');
+const { executeQuery, executeTransaction } = require('../config/mysql');
 const logger = require('../utils/logger');
 const { extractFileUploads, cleanupOldFiles } = require('../utils/fileUploadUtils');
+const { v4: uuidv4 } = require('uuid');
 
 /**
- * Helper function to validate and clean form data for Supabase
+ * Helper function to validate and clean form data for MySQL
  * @param {Object} stepData - Raw form data from frontend
- * @returns {Object} Cleaned and validated data for Supabase
+ * @returns {Object} Cleaned and validated data for MySQL
  */
 const validateAndCleanFormData = (stepData) => {
   // Define all valid fields for the company_brand_kit_forms table
@@ -26,44 +26,99 @@ const validateAndCleanFormData = (stepData) => {
     'big_picture_vision', 'success_metrics', 'business_description', 'inspiration',
     'target_interests', 'current_interests', 'special_notes', 'timeline', 'approver',
     'reference_materials', 'spending_type', 'secondary_audience', 'emotional_goal',
-    'culture_description', 'business_stage'
+    'culture_description', 'business_stage', 'purchase_motivators', 
+    'has_social_media', 'social_media_platforms', 'facebook_url', 'instagram_url', 'twitter_url', 'linkedin_url',
+    'tiktok_url', 'youtube_url', 'pinterest_url', 'snapchat_username', 'other_social_media_urls',
+    'want_to_create_social_media', 'desired_social_media_platforms'
+  ];
+
+  // Fields that should be stored as JSON in the database
+  const jsonFields = [
+    'industry', 'current_customers', 'target_professions', 'reach_locations', 
+    'age_groups', 'spending_habits', 'interaction_methods', 'audience_behavior',
+    'culture_words', 'brand_tone', 'core_values', 'brand_personality', 
+    'logo_action', 'preferred_colors', 'colors_to_avoid', 'font_styles',
+    'design_style', 'logo_type', 'imagery_style', 'brand_kit_use', 
+    'brand_elements', 'file_formats', 'success_metrics', 'target_interests',
+    'current_interests', 'social_media_platforms', 'desired_social_media_platforms',
+    'primary_location'
   ];
 
   const cleanedData = {};
   
+  // Process only valid fields from the stepData
   for (const [key, value] of Object.entries(stepData)) {
-    if (validFields.includes(key) && value !== undefined && value !== null) {
-      // Handle special data type conversions for Supabase
-      if (key === 'primary_location' && typeof value === 'string') {
-        try {
-          cleanedData[key] = JSON.parse(value);
-        } catch (e) {
-          console.warn('Failed to parse primary_location JSON:', e);
-          cleanedData[key] = value;
-        }
-      } else if (key === 'year_started' && typeof value === 'string') {
-        cleanedData[key] = parseInt(value) || null;
-      } else if (Array.isArray(value) && value.length === 0) {
-        // Handle empty arrays - store as null for Supabase
+    if (validFields.includes(key)) {
+      // Convert undefined to null for MySQL
+      if (value === undefined) {
+        cleanedData[key] = null;
+      } else if (value === null) {
         cleanedData[key] = null;
       } else {
-        cleanedData[key] = value;
+        // Handle special data type conversions for MySQL
+        if (key === 'year_started' && typeof value === 'string') {
+          cleanedData[key] = parseInt(value) || null;
+        } else if (Array.isArray(value)) {
+          // Convert arrays to JSON strings for MySQL
+          if (value.length === 0) {
+            cleanedData[key] = null;
+          } else {
+            cleanedData[key] = JSON.stringify(value);
+          }
+        } else if (jsonFields.includes(key)) {
+          // Handle JSON fields - convert objects/arrays to JSON strings
+          if (typeof value === 'string') {
+            // For JSON fields that are already strings, validate they are valid JSON
+            try {
+              JSON.parse(value);
+              cleanedData[key] = value;
+            } catch (e) {
+              console.warn(`Invalid JSON for field ${key}:`, e);
+              cleanedData[key] = null;
+            }
+          } else if (typeof value === 'object' && value !== null) {
+            // Convert objects to JSON strings for MySQL
+            cleanedData[key] = JSON.stringify(value);
+          } else {
+            cleanedData[key] = value;
+          }
+        } else {
+          cleanedData[key] = value;
+        }
       }
     }
   }
+
+  console.log('🔍 Cleaned data before return:', cleanedData);
+  console.log('🔍 Number of fields in cleaned data:', Object.keys(cleanedData).length);
 
   return cleanedData;
 };
 
 /**
- * Save or update BrandKit form data for a specific step (Supabase + MariaDB)
+ * Save or update BrandKit form data for a specific step (MySQL)
  * @route PUT /api/brandkit/save
  * @access Private
  */
 const saveFormData = async (req, res) => {
   try {
     console.log('📥 Received request body:', req.body);
-    const { userId, stepData, currentStep } = req.body;
+    let { userId, stepData, currentStep } = req.body;
+
+    // Parse stepData if it's a string (from FormData)
+    if (typeof stepData === 'string') {
+      try {
+        stepData = JSON.parse(stepData);
+        console.log('📋 Parsed stepData from JSON string');
+      } catch (e) {
+        console.error('❌ Failed to parse stepData JSON:', e);
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid stepData format',
+          error: e.message
+        });
+      }
+    }
 
     console.log('📋 Extracted fields:', { userId, stepData, currentStep });
 
@@ -76,288 +131,157 @@ const saveFormData = async (req, res) => {
       });
     }
 
-    // === FILE UPLOAD PROCESSING ===
-    console.log('📁 Processing file uploads...');
-    let processedStepData = { ...stepData };
-
-    // Handle file uploads for reference_materials and inspiration_links
-    const fileFields = ['reference_materials', 'inspiration_links'];
-    
-    for (const fieldName of fileFields) {
-      if (req.files && req.files[fieldName]) {
-        console.log(`📁 Processing ${fieldName} files:`, req.files[fieldName]);
-        
-        // Extract file paths from uploaded files
-        const filePaths = extractFileUploads(processedStepData, req.files[fieldName], fieldName);
-        
-        // Store file paths as JSON array in the database
-        processedStepData[fieldName] = JSON.stringify(filePaths);
-        
-        console.log(`📁 ${fieldName} file paths:`, filePaths);
-      }
-    }
-
-    logger.info(`Saving BrandKit form data for user ${userId}, step ${currentStep} (Supabase + MariaDB)`);
+    logger.info(`Saving BrandKit form data for user ${userId}, step ${currentStep} (MySQL)`);
 
     try {
-      // === SUPABASE OPERATIONS ===
-      console.log('🔍 Checking for existing form data in Supabase...');
-      const { data: existingForm, error: checkError } = await supabase
-        .from('company_brand_kit_forms')
-        .select('id, current_step, progress_percentage')
-        .eq('user_id', userId)
-        .single();
+      // === FILE UPLOAD PROCESSING ===
+      console.log('📁 Processing file uploads...');
+      let processedStepData = { ...stepData };
 
-      console.log('🔍 Supabase check result:', { existingForm, checkError });
-
-      let supabaseResult;
-      let supabaseSuccess = false;
+      // Handle file uploads for reference_materials and inspiration_links
+      const fileFields = ['reference_materials', 'inspiration_links'];
+      
+      for (const fieldName of fileFields) {
+        if (req.files && req.files[fieldName]) {
+          console.log(`📁 Processing ${fieldName} files:`, req.files[fieldName]);
+          
+          // Extract file paths from uploaded files
+          const filePaths = extractFileUploads(processedStepData, req.files[fieldName], fieldName);
+          
+          // Store file paths as JSON array in the database
+          processedStepData[fieldName] = JSON.stringify(filePaths);
+          
+          console.log(`📁 ${fieldName} file paths:`, filePaths);
+        }
+      }
 
       // Clean and validate the form data
       const cleanedStepData = validateAndCleanFormData(processedStepData);
-      console.log('📝 Cleaned step data for Supabase:', cleanedStepData);
+      console.log('📝 Cleaned step data for MySQL:', cleanedStepData);
+      console.log('🔍 Number of fields to save:', Object.keys(cleanedStepData).length);
+      console.log('🔍 Fields to save:', Object.keys(cleanedStepData));
 
-      if (existingForm) {
-        console.log('📝 Updating existing form data in Supabase...');
-        // Update existing form data in Supabase
-        const { data, error } = await supabase
-          .from('company_brand_kit_forms')
-          .update({
-            ...cleanedStepData,
-            current_step: currentStep,
-            progress_percentage: Math.round(currentStep * 8.33), // Calculate progress percentage
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', userId)
-          .select()
-          .single();
+      // === MYSQL OPERATIONS ===
+      console.log('🔍 Checking for existing form data in MySQL...');
+      const checkSql = 'SELECT id, current_step, progress_percentage FROM company_brand_kit_forms WHERE user_id = ? LIMIT 1';
+      console.log('🔍 Executing check query:', checkSql, 'with params:', [userId]);
+      const existingForm = await executeQuery(checkSql, [userId]);
 
-        console.log('📝 Supabase update result:', { data, error });
+      console.log('🔍 MySQL check result:', { existingForm });
 
-        if (error) {
-          console.error('❌ Error updating BrandKit form data in Supabase:', error);
-          logger.error('Error updating BrandKit form data in Supabase:', error);
-        } else {
-          supabaseResult = data;
-          supabaseSuccess = true;
-        }
+      let result;
+
+      if (existingForm && existingForm.length > 0) {
+        console.log('📝 Updating existing form data in MySQL...');
+        
+        // Build dynamic UPDATE query
+        const updateFields = Object.keys(cleanedStepData).map(key => `${key} = ?`).join(', ');
+        const updateValues = Object.values(cleanedStepData).map(value => {
+          if (value === undefined) {
+            console.warn('⚠️ Found undefined value, converting to null');
+            return null;
+          }
+          return value;
+        });
+        updateValues.push(currentStep, Math.round((currentStep / 11) * 100), existingForm[0].id);
+
+        // Handle case where there are no fields to update (only step and progress)
+        const setClause = updateFields 
+          ? `${updateFields}, current_step = ?, progress_percentage = ?, updated_at = CURRENT_TIMESTAMP`
+          : `current_step = ?, progress_percentage = ?, updated_at = CURRENT_TIMESTAMP`;
+
+        const updateSql = `
+          UPDATE company_brand_kit_forms 
+          SET 
+            ${setClause}
+          WHERE id = ?
+        `;
+
+        console.log('📝 Executing update query:', updateSql);
+        console.log('📝 Update values:', updateValues);
+        console.log('📝 Number of placeholders in SQL:', (updateSql.match(/\?/g) || []).length);
+        console.log('📝 Number of values provided:', updateValues.length);
+        console.log('📝 Field names:', Object.keys(cleanedStepData));
+        console.log('📝 Field values:', Object.values(cleanedStepData));
+        
+        await executeQuery(updateSql, updateValues);
+
+        // Fetch updated data
+        const fetchSql = 'SELECT * FROM company_brand_kit_forms WHERE id = ? LIMIT 1';
+        const updatedData = await executeQuery(fetchSql, [existingForm[0].id]);
+        result = updatedData[0];
+
+        console.log('📝 MySQL update result:', { result });
       } else {
-        console.log('🆕 Creating new form data in Supabase...');
-        // Create new form data in Supabase
-        const { data, error } = await supabase
-          .from('company_brand_kit_forms')
-          .insert({
-            user_id: userId,
-            ...cleanedStepData,
-            current_step: currentStep,
-            progress_percentage: Math.round(currentStep * 8.33), // Calculate progress percentage
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .select()
-          .single();
+        console.log('🆕 Creating new form data in MySQL...');
+        
+        // Generate UUID for new form
+        const formId = uuidv4();
+        
+        // Build dynamic INSERT query
+        const insertFields = ['id', 'user_id', ...Object.keys(cleanedStepData), 'current_step', 'progress_percentage'];
+        const insertPlaceholders = ['?', '?', ...Object.keys(cleanedStepData).map(() => '?'), '?', '?'];
+        const insertValues = [formId, userId, ...Object.values(cleanedStepData).map(value => {
+          if (value === undefined) {
+            console.warn('⚠️ Found undefined value in INSERT, converting to null');
+            return null;
+          }
+          return value;
+        }), currentStep, Math.round((currentStep / 11) * 100)];
 
-        console.log('🆕 Supabase insert result:', { data, error });
+        const insertSql = `
+          INSERT INTO company_brand_kit_forms (
+            ${insertFields.join(', ')}
+          ) VALUES (${insertPlaceholders.join(', ')})
+        `;
 
-        if (error) {
-          console.error('❌ Error creating BrandKit form data in Supabase:', error);
-          logger.error('Error creating BrandKit form data in Supabase:', error);
-        } else {
-          supabaseResult = data;
-          supabaseSuccess = true;
-        }
+        console.log('🆕 Executing insert query:', insertSql);
+        console.log('🆕 Insert values:', insertValues);
+        console.log('🆕 Number of placeholders in SQL:', (insertSql.match(/\?/g) || []).length);
+        console.log('🆕 Number of values provided:', insertValues.length);
+        console.log('🆕 Field names:', insertFields);
+        console.log('🆕 Field values:', insertValues);
+        
+        await executeQuery(insertSql, insertValues);
+
+        // Fetch created data
+        const fetchSql = 'SELECT * FROM company_brand_kit_forms WHERE id = ? LIMIT 1';
+        const createdData = await executeQuery(fetchSql, [formId]);
+        result = createdData[0];
+
+        console.log('🆕 MySQL insert result:', { result });
       }
 
-      // === MARIADB OPERATIONS ===
-      console.log('🔍 Checking for existing form data in MariaDB...');
-      let mariaDbResult;
-      let mariaDbSuccess = false;
-      let mariaDbError = null;
-
-      try {
-        // First, check if the table exists
-        console.log('🔍 Checking if company_brand_kit_forms table exists...');
-        const tableCheck = await executeQuery(`
-          SELECT COUNT(*) as count 
-          FROM information_schema.tables 
-          WHERE table_schema = DATABASE() 
-          AND table_name = 'company_brand_kit_forms'
-        `);
-        
-        if (tableCheck[0].count === 0) {
-          console.log('❌ company_brand_kit_forms table does not exist in MariaDB');
-          mariaDbError = 'Table company_brand_kit_forms does not exist';
-          throw new Error('Table company_brand_kit_forms does not exist');
-        }
-        
-        console.log('✅ company_brand_kit_forms table exists');
-
-        const checkSql = 'SELECT id, current_step, progress_percentage FROM company_brand_kit_forms WHERE user_id = ? LIMIT 1';
-        console.log('🔍 Executing check query:', checkSql, 'with params:', [userId]);
-        const existingFormMariaDb = await executeQuery(checkSql, [userId]);
-
-        console.log('🔍 MariaDB check result:', { existingFormMariaDb });
-
-        if (existingFormMariaDb && existingFormMariaDb.length > 0) {
-          console.log('📝 Updating existing form data in MariaDB...');
-          
-          // Filter out undefined/null values and prepare data
-          const filteredStepData = {};
-          const filteredValues = [];
-          
-          for (const [key, value] of Object.entries(processedStepData)) {
-            if (value !== undefined && value !== null) {
-              filteredStepData[key] = value;
-              filteredValues.push(value);
-            }
-          }
-          
-          console.log('📝 Filtered step data for update:', filteredStepData);
-          console.log('📝 Filtered values for update:', filteredValues);
-          
-          // Update existing form data in MariaDB
-          const updateSql = `
-            UPDATE company_brand_kit_forms 
-            SET 
-              current_step = ?,
-              progress_percentage = ?,
-              updated_at = NOW(),
-              ${Object.keys(filteredStepData).map(key => `${key} = ?`).join(', ')}
-            WHERE user_id = ?
-          `;
-          
-          const updateParams = [
-            currentStep,
-            Math.round(currentStep * 8.33), // Calculate progress percentage (8.33% per step)
-            ...filteredValues,
-            userId
-          ];
-
-          console.log('📝 Executing update query:', updateSql);
-          console.log('📝 Update params:', updateParams);
-          await executeQuery(updateSql, updateParams);
-
-          // Fetch updated data
-          const fetchSql = 'SELECT * FROM company_brand_kit_forms WHERE user_id = ? LIMIT 1';
-          const updatedData = await executeQuery(fetchSql, [userId]);
-          mariaDbResult = updatedData[0];
-          mariaDbSuccess = true;
-
-          console.log('📝 MariaDB update result:', { mariaDbResult });
-        } else {
-          console.log('🆕 Creating new form data in MariaDB...');
-          
-          // Filter out undefined/null values and prepare data
-          const filteredStepData = {};
-          const filteredValues = [];
-          
-          for (const [key, value] of Object.entries(processedStepData)) {
-            if (value !== undefined && value !== null) {
-              filteredStepData[key] = value;
-              filteredValues.push(value);
-            }
-          }
-          
-          console.log('🆕 Filtered step data:', filteredStepData);
-          console.log('🆕 Filtered values:', filteredValues);
-          
-          // Create new form data in MariaDB
-          const insertSql = `
-            INSERT INTO company_brand_kit_forms (
-              user_id, 
-              current_step, 
-              progress_percentage,
-              created_at,
-              updated_at,
-              ${Object.keys(filteredStepData).join(', ')}
-            ) VALUES (?, ?, ?, NOW(), NOW(), ${Object.keys(filteredStepData).map(() => '?').join(', ')})
-          `;
-          
-          const insertParams = [
-            userId,
-            currentStep,
-            Math.round(currentStep * 8.33), // Calculate progress percentage (8.33% per step)
-            ...filteredValues
-          ];
-
-          console.log('🆕 Executing insert query:', insertSql);
-          console.log('🆕 Insert params:', insertParams);
-          
-          await executeQuery(insertSql, insertParams);
-
-          // Fetch created data
-          const fetchSql = 'SELECT * FROM company_brand_kit_forms WHERE user_id = ? ORDER BY created_at DESC LIMIT 1';
-          const createdData = await executeQuery(fetchSql, [userId]);
-          mariaDbResult = createdData[0];
-          mariaDbSuccess = true;
-
-          console.log('🆕 MariaDB insert result:', { mariaDbResult });
-        }
-        
-        console.log('✅ MariaDB operations completed. Success:', mariaDbSuccess);
-      } catch (error) {
-        console.error('❌ Error in MariaDB operations:', error);
-        console.error('❌ Error details:', {
-          message: error.message,
-          code: error.code,
-          errno: error.errno,
-          sqlState: error.sqlState,
-          sqlMessage: error.sqlMessage
-        });
-        logger.error('Error in MariaDB operations:', error);
-        mariaDbError = error.message;
-      }
-
-      // === RESPONSE HANDLING ===
-      console.log('🔄 Preparing response...');
-      console.log('📊 Results summary:', {
-        supabaseSuccess,
-        mariaDbSuccess,
-        supabaseResult: !!supabaseResult,
-        mariaDbResult: !!mariaDbResult
-      });
-      
-      const result = supabaseResult || mariaDbResult;
-      const successCount = [supabaseSuccess, mariaDbSuccess].filter(Boolean).length;
-
-      if (successCount === 0) {
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to save form data to both databases',
-          errors: {
-            supabase: !supabaseSuccess ? 'Supabase operation failed' : null,
-            mariaDb: !mariaDbSuccess ? 'MariaDB operation failed' : null
-          }
-        });
-      }
-
-      logger.info(`Successfully saved BrandKit form data for user ${userId}, step ${currentStep} (${successCount}/2 databases)`);
+      logger.info(`Successfully saved BrandKit form data for user ${userId}, step ${currentStep} (MySQL)`);
 
       res.json({
         success: true,
-        message: `Form data saved successfully to ${successCount}/2 databases`,
+        message: 'Form data saved successfully to MySQL',
         data: {
           formId: result.id,
           currentStep: result.current_step,
           progressPercentage: result.progress_percentage,
-          databases: {
-            supabase: supabaseSuccess,
-            mariaDb: mariaDbSuccess
-          },
-          errors: {
-            supabase: !supabaseSuccess ? 'Supabase operation failed' : null,
-            mariaDb: !mariaDbSuccess ? mariaDbError : null
-          }
+          isCompleted: result.is_completed || false,
+          updatedAt: result.updated_at
         }
       });
 
     } catch (error) {
       console.error('❌ Unexpected error in saveFormData:', error);
+      console.error('❌ Error stack:', error.stack);
+      console.error('❌ Error code:', error.code);
+      console.error('❌ Error errno:', error.errno);
+      console.error('❌ Error sqlMessage:', error.sqlMessage);
       logger.error('Unexpected error in saveFormData:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
-        error: error.message
+        error: error.message,
+        details: {
+          code: error.code,
+          errno: error.errno,
+          sqlMessage: error.sqlMessage
+        }
       });
     }
   } catch (error) {
@@ -372,7 +296,7 @@ const saveFormData = async (req, res) => {
 };
 
 /**
- * Get BrandKit form data for a user (Supabase + MariaDB)
+ * Get BrandKit form data for a user (MySQL)
  * @route GET /api/brandkit/data/:userId
  * @access Private
  */
@@ -387,55 +311,20 @@ const getFormData = async (req, res) => {
       });
     }
 
-    logger.info(`Fetching BrandKit form data for user ${userId} (Supabase + MariaDB)`);
+    logger.info(`Fetching BrandKit form data for user ${userId} (MySQL)`);
 
-    let formData = null;
-    let dataSource = null;
+    console.log('🔍 Fetching from MySQL...');
+    const sql = `
+      SELECT * FROM company_brand_kit_forms 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC 
+      LIMIT 1
+    `;
+    
+    const formData = await executeQuery(sql, [userId]);
 
-    // Try Supabase first
-    try {
-      console.log('🔍 Fetching from Supabase...');
-      const { data: supabaseData, error } = await supabase
-        .from('company_brand_kit_forms')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (!error && supabaseData) {
-        formData = supabaseData;
-        dataSource = 'supabase';
-        console.log('✅ Data found in Supabase');
-      } else if (error && error.code !== 'PGRST116') {
-        console.error('❌ Supabase error:', error);
-      }
-    } catch (supabaseError) {
-      console.error('❌ Supabase fetch error:', supabaseError);
-    }
-
-    // If Supabase failed, try MariaDB
-    if (!formData) {
-      try {
-        console.log('🔍 Fetching from MariaDB...');
-        const sql = `
-          SELECT * FROM company_brand_kit_forms 
-          WHERE user_id = ? 
-          ORDER BY created_at DESC 
-          LIMIT 1
-        `;
-        const mariaDbData = await executeQuery(sql, [userId]);
-
-        if (mariaDbData && mariaDbData.length > 0) {
-          formData = mariaDbData[0];
-          dataSource = 'mariadb';
-          console.log('✅ Data found in MariaDB');
-        }
-      } catch (mariaDbError) {
-        console.error('❌ MariaDB fetch error:', mariaDbError);
-      }
-    }
-
-    // If no data found in either database
-    if (!formData) {
+    // If no data found
+    if (!formData || formData.length === 0) {
       return res.json({
         success: true,
         message: 'No form data found for this user',
@@ -443,23 +332,24 @@ const getFormData = async (req, res) => {
           formData: null,
           currentStep: 1,
           progressPercentage: 0,
-          isCompleted: false,
-          dataSource: null
+          isCompleted: false
         }
       });
     }
 
-    logger.info(`Successfully fetched BrandKit form data for user ${userId} from ${dataSource}`);
+    const data = formData[0];
+    console.log('✅ Data found in MySQL');
+
+    logger.info(`Successfully fetched BrandKit form data for user ${userId} from MySQL`);
 
     res.json({
       success: true,
-      message: `Form data retrieved successfully from ${dataSource}`,
+      message: 'Form data retrieved successfully from MySQL',
       data: {
-        formData: formData,
-        currentStep: formData.current_step || 1,
-        progressPercentage: formData.progress_percentage || 0,
-        isCompleted: formData.is_completed || false,
-        dataSource: dataSource
+        formData: data,
+        currentStep: data.current_step || 1,
+        progressPercentage: data.progress_percentage || 0,
+        isCompleted: data.is_completed || false
       }
     });
 
@@ -474,63 +364,113 @@ const getFormData = async (req, res) => {
 };
 
 /**
- * Get BrandKit form data for a user from MariaDB
- * @route GET /api/brandkit/data/mariadb/:userId
+ * Mark BrandKit form as completed
+ * @route PUT /api/brandkit/complete/:userId
  * @access Private
  */
-const getFormDataFromMariaDB = async (req, res) => {
+const completeForm = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    if (!userId) {
-      return res.status(400).json({
+    const result = await executeQuery(
+      'UPDATE company_brand_kit_forms SET is_completed = TRUE, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?',
+      [userId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
         success: false,
-        message: 'User ID is required'
+        message: 'BrandKit form not found for this user'
       });
     }
 
-    logger.info(`Fetching BrandKit form data from MariaDB for user ${userId}`);
-
-    const sql = `
-      SELECT * FROM company_brand_kit_forms 
-      WHERE user_id = ? 
-      ORDER BY created_at DESC 
-      LIMIT 1
-    `;
-
-    const formData = await executeQuery(sql, [userId]);
-
-    if (!formData || formData.length === 0) {
-      // No data found for this user
-      return res.json({
-        success: true,
-        message: 'No form data found for this user',
-        data: {
-          formData: null,
-          currentStep: 1,
-          progressPercentage: 0,
-          isCompleted: false
-        }
-      });
-    }
-
-    const data = formData[0];
-
-    logger.info(`Successfully fetched BrandKit form data from MariaDB for user ${userId}`);
+    // Get the updated form
+    const [form] = await executeQuery(
+      'SELECT * FROM company_brand_kit_forms WHERE user_id = ?',
+      [userId]
+    );
 
     res.json({
       success: true,
-      message: 'Form data retrieved successfully from MariaDB',
+      message: 'BrandKit form marked as completed',
       data: {
-        formData: data,
-        currentStep: data.current_step || 1,
-        progressPercentage: data.progress_percentage || 0,
-        isCompleted: data.is_completed || false
+        form_id: form.id,
+        is_completed: form.is_completed,
+        completed_at: form.completed_at
       }
     });
 
   } catch (error) {
-    logger.error('Unexpected error in getFormDataFromMariaDB:', error);
+    console.error('❌ Error completing BrandKit form:', error);
+    logger.error('BrandKit form completion error:', error);
+    
+    res.status(500).json({
+      success: false,
+      message: 'Failed to complete BrandKit form',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get all BrandKit form data (for admin purposes)
+ * @route GET /api/brandkit/admin/all
+ * @access Private
+ */
+const getAllForms = async (req, res) => {
+  try {
+    logger.info('Fetching all BrandKit form data from MySQL');
+
+    const sql = `
+      SELECT 
+        cbf.*,
+        u.email as user_email, 
+        u.fullname as user_fullname,
+        u.phone_number as user_phone,
+        u.address as user_address,
+        u.role as user_role,
+        u.created_at as user_created_at
+      FROM company_brand_kit_forms cbf
+      LEFT JOIN users u ON cbf.user_id = u.id
+      ORDER BY cbf.created_at DESC
+    `;
+
+    const formData = await executeQuery(sql);
+
+    logger.info(`Successfully fetched ${formData.length} BrandKit form records from MySQL`);
+
+    // Transform the data to include calculated fields for better display
+    const transformedForms = formData.map(form => {
+      // Calculate progress percentage based on completed fields
+      const totalFields = 50; // Approximate total fields in BrandKit form
+      const completedFields = Object.values(form).filter(value => 
+        value !== null && value !== undefined && value !== ''
+      ).length;
+      const progressPercentage = Math.round((completedFields / totalFields) * 100);
+
+      return {
+        ...form,
+        progress_percentage: progressPercentage,
+        is_completed: progressPercentage >= 80, // Consider 80%+ as completed
+        user_fullname: form.user_fullname || 'Unknown User',
+        user_email: form.user_email || 'No email provided',
+        business_name: form.business_name || 'No business name',
+        contact_number: form.contact_number || form.user_phone || 'No contact number',
+        primary_location: form.primary_location || form.user_address || 'No location specified'
+      };
+    });
+
+    res.json({
+      success: true,
+      message: 'All form data retrieved successfully from MySQL',
+      data: {
+        totalRecords: transformedForms.length,
+        forms: transformedForms
+      }
+    });
+
+  } catch (error) {
+    logger.error('Unexpected error in getAllForms:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -540,162 +480,112 @@ const getFormDataFromMariaDB = async (req, res) => {
 };
 
 /**
- * Save or update BrandKit form data for a specific step in MariaDB
- * @route PUT /api/brandkit/save/mariadb
+ * Get BrandKit form by ID (for admin purposes)
+ * @route GET /api/brandkit/admin/:id
  * @access Private
  */
-const saveFormDataToMariaDB = async (req, res) => {
+const getFormById = async (req, res) => {
   try {
-    console.log('📥 Received request body for MariaDB:', req.body);
-    const { userId, stepData, currentStep } = req.body;
+    const { id } = req.params;
 
-    console.log('📋 Extracted fields:', { userId, stepData, currentStep });
-
-    if (!userId || !stepData || !currentStep) {
-      console.log('❌ Missing fields detected');
+    if (!id) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: userId, stepData, currentStep',
-        received: { userId, stepData: !!stepData, currentStep }
+        message: 'Form ID is required'
       });
     }
 
-    logger.info(`Saving BrandKit form data to MariaDB for user ${userId}, step ${currentStep}`);
+    logger.info(`Fetching BrandKit form data by ID ${id} from MySQL`);
 
-    try {
-      // Clean and validate the form data
-      const cleanedStepData = validateAndCleanFormData(stepData);
-      console.log('📝 Cleaned step data for MariaDB:', cleanedStepData);
+    const sql = `
+      SELECT cbf.*, u.email as user_email, u.fullname as user_fullname
+      FROM company_brand_kit_forms cbf
+      LEFT JOIN users u ON cbf.user_id = u.id
+      WHERE cbf.id = ?
+    `;
 
-      // Check if form data already exists for this user
-      console.log('🔍 Checking for existing form data in MariaDB...');
-      const checkSql = 'SELECT id, current_step, progress_percentage FROM company_brand_kit_forms WHERE user_id = ? LIMIT 1';
-      const existingForm = await executeQuery(checkSql, [userId]);
+    const formData = await executeQuery(sql, [id]);
 
-      console.log('🔍 Check result:', { existingForm });
-
-      let result;
-
-      if (existingForm && existingForm.length > 0) {
-        console.log('📝 Updating existing form data in MariaDB...');
-        // Update existing form data
-        const updateSql = `
-          UPDATE company_brand_kit_forms 
-          SET 
-            current_step = ?,
-            progress_percentage = ?,
-            updated_at = NOW(),
-            ${Object.keys(cleanedStepData).map(key => `${key} = ?`).join(', ')}
-          WHERE user_id = ?
-        `;
-        
-        const updateParams = [
-          currentStep,
-          Math.round(currentStep * 8.33), // Calculate progress percentage (8.33% per step)
-          ...Object.values(cleanedStepData),
-          userId
-        ];
-
-        await executeQuery(updateSql, updateParams);
-
-        // Fetch updated data
-        const fetchSql = 'SELECT * FROM company_brand_kit_forms WHERE user_id = ? LIMIT 1';
-        const updatedData = await executeQuery(fetchSql, [userId]);
-        result = updatedData[0];
-
-        console.log('📝 Update result:', { result });
-      } else {
-        console.log('🆕 Creating new form data in MariaDB...');
-        // Create new form data
-        const insertSql = `
-          INSERT INTO company_brand_kit_forms (
-            user_id, 
-            current_step, 
-            progress_percentage,
-            created_at,
-            updated_at,
-            ${Object.keys(cleanedStepData).join(', ')}
-          ) VALUES (?, ?, ?, NOW(), NOW(), ${Object.keys(cleanedStepData).map(() => '?').join(', ')})
-        `;
-        
-        const insertParams = [
-          userId,
-          currentStep,
-          Math.round(currentStep * 8.33), // Calculate progress percentage (8.33% per step)
-          ...Object.values(cleanedStepData)
-        ];
-
-        await executeQuery(insertSql, insertParams);
-
-        // Fetch created data
-        const fetchSql = 'SELECT * FROM company_brand_kit_forms WHERE user_id = ? ORDER BY created_at DESC LIMIT 1';
-        const createdData = await executeQuery(fetchSql, [userId]);
-        result = createdData[0];
-
-        console.log('🆕 Insert result:', { result });
-      }
-
-      logger.info(`Successfully saved BrandKit form data to MariaDB for user ${userId}, step ${currentStep}`);
-
-      res.json({
-        success: true,
-        message: 'Form data saved successfully to MariaDB',
-        data: {
-          formId: result.id,
-          currentStep: result.current_step,
-          progressPercentage: result.progress_percentage
-        }
-      });
-
-    } catch (error) {
-      console.error('❌ Unexpected error in saveFormDataToMariaDB:', error);
-      logger.error('Unexpected error in saveFormDataToMariaDB:', error);
-      res.status(500).json({
+    if (!formData || formData.length === 0) {
+      return res.status(404).json({
         success: false,
-        message: 'Internal server error',
-        error: error.message
+        message: 'Form not found'
       });
     }
+
+    const data = formData[0];
+
+    logger.info(`Successfully fetched BrandKit form data by ID ${id} from MySQL`);
+
+    res.json({
+      success: true,
+      message: 'Form data retrieved successfully from MySQL',
+      data: {
+        form: data
+      }
+    });
+
   } catch (error) {
-    console.error('❌ Database operation error:', error);
-    logger.error('Database operation error:', error);
+    logger.error('Unexpected error in getFormById:', error);
     res.status(500).json({
       success: false,
-      message: 'Database operation failed',
+      message: 'Internal server error',
       error: error.message
     });
   }
 };
 
 /**
- * Get all BrandKit form data from MariaDB (for admin purposes)
- * @route GET /api/brandkit/all/mariadb
+ * Delete BrandKit form (for admin purposes)
+ * @route DELETE /api/brandkit/admin/:id
  * @access Private
  */
-const getAllFormDataFromMariaDB = async (req, res) => {
+const deleteForm = async (req, res) => {
   try {
-    logger.info('Fetching all BrandKit form data from MariaDB');
+    const { id } = req.params;
 
-    const sql = `
-      SELECT * FROM company_brand_kit_forms 
-      ORDER BY created_at DESC
-    `;
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Form ID is required'
+      });
+    }
 
-    const formData = await executeQuery(sql);
+    logger.info(`Deleting BrandKit form data by ID ${id} from MySQL`);
 
-    logger.info(`Successfully fetched ${formData.length} BrandKit form records from MariaDB`);
+    // Get form data for cleanup
+    const formData = await executeQuery(
+      'SELECT * FROM company_brand_kit_forms WHERE id = ?',
+      [id]
+    );
+
+    if (!formData || formData.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Form not found'
+      });
+    }
+
+    const form = formData[0];
+
+    // Clean up uploaded files
+    await cleanupOldFiles(form);
+
+    // Delete the form
+    await executeQuery(
+      'DELETE FROM company_brand_kit_forms WHERE id = ?',
+      [id]
+    );
+
+    logger.info(`Successfully deleted BrandKit form data by ID ${id} from MySQL`);
 
     res.json({
       success: true,
-      message: 'All form data retrieved successfully from MariaDB',
-      data: {
-        totalRecords: formData.length,
-        forms: formData
-      }
+      message: 'Form deleted successfully from MySQL'
     });
 
   } catch (error) {
-    logger.error('Unexpected error in getAllFormDataFromMariaDB:', error);
+    logger.error('Unexpected error in deleteForm:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -707,5 +597,5 @@ const getAllFormDataFromMariaDB = async (req, res) => {
 module.exports = {
   saveFormData,
   getFormData,
-  getAllFormDataFromMariaDB
+  getAllForms
 }; 

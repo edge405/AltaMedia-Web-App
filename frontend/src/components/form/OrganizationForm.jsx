@@ -15,18 +15,22 @@ import AISuggestion from './AISuggestion';
 import CheckboxGroup from './CheckboxGroup';
 import { organizationApi, transformToDatabaseFormat, transformToFrontendFormat } from '@/utils/organizationApi';
 import KnowingYouForm from './KnowingYouForm';
-import ProductServiceForm from './ProductServiceForm';
+import BrandKitQuestionnaire from './BrandKitQuestionnaire';
 
-const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) => {
+const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onComplete = null, onRefreshStatuses = null }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState({
         buildingType: 'organization' // Default value
     });
+
+    // Ensure formData is always an object
+    const safeFormData = formData || { buildingType: 'organization' };
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isNextLoading, setIsNextLoading] = useState(false);
     const [error, setError] = useState(null);
 
     const totalSteps = 4;
@@ -51,17 +55,36 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
             setError(null);
 
             try {
-                const response = await organizationApi.getFormData(userId);
+                const response = await organizationApi.getFormData();
 
-                if (response.success && response.data?.formData) {
-                    const frontendData = transformToFrontendFormat(response.data.formData);
-                    setFormData(frontendData);
-                    setCurrentStep(response.data.currentStep || 1);
-                    console.log('Loaded existing form data:', frontendData);
+                if (response.success && response.data) {
+                    if (response.data.formData) {
+                        // Existing data found
+                        const frontendData = transformToFrontendFormat(response.data.formData);
+                        setFormData({
+                            buildingType: 'organization',
+                            ...frontendData
+                        });
+                        setCurrentStep(response.data.currentStep || 1);
+                        console.log('Loaded existing form data:', frontendData);
+                    } else {
+                        // No data found, start with empty form
+                        console.log('No existing form data found, starting with empty form');
+                        setFormData({ buildingType: 'organization' });
+                        setCurrentStep(1);
+                    }
+                } else {
+                    // API returned success: false
+                    console.log('API returned no data, starting with empty form');
+                    setFormData({ buildingType: 'organization' });
+                    setCurrentStep(1);
                 }
             } catch (err) {
                 console.error('Error loading form data:', err);
-                setError(err.message);
+                // Don't show error to user, just start with empty form
+                console.log('Error occurred, starting with empty form');
+                setFormData({ buildingType: 'organization' });
+                setCurrentStep(1);
             } finally {
                 setIsLoading(false);
             }
@@ -86,10 +109,13 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
             }
         }
 
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
+        setFormData(prev => {
+            const currentData = prev || { buildingType: 'organization' };
+            return {
+                ...currentData,
+                [field]: value
+            };
+        });
 
         // If building type is changing, notify parent component
         if (field === 'buildingType' && onFormTypeChange) {
@@ -108,7 +134,7 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
             console.log('No authenticated user, using test user ID:', userId);
         }
 
-        setIsSaving(true);
+        setIsNextLoading(true);
         setError(null);
 
         try {
@@ -120,13 +146,29 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
             console.log('Form data referenceMaterials is array:', Array.isArray(formData.referenceMaterials));
 
             // Save current step data (pass raw formData, let API handle transformation)
-            const response = await organizationApi.saveFormData(userId, formData, currentStep);
+            const response = await organizationApi.saveFormData(formData || { buildingType: 'organization' }, currentStep);
 
             if (response.success) {
                 console.log('Form data saved successfully:', response.data);
 
                 if (currentStep < totalSteps) {
-                    setCurrentStep(currentStep + 1);
+                    const nextStepNumber = currentStep + 1;
+
+                    // Update UI immediately for real-time experience
+                    setCurrentStep(nextStepNumber);
+
+                    // Immediately refresh form statuses to update the UI
+                    if (onRefreshStatuses) {
+                        onRefreshStatuses();
+                    }
+
+                    // Update progress in database for the next step (in background)
+                    try {
+                        await organizationApi.saveFormData(formData || { buildingType: 'organization' }, nextStepNumber);
+                        console.log('Progress updated to step:', nextStepNumber);
+                    } catch (progressError) {
+                        console.error('Error updating progress:', progressError);
+                    }
                 }
             } else {
                 setError('Failed to save form data');
@@ -135,7 +177,7 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
             console.error('Error saving form data:', err);
             setError(err.message);
         } finally {
-            setIsSaving(false);
+            setIsNextLoading(false);
         }
     };
 
@@ -160,13 +202,21 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
             console.log('Completing form with data:', formData);
 
             // Save the final step data (step 4) (pass raw formData, let API handle transformation)
-            const response = await organizationApi.saveFormData(userId, formData, 4);
+            const response = await organizationApi.saveFormData(formData || { buildingType: 'organization' }, 4);
 
             if (response.success) {
                 console.log('Form completed successfully:', response.data);
-                setIsSubmitted(true);
-                // Show success message
-                toast.success('🎉 Organization form completed successfully! Your social media strategy is ready.');
+
+                // Skip the completion screen and directly proceed
+                // setIsSubmitted(true); // Remove this line to skip the completion screen
+
+                // Remove the success toast notification
+                // toast.success('🎉 Organization form completed successfully! Your social media strategy is ready.');
+
+                // If onComplete callback is provided, call it immediately
+                if (onComplete) {
+                    onComplete();
+                }
             } else {
                 setError('Failed to complete form');
             }
@@ -195,9 +245,9 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
         }} />;
     }
 
-    // If building type is "product", render the ProductServiceForm component
+    // If building type is "product", render the BrandKitQuestionnaire component
     if (formData.buildingType === 'product') {
-        return <ProductServiceForm onFormTypeChange={(type) => {
+        return <BrandKitQuestionnaire onFormTypeChange={(type) => {
             updateFormData('buildingType', type);
             setCurrentStep(1); // Reset to first step
         }} />;
@@ -206,9 +256,9 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
     const renderStep1 = () => (
         <div className="space-y-8">
             <FormField label="What are you building?" type="Dropdown" required>
-                <Select value={formData.buildingType} onValueChange={(value) => updateFormData('buildingType', value)}>
-                    <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                        <SelectValue placeholder="Select what you're building" />
+                <Select value={safeFormData.buildingType} onValueChange={(value) => updateFormData('buildingType', value)} disabled>
+                    <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed">
+                        <SelectValue placeholder="Organization/Brand/Page (Locked)" />
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                         <SelectItem value="business">Business/Company</SelectItem>
@@ -216,11 +266,14 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
                         <SelectItem value="organization">Organization/Brand/Page</SelectItem>
                     </SelectContent>
                 </Select>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    🔒 Form type is locked to ensure proper form completion flow
+                </p>
             </FormField>
 
             <FormField label="What's the name of your organization, brand, or page?" type="Short Text" required>
                 <Input
-                    value={formData.organizationName || ''}
+                    value={safeFormData.organizationName || ''}
                     onChange={(e) => updateFormData('organizationName', e.target.value)}
                     placeholder="Enter your organization, brand, or page name"
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
@@ -230,14 +283,14 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
             <FormField label="Briefly describe your social media goals and who you want to reach." type="Long Text" required aiSuggestions>
                 <Textarea
                     placeholder="e.g., raise awareness among young professionals, drive sales to moms, build community for hobbyists"
-                    value={formData.socialMediaGoals || ''}
+                    value={safeFormData.socialMediaGoals || ''}
                     onChange={(e) => updateFormData('socialMediaGoals', e.target.value)}
                     rows={4}
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 />
                 <AISuggestion
                     fieldName="socialMediaGoals"
-                    currentValue={formData.socialMediaGoals}
+                    currentValue={safeFormData.socialMediaGoals}
                     onApplySuggestion={(suggestion) => updateFormData('socialMediaGoals', suggestion)}
                     formData={formData}
                 />
@@ -246,21 +299,21 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
             <FormField label="What makes your brand unique, and how should it sound online? (tone/style)" type="Long Text" required aiSuggestions>
                 <Textarea
                     placeholder="Describe your brand's unique qualities and online voice"
-                    value={formData.brandUniqueness || ''}
+                    value={safeFormData.brandUniqueness || ''}
                     onChange={(e) => updateFormData('brandUniqueness', e.target.value)}
                     rows={4}
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 />
                 <AISuggestion
                     fieldName="brandUniqueness"
-                    currentValue={formData.brandUniqueness}
+                    currentValue={safeFormData.brandUniqueness}
                     onApplySuggestion={(suggestion) => updateFormData('brandUniqueness', suggestion)}
                     formData={formData}
                 />
             </FormField>
 
             <FormField label="What feeling do you want your audience to have after engaging with your content?" type="Dropdown" required>
-                <Select value={formData.desiredEmotion} onValueChange={(value) => updateFormData('desiredEmotion', value)}>
+                <Select value={safeFormData.desiredEmotion} onValueChange={(value) => updateFormData('desiredEmotion', value)}>
                     <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                         <SelectValue placeholder="Select desired emotional response" />
                     </SelectTrigger>
@@ -279,7 +332,7 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
             <FormField label="Which platforms should we focus on?" type="Checkbox" required>
                 <CheckboxGroup
                     options={['Facebook', 'Instagram', 'TikTok', 'YouTube', 'LinkedIn']}
-                    value={formData.targetPlatforms || []}
+                    value={safeFormData.targetPlatforms || []}
                     onChange={(value) => updateFormData('targetPlatforms', value)}
                 />
             </FormField>
@@ -287,12 +340,12 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
             <FormField label="What types of content should we prioritize?" type="Checkbox" aiSuggestions>
                 <CheckboxGroup
                     options={['Short Videos/Reels', 'Static Graphics', 'Carousel Posts', 'Motion Graphics', 'Long-Form Videos']}
-                    value={formData.contentTypes || []}
+                    value={safeFormData.contentTypes || []}
                     onChange={(value) => updateFormData('contentTypes', value)}
                 />
                 <AISuggestion
                     fieldName="contentTypes"
-                    currentValue={formData.contentTypes?.join(', ')}
+                    currentValue={safeFormData.contentTypes?.join(', ')}
                     onApplySuggestion={(suggestion) => updateFormData('contentTypes', suggestion.split(', '))}
                     formData={formData}
                 />
@@ -313,13 +366,13 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
                         'Platform Setup/Optimization',
                         'Performance Reports'
                     ]}
-                    value={formData.deliverables || []}
+                    value={safeFormData.deliverables || []}
                     onChange={(value) => updateFormData('deliverables', value)}
                 />
             </FormField>
 
             <FormField label="When do you want the first batch ready by?" type="Dropdown" required>
-                <Select value={formData.timeline} onValueChange={(value) => updateFormData('timeline', value)}>
+                <Select value={safeFormData.timeline} onValueChange={(value) => updateFormData('timeline', value)}>
                     <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                         <SelectValue placeholder="Select timeline" />
                     </SelectTrigger>
@@ -337,7 +390,7 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
         <div className="space-y-8">
             <FormField label="Who will be our main point of contact?" type="Short Text" required>
                 <Input
-                    value={formData.mainContact || ''}
+                    value={safeFormData.mainContact || ''}
                     onChange={(e) => updateFormData('mainContact', e.target.value)}
                     placeholder="Enter main point of contact name"
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
@@ -347,14 +400,14 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
             <FormField label="Anything else we should know? Upload any references here." type="Long Text + Upload">
                 <div className="space-y-4">
                     <Textarea
-                        value={formData.additionalInfo || ''}
+                        value={safeFormData.additionalInfo || ''}
                         onChange={(e) => updateFormData('additionalInfo', e.target.value)}
                         placeholder="Any additional information or special requirements"
                         rows={4}
                         className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                     />
                     <FileUpload
-                        value={formData.referenceMaterials || ''}
+                        value={safeFormData.referenceMaterials || ''}
                         onChange={(value) => updateFormData('referenceMaterials', value)}
                         placeholder="Upload reference files or paste links"
                     />
@@ -456,19 +509,34 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
                 </div>
             )}
 
-            <ProgressBar
-                currentStep={currentStep}
-                totalSteps={totalSteps}
-                steps={steps}
-            />
+            <div className={`transition-opacity duration-300 ${isNextLoading ? 'opacity-50' : 'opacity-100'}`}>
+                <ProgressBar
+                    currentStep={currentStep}
+                    totalSteps={totalSteps}
+                    steps={steps}
+                />
+            </div>
 
-            <div className="rounded-xl border-2 border-gray-200 dark:border-gray-600 shadow-lg bg-white dark:bg-gray-800">
+            <div className="rounded-xl border-2 border-gray-200 dark:border-gray-600 shadow-lg bg-white dark:bg-gray-800 relative">
+                {isNextLoading && (
+                    <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+                        <div className="flex flex-col items-center gap-3">
+                            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                Saving your progress...
+                            </p>
+                        </div>
+                    </div>
+                )}
                 <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-600">
-                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-100">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
                         Step {currentStep}: {steps[currentStep - 1]}
+                        {isNextLoading && (
+                            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                        )}
                     </h2>
                 </div>
-                <div className="p-4 sm:p-6">
+                <div className={`p-4 sm:p-6 ${isNextLoading ? 'pointer-events-none' : ''}`}>
                     {renderCurrentStep()}
                 </div>
             </div>
@@ -514,13 +582,13 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false }) =>
                     ) : (
                         <Button
                             onClick={nextStep}
-                            disabled={currentStep === totalSteps || isSaving}
+                            disabled={currentStep === totalSteps || isNextLoading}
                             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
                         >
-                            {isSaving ? (
+                            {isNextLoading ? (
                                 <>
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                    Saving...
+                                    Loading...
                                 </>
                             ) : (
                                 <>

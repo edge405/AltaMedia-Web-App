@@ -1,61 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+// UI Components
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { toast } from 'sonner';
+
+// Icons
 import {
-    Home,
-    Users,
-    Activity,
-    Package,
-    BarChart3,
-    MessageSquare,
-    Menu,
-    X,
-    ChevronRight,
     Search,
-    Filter,
+    RefreshCw,
     Download,
-    Upload,
+    Palette,
     Eye,
-    Edit,
-    MoreHorizontal,
-    TrendingUp,
-    TrendingDown,
-    DollarSign,
-    Calendar,
-    Clock,
-    CheckCircle,
-    AlertCircle,
-    UserPlus,
-    Settings,
-    Bell,
-    Mail,
-    Phone,
-    Building,
-    ExternalLink,
     FileText,
+    Users,
+    Package,
+    Building,
+    FileDown,
+    MoreHorizontal,
+    Users as UsersIcon,
+    Target,
+    DollarSign,
+    Globe,
+    BarChart3,
+    CheckCircle,
+    Upload,
     Image,
     Video,
-    Globe,
-    Target,
-    MousePointer,
-    Users as UsersIcon,
-    PieChart,
-    LineChart,
-    Download as DownloadIcon,
-    Upload as UploadIcon,
-    Plus,
     Trash2,
-    Archive,
-    RefreshCw,
-    Star,
-    StarOff,
-    Palette,
-    LogOut
+    Filter,
+    Edit,
+    UserPlus,
+    MousePointer,
+    Clock,
+    Plus
 } from 'lucide-react';
+
+// Import separated components
+import AdminSidebar from '@/components/admin/AdminSidebar';
+import AdminTopBar from '@/components/admin/AdminTopBar';
+import AdminDashboard from '@/components/admin/sections/AdminDashboard';
+import AdminPackagesAndClients from '@/components/admin/sections/AdminPackagesAndClients';
+import AdminActivityLogs from '@/components/admin/sections/AdminActivityLogs';
+import AdminBrandKits from '@/components/admin/sections/AdminBrandKits';
+import AdminRevisions from '@/components/admin/sections/AdminRevisions';
+import AdminClientRequests from '@/components/admin/sections/AdminClientRequests';
+import UploadDeliverable from '@/components/admin/UploadDeliverable';
 
 // Mock admin data
 const adminData = {
@@ -105,95 +97,180 @@ const adminData = {
             company: "Lee Technologies",
             email: "david@lee.com",
             phone: "+63 934 567 8901",
-            package: "Website Development",
-            status: "Pending",
-            progress: 20,
-            lastActivity: "3 days ago",
+            package: "Website Development - Standard",
+            status: "Active",
+            progress: 90,
+            lastActivity: "3 hours ago",
             budget: 25000,
-            budgetUsed: 5000,
+            budgetUsed: 22000,
             projectManager: "Sarah Johnson"
-        }
-    ],
-    activityLogs: [
-        {
-            id: 1,
-            client: "John Smith",
-            action: "approved 2 graphics",
-            timestamp: "2 hours ago",
-            type: "approval"
-        },
-        {
-            id: 2,
-            client: "Maria Garcia",
-            action: "requested revisions on a reel",
-            timestamp: "1 day ago",
-            type: "revision"
-        },
-        {
-            id: 3,
-            client: "David Lee",
-            action: "viewed analytics dashboard",
-            timestamp: "3 days ago",
-            type: "view"
         },
         {
             id: 4,
+            name: "Lisa Chen",
+            company: "Chen Consulting",
+            email: "lisa@chen.com",
+            phone: "+63 945 678 9012",
+            package: "Google Ads - Premium",
+            status: "Pending",
+            progress: 0,
+            lastActivity: "1 week ago",
+            budget: 30000,
+            budgetUsed: 0,
+            projectManager: "Mike Chen"
+        },
+        {
+            id: 5,
+            name: "Robert Wilson",
+            company: "Wilson & Co",
+            email: "robert@wilson.com",
+            phone: "+63 956 789 0123",
+            package: "META Marketing - Premium",
+            status: "Active",
+            progress: 60,
+            lastActivity: "5 hours ago",
+            budget: 35000,
+            budgetUsed: 21000,
+            projectManager: "Sarah Johnson"
+        }
+    ],
+    recentActivity: [
+        {
+            id: 1,
+            type: "package_purchased",
             client: "John Smith",
-            action: "downloaded deliverables",
-            timestamp: "4 days ago",
-            type: "download"
+            description: "Purchased META Marketing - Basic package",
+            timestamp: "2024-02-01T10:30:00Z",
+            amount: 6999
+        },
+        {
+            id: 2,
+            type: "deliverable_uploaded",
+            client: "Maria Garcia",
+            description: "Uploaded brand kit deliverables",
+            timestamp: "2024-02-01T09:15:00Z"
+        },
+        {
+            id: 3,
+            type: "revision_requested",
+            client: "David Lee",
+            description: "Requested website design revisions",
+            timestamp: "2024-02-01T08:45:00Z"
+        },
+        {
+            id: 4,
+            type: "campaign_launched",
+            client: "Lisa Chen",
+            description: "Launched Google Ads campaign",
+            timestamp: "2024-02-01T07:20:00Z"
+        },
+        {
+            id: 5,
+            type: "payment_received",
+            client: "Robert Wilson",
+            description: "Received payment for Premium package",
+            timestamp: "2024-02-01T06:30:00Z",
+            amount: 17999
         }
     ],
     campaigns: [
         {
             id: 1,
             client: "John Smith",
-            name: "Brand Awareness Campaign",
+            platform: "Facebook",
             status: "Active",
-            reach: 15000,
-            ctr: 3.2,
+            budget: 20000,
+            spent: 12500,
+            impressions: 45000,
+            clicks: 1200,
             conversions: 45,
-            budgetUsed: 8500
+            ctr: 2.67,
+            cpc: 10.42,
+            cpm: 277.78
         },
         {
             id: 2,
             client: "Maria Garcia",
-            name: "Product Launch",
+            platform: "Instagram",
             status: "Active",
-            reach: 12000,
-            ctr: 2.8,
+            budget: 15000,
+            spent: 8000,
+            impressions: 32000,
+            clicks: 950,
             conversions: 32,
-            budgetUsed: 6200
+            ctr: 2.97,
+            cpc: 8.42,
+            cpm: 250.00
         },
         {
             id: 3,
             client: "David Lee",
-            name: "Lead Generation",
-            status: "Paused",
-            reach: 8000,
-            ctr: 2.1,
-            conversions: 18,
-            budgetUsed: 4200
-        }
-    ],
-    supportTickets: [
-        {
-            id: 1,
-            client: "John Smith",
-            title: "Request for additional revisions",
-            status: "Open",
-            priority: "Medium",
-            assignedTo: "Sarah Johnson",
-            createdAt: "2024-02-01"
+            platform: "Google Ads",
+            status: "Active",
+            budget: 25000,
+            spent: 22000,
+            impressions: 28000,
+            clicks: 1800,
+            conversions: 78,
+            ctr: 6.43,
+            cpc: 12.22,
+            cpm: 785.71
         },
         {
-            id: 2,
-            client: "Maria Garcia",
-            title: "Question about ad performance",
-            status: "In Progress",
-            priority: "Low",
-            assignedTo: "Mike Chen",
-            createdAt: "2024-01-28"
+            id: 4,
+            client: "Lisa Chen",
+            platform: "Facebook",
+            status: "Paused",
+            budget: 30000,
+            spent: 15000,
+            impressions: 35000,
+            clicks: 1100,
+            conversions: 38,
+            ctr: 3.14,
+            cpc: 13.64,
+            cpm: 428.57
+        },
+        {
+            id: 5,
+            client: "Robert Wilson",
+            platform: "Instagram",
+            status: "Active",
+            budget: 35000,
+            spent: 21000,
+            impressions: 55000,
+            clicks: 2200,
+            conversions: 88,
+            ctr: 4.00,
+            cpc: 9.55,
+            cpm: 381.82
+        }
+    ],
+    analytics: {
+        totalRevenue: 1250000,
+        monthlyGrowth: 15.5,
+        activeClients: 24,
+        totalCampaigns: 45,
+        averageCtr: 3.8,
+        averageCpc: 11.2,
+        totalImpressions: 195000,
+        totalClicks: 7250,
+        totalConversions: 281,
+        conversionRate: 3.87
+    },
+    performanceMetrics: [
+        {
+            month: "Jan",
+            revenue: 98000,
+            clients: 18,
+            campaigns: 32,
+            conversions: 12
+        },
+        {
+            month: "Feb",
+            revenue: 125000,
+            clients: 24,
+            campaigns: 45,
+            conversions: 18
         }
     ],
     globalAnalytics: {
@@ -208,11 +285,35 @@ export default function AdminPortal() {
     const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState("dashboard");
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [selectedClient, setSelectedClient] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterStatus, setFilterStatus] = useState("all");
     const [brandKits, setBrandKits] = useState([]);
     const [loadingBrandKits, setLoadingBrandKits] = useState(false);
+    const [revisionRequests, setRevisionRequests] = useState([]);
+    const [loadingRevisions, setLoadingRevisions] = useState(false);
+
+    // Debug: Log brandKits state changes
+    useEffect(() => {
+        console.log('🔄 BrandKits state updated:', {
+            count: brandKits.length,
+            data: brandKits
+        });
+    }, [brandKits]);
+
+    // Fetch brandkits when component mounts or when brandkits section is active
+    useEffect(() => {
+        fetchBrandKits();
+        fetchRevisionRequests();
+    }, []);
+
+    useEffect(() => {
+        if (activeSection === "brandkits") {
+            fetchBrandKits();
+        }
+        if (activeSection === "revisions") {
+            fetchRevisionRequests();
+        }
+    }, [activeSection]);
 
     const handleLogout = () => {
         // Clear all auth data
@@ -224,169 +325,354 @@ export default function AdminPortal() {
         navigate("/admin/login");
     };
 
-    const sidebarItems = [
-        { id: "dashboard", label: "Dashboard", icon: Home },
-        { id: "clients", label: "Clients", icon: Users },
-        { id: "activity", label: "Activity Logs", icon: Activity },
-        { id: "packages", label: "Packages & Deliverables", icon: Package },
-        { id: "campaigns", label: "Campaigns", icon: BarChart3 },
-        { id: "analytics", label: "Analytics", icon: PieChart },
-        { id: "brandkits", label: "BrandKits", icon: Palette },
-        { id: "support", label: "Support", icon: MessageSquare },
-    ];
-
-    const getStatusColor = (status) => {
-        switch (status) {
-            case "Active":
-                return "bg-green-500";
-            case "Pending":
-                return "bg-yellow-500";
-            case "Suspended":
-                return "bg-red-500";
-            case "Completed":
-                return "bg-blue-500";
-            default:
-                return "bg-gray-500";
-        }
-    };
-
-    // Fetch brandkits when component mounts or when brandkits section is active
-    React.useEffect(() => {
-        fetchBrandKits();
-    }, []);
-
-    React.useEffect(() => {
-        if (activeSection === "brandkits") {
-            fetchBrandKits();
-        }
-    }, [activeSection]);
-
     const fetchBrandKits = async () => {
         setLoadingBrandKits(true);
         try {
-            const response = await fetch('/api/brandkit/all/mariadb');
+            console.log('🔄 Fetching brandkits from API...');
+            console.log('🔑 Auth token available:', !!localStorage.getItem('authToken'));
+
+            const response = await fetch('/api/brandkit/admin/all', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('📡 Response status:', response.status);
+            console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
             const data = await response.json();
+            console.log('📊 BrandKits API response:', data);
+
             if (data.success) {
+                console.log('✅ BrandKits fetched successfully:', data.data.forms);
+                console.log('📊 Number of forms:', data.data.forms?.length || 0);
                 setBrandKits(data.data.forms || []);
+            } else {
+                console.error('❌ BrandKits API returned error:', data);
             }
         } catch (error) {
-            console.error('Error fetching brandkits:', error);
+            console.error('❌ Error fetching brandkits:', error);
+            console.error('❌ Error details:', {
+                message: error.message,
+                stack: error.stack
+            });
         } finally {
             setLoadingBrandKits(false);
         }
     };
 
+    const fetchRevisionRequests = async () => {
+        setLoadingRevisions(true);
+        try {
+            const response = await fetch('/api/admin/revision-requests', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setRevisionRequests(data.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching revision requests:', error);
+        } finally {
+            setLoadingRevisions(false);
+        }
+    };
+
     const downloadBrandKit = async (brandKit) => {
         try {
-            // Create a formatted JSON file with the brandkit data
-            const brandKitData = {
-                businessName: brandKit.business_name,
-                businessEmail: brandKit.business_email,
-                contactNumber: brandKit.contact_number,
-                industry: brandKit.industry,
-                yearStarted: brandKit.year_started,
-                primaryLocation: brandKit.primary_location,
-                missionStatement: brandKit.mission_statement,
-                coreValues: brandKit.core_values,
-                brandDescription: brandKit.brand_description,
-                targetAudience: brandKit.target_audience,
-                desiredFeeling: brandKit.desired_feeling,
-                brandPersonality: brandKit.brand_personality,
-                brandVoice: brandKit.brand_voice,
-                preferredColors: brandKit.preferred_colors,
-                colorsToAvoid: brandKit.colors_to_avoid,
-                fontStyles: brandKit.font_styles,
-                designStyle: brandKit.design_style,
-                logoType: brandKit.logo_type,
-                imageryStyle: brandKit.imagery_style,
-                brandKitUse: brandKit.brand_kit_use,
-                brandElements: brandKit.brand_elements,
-                fileFormats: brandKit.file_formats,
-                primaryGoal: brandKit.primary_goal,
-                shortTermGoals: brandKit.short_term_goals,
-                longTermGoal: brandKit.long_term_goal,
-                successMetrics: brandKit.success_metrics,
-                specialNotes: brandKit.special_notes,
-                timeline: brandKit.timeline,
-                approver: brandKit.approver,
-                referenceMaterials: brandKit.reference_materials,
-                inspirationLinks: brandKit.inspiration_links,
-                createdAt: brandKit.created_at,
-                updatedAt: brandKit.updated_at,
-                progressPercentage: brandKit.progress_percentage,
-                isCompleted: brandKit.is_completed
+            console.log('🔄 Starting comprehensive form download for user:', brandKit.user_id);
+
+            // Fetch all form types for this user
+            const [brandKitData, organizationData] = await Promise.allSettled([
+                // BrandKit data (already available)
+                Promise.resolve(brandKit),
+
+
+
+                // Organization data
+                fetch(`/api/organization/admin/all`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                }).then(res => res.json()).then(data =>
+                    data.success ? data.data.forms.find(form => form.user_id === brandKit.user_id) : null
+                )
+            ]);
+
+            // Create comprehensive form data object
+            const comprehensiveFormData = {
+                // Metadata
+                exportInfo: {
+                    exportDate: new Date().toISOString(),
+                    clientName: brandKit.business_name || 'Unknown Client',
+                    clientEmail: brandKit.business_email || 'No email provided',
+                    userId: brandKit.user_id,
+                    formsCompleted: {
+                        brandKit: brandKitData.status === 'fulfilled' && brandKitData.value,
+                        organization: organizationData.status === 'fulfilled' && organizationData.value
+                    }
+                },
+
+                // BrandKit Form (Knowing You Form)
+                brandKitForm: brandKitData.status === 'fulfilled' ? {
+                    formType: 'BrandKit (Knowing You Form)',
+                    status: brandKit.is_completed ? 'Completed' : 'In Progress',
+                    progressPercentage: brandKit.progress_percentage || 0,
+                    data: {
+                        businessName: brandKit.business_name,
+                        businessEmail: brandKit.business_email,
+                        contactNumber: brandKit.contact_number,
+                        industry: brandKit.industry,
+                        yearStarted: brandKit.year_started,
+                        primaryLocation: brandKit.primary_location,
+                        missionStatement: brandKit.mission_statement,
+                        coreValues: brandKit.core_values,
+                        brandDescription: brandKit.brand_description,
+                        targetAudience: brandKit.target_audience,
+                        desiredFeeling: brandKit.desired_feeling,
+                        brandPersonality: brandKit.brand_personality,
+                        brandVoice: brandKit.brand_voice,
+                        preferredColors: brandKit.preferred_colors,
+                        colorsToAvoid: brandKit.colors_to_avoid,
+                        fontStyles: brandKit.font_styles,
+                        designStyle: brandKit.design_style,
+                        logoType: brandKit.logo_type,
+                        imageryStyle: brandKit.imagery_style,
+                        brandKitUse: brandKit.brand_kit_use,
+                        brandElements: brandKit.brand_elements,
+                        fileFormats: brandKit.file_formats,
+                        primaryGoal: brandKit.primary_goal,
+                        shortTermGoals: brandKit.short_term_goals,
+                        longTermGoal: brandKit.long_term_goal,
+                        successMetrics: brandKit.success_metrics,
+                        specialNotes: brandKit.special_notes,
+                        timeline: brandKit.timeline,
+                        approver: brandKit.approver,
+                        referenceMaterials: brandKit.reference_materials,
+                        inspirationLinks: brandKit.inspiration_links,
+                        createdAt: brandKit.created_at,
+                        updatedAt: brandKit.updated_at
+                    }
+                } : {
+                    formType: 'BrandKit (Knowing You Form)',
+                    status: 'Not Started',
+                    progressPercentage: 0,
+                    data: null,
+                    error: brandKitData.reason?.message || 'Failed to fetch data'
+                },
+
+
+
+                // Organization Form
+                organizationForm: organizationData.status === 'fulfilled' && organizationData.value ? {
+                    formType: 'Organization Form',
+                    status: organizationData.value.is_completed ? 'Completed' : 'In Progress',
+                    progressPercentage: organizationData.value.progress_percentage || 0,
+                    data: {
+                        buildingType: organizationData.value.building_type,
+                        organizationName: organizationData.value.organization_name,
+                        socialMediaGoals: organizationData.value.social_media_goals,
+                        brandUniqueness: organizationData.value.brand_uniqueness,
+                        desiredEmotion: organizationData.value.desired_emotion,
+                        targetPlatforms: organizationData.value.target_platforms,
+                        contentTypes: organizationData.value.content_types,
+                        deliverables: organizationData.value.deliverables,
+                        timeline: organizationData.value.timeline,
+                        mainContact: organizationData.value.main_contact,
+                        additionalInfo: organizationData.value.additional_info,
+                        referenceMaterials: organizationData.value.reference_materials,
+                        createdAt: organizationData.value.created_at,
+                        updatedAt: organizationData.value.updated_at
+                    }
+                } : {
+                    formType: 'Organization Form',
+                    status: 'Not Started',
+                    progressPercentage: 0,
+                    data: null,
+                    error: organizationData.status === 'rejected' ? organizationData.reason?.message : 'No data found'
+                }
             };
 
-            const blob = new Blob([JSON.stringify(brandKitData, null, 2)], { type: 'application/json' });
+            // Create the download file
+            const blob = new Blob([JSON.stringify(comprehensiveFormData, null, 2)], { type: 'application/json' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${brandKit.business_name || 'BrandKit'}_${brandKit.id}.json`;
+            a.download = `Complete_Forms_${brandKit.business_name || 'Client'}_${brandKit.user_id}_${new Date().toISOString().split('T')[0]}.json`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
+
+            toast.success('✅ Complete form data downloaded successfully!');
+            console.log('✅ Comprehensive form download completed for user:', brandKit.user_id);
+
         } catch (error) {
-            console.error('Error downloading brandkit:', error);
+            console.error('❌ Error downloading comprehensive form data:', error);
+            toast.error('Failed to download form data. Please try again.');
         }
     };
 
     const downloadAllBrandKits = async () => {
         try {
-            const allBrandKitsData = {
-                exportDate: new Date().toISOString(),
-                totalBrandKits: brandKits.length,
-                brandKits: brandKits.map(brandKit => ({
-                    id: brandKit.id,
-                    businessName: brandKit.business_name,
-                    businessEmail: brandKit.business_email,
-                    contactNumber: brandKit.contact_number,
-                    industry: brandKit.industry,
-                    yearStarted: brandKit.year_started,
-                    primaryLocation: brandKit.primary_location,
-                    missionStatement: brandKit.mission_statement,
-                    coreValues: brandKit.core_values,
-                    brandDescription: brandKit.brand_description,
-                    targetAudience: brandKit.target_audience,
-                    desiredFeeling: brandKit.desired_feeling,
-                    brandPersonality: brandKit.brand_personality,
-                    brandVoice: brandKit.brand_voice,
-                    preferredColors: brandKit.preferred_colors,
-                    colorsToAvoid: brandKit.colors_to_avoid,
-                    fontStyles: brandKit.font_styles,
-                    designStyle: brandKit.design_style,
-                    logoType: brandKit.logo_type,
-                    imageryStyle: brandKit.imagery_style,
-                    brandKitUse: brandKit.brand_kit_use,
-                    brandElements: brandKit.brand_elements,
-                    fileFormats: brandKit.file_formats,
-                    primaryGoal: brandKit.primary_goal,
-                    shortTermGoals: brandKit.short_term_goals,
-                    longTermGoal: brandKit.long_term_goal,
-                    successMetrics: brandKit.success_metrics,
-                    specialNotes: brandKit.special_notes,
-                    timeline: brandKit.timeline,
-                    approver: brandKit.approver,
-                    referenceMaterials: brandKit.reference_materials,
-                    inspirationLinks: brandKit.inspiration_links,
-                    createdAt: brandKit.created_at,
-                    updatedAt: brandKit.updated_at,
-                    progressPercentage: brandKit.progress_percentage,
-                    isCompleted: brandKit.is_completed
-                }))
+            console.log('🔄 Starting comprehensive bulk download for all users...');
+
+            // Fetch all form types for all users
+            const [allBrandKits, allOrganizations] = await Promise.allSettled([
+                // All BrandKit data (already available)
+                Promise.resolve(brandKits),
+
+                // All Organization data
+                fetch(`/api/organization/admin/all`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                }).then(res => res.json()).then(data => data.success ? data.data.forms : [])
+            ]);
+
+            // Create comprehensive bulk export data
+            const comprehensiveBulkData = {
+                exportInfo: {
+                    exportDate: new Date().toISOString(),
+                    totalUsers: brandKits.length,
+                    formsSummary: {
+                        brandKits: allBrandKits.status === 'fulfilled' ? allBrandKits.value.length : 0,
+                        organizations: allOrganizations.status === 'fulfilled' ? allOrganizations.value.length : 0
+                    },
+                    exportType: 'Comprehensive Bulk Export - All Form Types'
+                },
+
+                // Process each user's complete form data
+                users: brandKits.map(brandKit => {
+                    const userId = brandKit.user_id;
+
+                    // Find corresponding Organization forms for this user
+
+                    const organizationForm = allOrganizations.status === 'fulfilled'
+                        ? allOrganizations.value.find(form => form.user_id === userId)
+                        : null;
+
+                    return {
+                        userId: userId,
+                        clientName: brandKit.business_name || 'Unknown Client',
+                        clientEmail: brandKit.business_email || 'No email provided',
+                        formsCompleted: {
+                            brandKit: !!brandKit,
+                            organization: !!organizationForm
+                        },
+                        totalFormsCompleted: [brandKit, organizationForm].filter(Boolean).length,
+
+                        // BrandKit Form (Knowing You Form)
+                        brandKitForm: {
+                            formType: 'BrandKit (Knowing You Form)',
+                            status: brandKit.is_completed ? 'Completed' : 'In Progress',
+                            progressPercentage: brandKit.progress_percentage || 0,
+                            data: {
+                                businessName: brandKit.business_name,
+                                businessEmail: brandKit.business_email,
+                                contactNumber: brandKit.contact_number,
+                                industry: brandKit.industry,
+                                yearStarted: brandKit.year_started,
+                                primaryLocation: brandKit.primary_location,
+                                missionStatement: brandKit.mission_statement,
+                                coreValues: brandKit.core_values,
+                                brandDescription: brandKit.brand_description,
+                                targetAudience: brandKit.target_audience,
+                                desiredFeeling: brandKit.desired_feeling,
+                                brandPersonality: brandKit.brand_personality,
+                                brandVoice: brandKit.brand_voice,
+                                preferredColors: brandKit.preferred_colors,
+                                colorsToAvoid: brandKit.colors_to_avoid,
+                                fontStyles: brandKit.font_styles,
+                                designStyle: brandKit.design_style,
+                                logoType: brandKit.logo_type,
+                                imageryStyle: brandKit.imagery_style,
+                                brandKitUse: brandKit.brand_kit_use,
+                                brandElements: brandKit.brand_elements,
+                                fileFormats: brandKit.file_formats,
+                                primaryGoal: brandKit.primary_goal,
+                                shortTermGoals: brandKit.short_term_goals,
+                                longTermGoal: brandKit.long_term_goal,
+                                successMetrics: brandKit.success_metrics,
+                                specialNotes: brandKit.special_notes,
+                                timeline: brandKit.timeline,
+                                approver: brandKit.approver,
+                                referenceMaterials: brandKit.reference_materials,
+                                inspirationLinks: brandKit.inspiration_links,
+                                createdAt: brandKit.created_at,
+                                updatedAt: brandKit.updated_at
+                            }
+                        },
+
+
+
+                        // Organization Form
+                        organizationForm: organizationForm ? {
+                            formType: 'Organization Form',
+                            status: organizationForm.is_completed ? 'Completed' : 'In Progress',
+                            progressPercentage: organizationForm.progress_percentage || 0,
+                            data: {
+                                buildingType: organizationForm.building_type,
+                                organizationName: organizationForm.organization_name,
+                                socialMediaGoals: organizationForm.social_media_goals,
+                                brandUniqueness: organizationForm.brand_uniqueness,
+                                desiredEmotion: organizationForm.desired_emotion,
+                                targetPlatforms: organizationForm.target_platforms,
+                                contentTypes: organizationForm.content_types,
+                                deliverables: organizationForm.deliverables,
+                                timeline: organizationForm.timeline,
+                                mainContact: organizationForm.main_contact,
+                                additionalInfo: organizationForm.additional_info,
+                                referenceMaterials: organizationForm.reference_materials,
+                                createdAt: organizationForm.created_at,
+                                updatedAt: organizationForm.updated_at
+                            }
+                        } : {
+                            formType: 'Organization Form',
+                            status: 'Not Started',
+                            progressPercentage: 0,
+                            data: null
+                        }
+                    };
+                }),
+
+                // Summary statistics
+                summary: {
+                    totalUsers: brandKits.length,
+                    completedBrandKits: brandKits.filter(bk => bk.is_completed).length,
+                    completedOrganizations: allOrganizations.status === 'fulfilled'
+                        ? allOrganizations.value.filter(org => org.is_completed).length
+                        : 0,
+                    usersWithAllForms: brandKits.filter(bk => {
+                        const userId = bk.user_id;
+                        const hasOrganization = allOrganizations.status === 'fulfilled'
+                            ? allOrganizations.value.some(org => org.user_id === userId)
+                            : false;
+                        return hasOrganization;
+                    }).length
+                }
             };
 
-            const blob = new Blob([JSON.stringify(allBrandKitsData, null, 2)], { type: 'application/json' });
+            // Create the download file
+            const blob = new Blob([JSON.stringify(comprehensiveBulkData, null, 2)], { type: 'application/json' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `All_BrandKits_${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `Complete_Forms_Bulk_Export_${new Date().toISOString().split('T')[0]}.json`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
+
+            toast.success(`✅ Bulk export completed! ${comprehensiveBulkData.users.length} users processed.`);
+            console.log('✅ Comprehensive bulk download completed');
+
         } catch (error) {
-            console.error('Error downloading all brandkits:', error);
+            console.error('❌ Error downloading bulk form data:', error);
+            toast.error('Failed to download bulk form data. Please try again.');
         }
     };
 
@@ -465,102 +751,6 @@ export default function AdminPortal() {
                 </Card>
             </div>
 
-            {/* Package Distribution */}
-            <Card className="bg-white shadow-xl border-0 rounded-3xl overflow-hidden">
-                <CardHeader className="p-8 border-b border-gray-100">
-                    <CardTitle className="text-2xl font-bold text-gray-900">Package Distribution</CardTitle>
-                </CardHeader>
-                <CardContent className="p-8">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        <div className="text-center p-6 bg-gray-50 rounded-3xl">
-                            <div className="w-16 h-16 bg-[#f7e833] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <Globe className="w-8 h-8 text-black" />
-                            </div>
-                            <p className="text-2xl font-bold text-gray-900">{adminData.overview.activePackages.meta}</p>
-                            <p className="text-gray-600 font-medium">META Marketing</p>
-                        </div>
-                        <div className="text-center p-6 bg-gray-50 rounded-3xl">
-                            <div className="w-16 h-16 bg-[#f7e833] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <Target className="w-8 h-8 text-black" />
-                            </div>
-                            <p className="text-2xl font-bold text-gray-900">{adminData.overview.activePackages.ai}</p>
-                            <p className="text-gray-600 font-medium">AI Marketing</p>
-                        </div>
-                        <div className="text-center p-6 bg-gray-50 rounded-3xl">
-                            <div className="w-16 h-16 bg-[#f7e833] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <Globe className="w-8 h-8 text-black" />
-                            </div>
-                            <p className="text-2xl font-bold text-gray-900">{adminData.overview.activePackages.website}</p>
-                            <p className="text-gray-600 font-medium">Website Dev</p>
-                        </div>
-                        <div className="text-center p-6 bg-gray-50 rounded-3xl">
-                            <div className="w-16 h-16 bg-[#f7e833] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <BarChart3 className="w-8 h-8 text-black" />
-                            </div>
-                            <p className="text-2xl font-bold text-gray-900">{adminData.overview.activePackages.googleAds}</p>
-                            <p className="text-gray-600 font-medium">Google Ads</p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Client Activity Feed */}
-            <Card className="bg-white shadow-xl border-0 rounded-3xl overflow-hidden">
-                <CardHeader className="p-8 border-b border-gray-100">
-                    <CardTitle className="text-2xl font-bold text-gray-900">Client Activity Feed</CardTitle>
-                </CardHeader>
-                <CardContent className="p-8">
-                    <div className="space-y-4">
-                        {adminData.activityLogs.map((activity) => (
-                            <div key={activity.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-2xl">
-                                <div className="w-10 h-10 bg-[#f7e833] rounded-2xl flex items-center justify-center">
-                                    {activity.type === "approval" && <CheckCircle className="w-5 h-5 text-black" />}
-                                    {activity.type === "revision" && <RefreshCw className="w-5 h-5 text-black" />}
-                                    {activity.type === "view" && <Eye className="w-5 h-5 text-black" />}
-                                    {activity.type === "download" && <Download className="w-5 h-5 text-black" />}
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-semibold text-gray-900">
-                                        <span className="text-[#f7e833]">{activity.client}</span> {activity.action}
-                                    </p>
-                                    <p className="text-sm text-gray-500">{activity.timestamp}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Global Performance */}
-            <Card className="bg-white shadow-xl border-0 rounded-3xl overflow-hidden">
-                <CardHeader className="p-8 border-b border-gray-100">
-                    <CardTitle className="text-2xl font-bold text-gray-900">Global Performance</CardTitle>
-                </CardHeader>
-                <CardContent className="p-8">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        <div className="text-center p-6 bg-gray-50 rounded-3xl">
-                            <Eye className="w-8 h-8 text-[#f7e833] mx-auto mb-2" />
-                            <p className="text-2xl font-bold text-gray-900">{adminData.globalAnalytics.totalReach.toLocaleString()}</p>
-                            <p className="text-gray-600 font-medium">Total Reach</p>
-                        </div>
-                        <div className="text-center p-6 bg-gray-50 rounded-3xl">
-                            <Users className="w-8 h-8 text-[#f7e833] mx-auto mb-2" />
-                            <p className="text-2xl font-bold text-gray-900">{adminData.globalAnalytics.totalEngagement.toLocaleString()}</p>
-                            <p className="text-gray-600 font-medium">Engagement</p>
-                        </div>
-                        <div className="text-center p-6 bg-gray-50 rounded-3xl">
-                            <MousePointer className="w-8 h-8 text-[#f7e833] mx-auto mb-2" />
-                            <p className="text-2xl font-bold text-gray-900">{adminData.globalAnalytics.totalCtr}%</p>
-                            <p className="text-gray-600 font-medium">CTR</p>
-                        </div>
-                        <div className="text-center p-6 bg-gray-50 rounded-3xl">
-                            <Target className="w-8 h-8 text-[#f7e833] mx-auto mb-2" />
-                            <p className="text-2xl font-bold text-gray-900">{adminData.globalAnalytics.totalConversions}</p>
-                            <p className="text-gray-600 font-medium">Conversions</p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
 
             {/* BrandKit Summary */}
             <Card className="bg-white shadow-xl border-0 rounded-3xl overflow-hidden">
@@ -733,27 +923,29 @@ export default function AdminPortal() {
                         </div>
                         <select className="px-6 py-4 border-2 border-gray-200 rounded-2xl bg-white text-gray-900 focus:border-[#f7e833] focus:outline-none transition-colors font-medium">
                             <option value="all">All Actions</option>
-                            <option value="approval">Approvals</option>
-                            <option value="revision">Revisions</option>
-                            <option value="view">Views</option>
-                            <option value="download">Downloads</option>
+                            <option value="package_purchased">Package Purchased</option>
+                            <option value="deliverable_uploaded">Deliverable Uploaded</option>
+                            <option value="revision_requested">Revision Requested</option>
+                            <option value="campaign_launched">Campaign Launched</option>
+                            <option value="payment_received">Payment Received</option>
                         </select>
                     </div>
 
                     {/* Activity Logs */}
                     <div className="space-y-4">
-                        {adminData.activityLogs.map((activity) => (
+                        {adminData.recentActivity.map((activity) => (
                             <div key={activity.id} className="flex items-center justify-between p-6 bg-gray-50 rounded-2xl hover:shadow-lg transition-shadow duration-200">
                                 <div className="flex items-center space-x-4">
                                     <div className="w-12 h-12 bg-[#f7e833] rounded-2xl flex items-center justify-center">
-                                        {activity.type === "approval" && <CheckCircle className="w-6 h-6 text-black" />}
-                                        {activity.type === "revision" && <RefreshCw className="w-6 h-6 text-black" />}
-                                        {activity.type === "view" && <Eye className="w-6 h-6 text-black" />}
-                                        {activity.type === "download" && <Download className="w-6 h-6 text-black" />}
+                                        {activity.type === "package_purchased" && <CheckCircle className="w-6 h-6 text-black" />}
+                                        {activity.type === "deliverable_uploaded" && <Upload className="w-6 h-6 text-black" />}
+                                        {activity.type === "revision_requested" && <RefreshCw className="w-6 h-6 text-black" />}
+                                        {activity.type === "campaign_launched" && <Eye className="w-6 h-6 text-black" />}
+                                        {activity.type === "payment_received" && <DollarSign className="w-6 h-6 text-black" />}
                                     </div>
                                     <div>
                                         <p className="font-semibold text-gray-900">
-                                            <span className="text-[#f7e833]">{activity.client}</span> {activity.action}
+                                            <span className="text-[#f7e833]">{activity.client}</span> {activity.description}
                                         </p>
                                         <p className="text-sm text-gray-500">{activity.timestamp}</p>
                                     </div>
@@ -853,159 +1045,14 @@ export default function AdminPortal() {
                 </CardContent>
             </Card>
 
-            {/* Deliverables Upload Section */}
-            <Card className="bg-white shadow-xl border-0 rounded-3xl overflow-hidden">
-                <CardHeader className="p-8 border-b border-gray-100">
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="text-2xl font-bold text-gray-900">Upload Deliverables</CardTitle>
-                        <Button className="bg-[#f7e833] hover:bg-yellow-400 text-black px-6 py-3 rounded-2xl font-semibold">
-                            <Upload className="w-5 h-5 mr-2" />
-                            Upload Files
-                        </Button>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-8">
-                    {/* Upload Form */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Client & Package Selection */}
-                        <div className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-900 mb-3">Select Client</label>
-                                <select className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl bg-white text-gray-900 focus:border-[#f7e833] focus:outline-none transition-colors">
-                                    <option value="">Choose a client...</option>
-                                    {adminData.clients.map((client) => (
-                                        <option key={client.id} value={client.id}>
-                                            {client.name} - {client.package}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-900 mb-3">Deliverable Type</label>
-                                <select className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl bg-white text-gray-900 focus:border-[#f7e833] focus:outline-none transition-colors">
-                                    <option value="">Select deliverable type...</option>
-                                    <option value="graphics">Layout Graphics</option>
-                                    <option value="reels">Reels & Videos</option>
-                                    <option value="ads">Ad Creatives</option>
-                                    <option value="campaigns">Campaign Materials</option>
-                                    <option value="website">Website Assets</option>
-                                    <option value="branding">Branding Materials</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-900 mb-3">Package Features</label>
-                                <div className="space-y-2">
-                                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
-                                        <input type="checkbox" className="w-4 h-4 text-[#f7e833] border-gray-300 rounded focus:ring-[#f7e833]" />
-                                        <span className="text-sm text-gray-700">Social Media Graphics (12 pieces)</span>
-                                    </div>
-                                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
-                                        <input type="checkbox" className="w-4 h-4 text-[#f7e833] border-gray-300 rounded focus:ring-[#f7e833]" />
-                                        <span className="text-sm text-gray-700">Instagram Reels (8 videos)</span>
-                                    </div>
-                                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
-                                        <input type="checkbox" className="w-4 h-4 text-[#f7e833] border-gray-300 rounded focus:ring-[#f7e833]" />
-                                        <span className="text-sm text-gray-700">Facebook Ads (6 creatives)</span>
-                                    </div>
-                                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
-                                        <input type="checkbox" className="w-4 h-4 text-[#f7e833] border-gray-300 rounded focus:ring-[#f7e833]" />
-                                        <span className="text-sm text-gray-700">Campaign Strategy</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* File Upload Area */}
-                        <div className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-900 mb-3">Upload Files</label>
-                                <div className="border-2 border-dashed border-gray-300 rounded-3xl p-8 text-center hover:border-[#f7e833] transition-colors">
-                                    <div className="w-16 h-16 bg-[#f7e833] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                        <Upload className="w-8 h-8 text-black" />
-                                    </div>
-                                    <p className="text-lg font-semibold text-gray-900 mb-2">Drop files here or click to upload</p>
-                                    <p className="text-sm text-gray-500 mb-4">Supports: JPG, PNG, MP4, MOV, PDF (Max 50MB each)</p>
-                                    <Button className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-2xl font-semibold">
-                                        Choose Files
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Uploaded Files Preview */}
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-900 mb-3">Uploaded Files</label>
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 bg-[#f7e833] rounded-xl flex items-center justify-center">
-                                                <Image className="w-5 h-5 text-black" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-gray-900">brand_graphics_01.jpg</p>
-                                                <p className="text-sm text-gray-500">2.4 MB</p>
-                                            </div>
-                                        </div>
-                                        <Button size="sm" variant="outline" className="border-2 border-red-300 text-red-600 hover:bg-red-50 rounded-xl">
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                    </div>
-                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 bg-[#f7e833] rounded-xl flex items-center justify-center">
-                                                <Video className="w-5 h-5 text-black" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-gray-900">product_reel_01.mp4</p>
-                                                <p className="text-sm text-gray-500">15.2 MB</p>
-                                            </div>
-                                        </div>
-                                        <Button size="sm" variant="outline" className="border-2 border-red-300 text-red-600 hover:bg-red-50 rounded-xl">
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Delivery Options */}
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-900 mb-3">Delivery Options</label>
-                                <div className="space-y-3">
-                                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
-                                        <input type="radio" name="delivery" className="w-4 h-4 text-[#f7e833] border-gray-300 focus:ring-[#f7e833]" />
-                                        <span className="text-sm text-gray-700">Send to client for review</span>
-                                    </div>
-                                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
-                                        <input type="radio" name="delivery" className="w-4 h-4 text-[#f7e833] border-gray-300 focus:ring-[#f7e833]" />
-                                        <span className="text-sm text-gray-700">Mark as completed</span>
-                                    </div>
-                                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
-                                        <input type="radio" name="delivery" className="w-4 h-4 text-[#f7e833] border-gray-300 focus:ring-[#f7e833]" />
-                                        <span className="text-sm text-gray-700">Schedule for later delivery</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
-                        <Button variant="outline" className="border-2 border-gray-300 text-gray-600 hover:bg-gray-50 px-6 py-3 rounded-2xl font-semibold">
-                            Save Draft
-                        </Button>
-                        <Button className="bg-[#f7e833] hover:bg-yellow-400 text-black px-8 py-3 rounded-2xl font-semibold">
-                            Send to Client
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
+            {/* Upload Deliverable Section */}
+            <UploadDeliverable />
 
             {/* Deliverables Management */}
             <Card className="bg-white shadow-xl border-0 rounded-3xl overflow-hidden">
                 <CardHeader className="p-8 border-b border-gray-100">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-2xl font-bold text-gray-900">Deliverables Management</CardTitle>
+                        <CardTitle className="text-2xl font-bold text-gray-900">Complete Forms Management</CardTitle>
                         <div className="flex space-x-3">
                             <Button variant="outline" className="border-2 border-black text-black hover:bg-black hover:text-white px-4 py-2 rounded-2xl">
                                 <Filter className="w-4 h-4 mr-2" />
@@ -1122,7 +1169,7 @@ export default function AdminPortal() {
                                         </div>
                                     </td>
                                     <td className="py-4 px-4">
-                                        <p className="text-gray-900">Website Development</p>
+                                        <p className="text-gray-900">Website Development - Standard</p>
                                     </td>
                                     <td className="py-4 px-4">
                                         <Badge className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">
@@ -1134,11 +1181,91 @@ export default function AdminPortal() {
                                     </td>
                                     <td className="py-4 px-4">
                                         <Badge className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
+                                            Active
+                                        </Badge>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <p className="text-gray-600">3 hours ago</p>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <div className="flex space-x-2">
+                                            <Button size="sm" variant="outline" className="border-2 border-black text-black hover:bg-black hover:text-white rounded-xl">
+                                                <Eye className="w-4 h-4" />
+                                            </Button>
+                                            <Button size="sm" variant="outline" className="border-2 border-[#f7e833] text-[#f7e833] hover:bg-[#f7e833] hover:text-black rounded-xl">
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
+                                            <Button size="sm" variant="outline" className="border-2 border-gray-300 text-gray-600 hover:bg-gray-50 rounded-xl">
+                                                <MoreHorizontal className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr className="border-b border-gray-100 hover:bg-gray-50">
+                                    <td className="py-4 px-4">
+                                        <div>
+                                            <p className="font-semibold text-gray-900">Lisa Chen</p>
+                                            <p className="text-sm text-gray-500">Chen Consulting</p>
+                                        </div>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <p className="text-gray-900">Google Ads - Premium</p>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <Badge className="bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-sm">
+                                            Ad Creatives
+                                        </Badge>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <p className="text-gray-900">3 files</p>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <Badge className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
                                             Pending
                                         </Badge>
                                     </td>
                                     <td className="py-4 px-4">
-                                        <p className="text-gray-600">3 days ago</p>
+                                        <p className="text-gray-600">1 week ago</p>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <div className="flex space-x-2">
+                                            <Button size="sm" variant="outline" className="border-2 border-black text-black hover:bg-black hover:text-white rounded-xl">
+                                                <Eye className="w-4 h-4" />
+                                            </Button>
+                                            <Button size="sm" variant="outline" className="border-2 border-[#f7e833] text-[#f7e833] hover:bg-[#f7e833] hover:text-black rounded-xl">
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
+                                            <Button size="sm" variant="outline" className="border-2 border-gray-300 text-gray-600 hover:bg-gray-50 rounded-xl">
+                                                <MoreHorizontal className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr className="border-b border-gray-100 hover:bg-gray-50">
+                                    <td className="py-4 px-4">
+                                        <div>
+                                            <p className="font-semibold text-gray-900">Robert Wilson</p>
+                                            <p className="text-sm text-gray-500">Wilson & Co</p>
+                                        </div>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <p className="text-gray-900">META Marketing - Premium</p>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <Badge className="bg-pink-100 text-pink-800 px-3 py-1 rounded-full text-sm">
+                                            Branding Materials
+                                        </Badge>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <p className="text-gray-900">4 files</p>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <Badge className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
+                                            Active
+                                        </Badge>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <p className="text-gray-600">5 hours ago</p>
                                     </td>
                                     <td className="py-4 px-4">
                                         <div className="flex space-x-2">
@@ -1354,313 +1481,51 @@ export default function AdminPortal() {
         </div>
     );
 
-    const renderBrandKits = () => (
-        <div className="space-y-8">
-            <Card className="bg-white shadow-xl border-0 rounded-3xl overflow-hidden">
-                <CardHeader className="p-8 border-b border-gray-100">
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="text-2xl font-bold text-gray-900">BrandKit Management</CardTitle>
-                        <div className="flex space-x-3">
-                            <Button
-                                onClick={fetchBrandKits}
-                                disabled={loadingBrandKits}
-                                variant="outline"
-                                className="border-2 border-black text-black hover:bg-black hover:text-white px-4 py-2 rounded-2xl"
-                            >
-                                <RefreshCw className={`w-4 h-4 mr-2 ${loadingBrandKits ? 'animate-spin' : ''}`} />
-                                Refresh
-                            </Button>
-                            <Button
-                                onClick={downloadAllBrandKits}
-                                disabled={brandKits.length === 0}
-                                className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-2xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <Download className="w-5 h-5 mr-2" />
-                                Export All
-                            </Button>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-8">
-                    {/* Search and Filter */}
-                    <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                            <input
-                                type="text"
-                                placeholder="Search brandkits..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl bg-white text-gray-900 focus:border-[#f7e833] focus:outline-none transition-colors"
-                            />
-                        </div>
-                        <select
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                            className="px-6 py-4 border-2 border-gray-200 rounded-2xl bg-white text-gray-900 focus:border-[#f7e833] focus:outline-none transition-colors font-medium"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="completed">Completed</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="started">Started</option>
-                        </select>
-                    </div>
-
-                    {/* Loading State */}
-                    {loadingBrandKits && (
-                        <div className="text-center py-12">
-                            <div className="w-16 h-16 bg-[#f7e833] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <RefreshCw className="w-8 h-8 text-black animate-spin" />
-                            </div>
-                            <p className="text-gray-600 font-medium">Loading BrandKits...</p>
-                        </div>
-                    )}
-
-                    {/* BrandKits Grid */}
-                    {!loadingBrandKits && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {brandKits
-                                .filter(brandKit => {
-                                    const matchesSearch = !searchTerm ||
-                                        brandKit.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                        brandKit.business_email?.toLowerCase().includes(searchTerm.toLowerCase());
-
-                                    const matchesFilter = filterStatus === "all" ||
-                                        (filterStatus === "completed" && brandKit.is_completed) ||
-                                        (filterStatus === "in-progress" && brandKit.progress_percentage >= 60 && brandKit.progress_percentage < 80) ||
-                                        (filterStatus === "started" && brandKit.progress_percentage < 60);
-
-                                    return matchesSearch && matchesFilter;
-                                })
-                                .map((brandKit) => (
-                                    <Card key={brandKit.id} className="bg-gray-50 border-2 border-gray-200 rounded-3xl overflow-hidden hover:shadow-lg transition-shadow duration-200">
-                                        <CardContent className="p-6">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="w-12 h-12 bg-[#f7e833] rounded-2xl flex items-center justify-center">
-                                                    <Palette className="w-6 h-6 text-black" />
-                                                </div>
-                                                <Badge className={`${getProgressColor(brandKit.progress_percentage)} text-white px-3 py-1 rounded-full text-xs`}>
-                                                    {getProgressText(brandKit.progress_percentage)}
-                                                </Badge>
-                                            </div>
-
-                                            <h3 className="font-bold text-gray-900 mb-2 text-lg">
-                                                {brandKit.business_name || 'Unnamed Business'}
-                                            </h3>
-
-                                            <p className="text-sm text-gray-600 mb-3">
-                                                {brandKit.business_email || 'No email provided'}
-                                            </p>
-
-                                            <div className="space-y-3 mb-4">
-                                                <div>
-                                                    <p className="text-xs text-gray-500 mb-1">Progress</p>
-                                                    <div className="w-full bg-gray-200 rounded-full h-2">
-                                                        <div
-                                                            className={`${getProgressColor(brandKit.progress_percentage)} h-2 rounded-full transition-all duration-300`}
-                                                            style={{ width: `${brandKit.progress_percentage || 0}%` }}
-                                                        ></div>
-                                                    </div>
-                                                    <p className="text-xs text-gray-600 mt-1">{brandKit.progress_percentage || 0}% Complete</p>
-                                                </div>
-
-                                                {brandKit.industry && (
-                                                    <div>
-                                                        <p className="text-xs text-gray-500 mb-1">Industry</p>
-                                                        <p className="text-sm text-gray-700">
-                                                            {Array.isArray(brandKit.industry) ? brandKit.industry.join(', ') : brandKit.industry}
-                                                        </p>
-                                                    </div>
-                                                )}
-
-                                                {brandKit.mission_statement && (
-                                                    <div>
-                                                        <p className="text-xs text-gray-500 mb-1">Mission</p>
-                                                        <p className="text-sm text-gray-700 line-clamp-2">
-                                                            {brandKit.mission_statement}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                                                <span>Created: {new Date(brandKit.created_at).toLocaleDateString()}</span>
-                                                <span>Updated: {new Date(brandKit.updated_at).toLocaleDateString()}</span>
-                                            </div>
-
-                                            <div className="flex space-x-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="flex-1 border-2 border-black text-black hover:bg-black hover:text-white rounded-xl"
-                                                    onClick={() => downloadBrandKit(brandKit)}
-                                                >
-                                                    <Download className="w-4 h-4 mr-1" />
-                                                    Download
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="border-2 border-[#f7e833] text-[#f7e833] hover:bg-[#f7e833] hover:text-black rounded-xl"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                        </div>
-                    )}
-
-                    {/* Empty State */}
-                    {!loadingBrandKits && brandKits.length === 0 && (
-                        <div className="text-center py-12">
-                            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <Palette className="w-8 h-8 text-gray-400" />
-                            </div>
-                            <p className="text-gray-600 font-medium mb-2">No BrandKits Found</p>
-                            <p className="text-gray-500 text-sm">No brandkit forms have been submitted yet.</p>
-                        </div>
-                    )}
-
-                    {/* Stats Summary */}
-                    {!loadingBrandKits && brandKits.length > 0 && (
-                        <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="p-4 bg-gray-50 rounded-2xl text-center">
-                                <p className="text-2xl font-bold text-gray-900">{brandKits.length}</p>
-                                <p className="text-sm text-gray-600">Total BrandKits</p>
-                            </div>
-                            <div className="p-4 bg-gray-50 rounded-2xl text-center">
-                                <p className="text-2xl font-bold text-green-600">
-                                    {brandKits.filter(bk => bk.is_completed).length}
-                                </p>
-                                <p className="text-sm text-gray-600">Completed</p>
-                            </div>
-                            <div className="p-4 bg-gray-50 rounded-2xl text-center">
-                                <p className="text-2xl font-bold text-blue-600">
-                                    {brandKits.filter(bk => bk.progress_percentage >= 60 && bk.progress_percentage < 80).length}
-                                </p>
-                                <p className="text-sm text-gray-600">In Progress</p>
-                            </div>
-                            <div className="p-4 bg-gray-50 rounded-2xl text-center">
-                                <p className="text-2xl font-bold text-yellow-600">
-                                    {brandKits.filter(bk => bk.progress_percentage < 60).length}
-                                </p>
-                                <p className="text-sm text-gray-600">Started</p>
-                            </div>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-        </div>
-    );
-
-    const renderSupport = () => (
-        <div className="space-y-8">
-            <Card className="bg-white shadow-xl border-0 rounded-3xl overflow-hidden">
-                <CardHeader className="p-8 border-b border-gray-100">
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="text-2xl font-bold text-gray-900">Support & Communication</CardTitle>
-                        <Button className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-2xl font-semibold">
-                            <Plus className="w-5 h-5 mr-2" />
-                            New Ticket
-                        </Button>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-8">
-                    {/* Ticket System */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                        <div className="p-6 bg-gray-50 rounded-3xl">
-                            <div className="flex items-center space-x-3 mb-4">
-                                <div className="w-10 h-10 bg-red-100 rounded-2xl flex items-center justify-center">
-                                    <AlertCircle className="w-5 h-5 text-red-600" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-gray-900">Open</h3>
-                                    <p className="text-2xl font-bold text-red-600">5</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="p-6 bg-gray-50 rounded-3xl">
-                            <div className="flex items-center space-x-3 mb-4">
-                                <div className="w-10 h-10 bg-yellow-100 rounded-2xl flex items-center justify-center">
-                                    <Clock className="w-5 h-5 text-yellow-600" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-gray-900">In Progress</h3>
-                                    <p className="text-2xl font-bold text-yellow-600">3</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="p-6 bg-gray-50 rounded-3xl">
-                            <div className="flex items-center space-x-3 mb-4">
-                                <div className="w-10 h-10 bg-green-100 rounded-2xl flex items-center justify-center">
-                                    <CheckCircle className="w-5 h-5 text-green-600" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-gray-900">Resolved</h3>
-                                    <p className="text-2xl font-bold text-green-600">12</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Support Tickets */}
-                    <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-gray-900 mb-4">Recent Tickets</h3>
-                        {adminData.supportTickets.map((ticket) => (
-                            <div key={ticket.id} className="p-6 border border-gray-200 rounded-2xl hover:shadow-lg transition-shadow duration-200">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                        <h4 className="font-semibold text-gray-900">{ticket.title}</h4>
-                                        <p className="text-sm text-gray-500">Client: {ticket.client}</p>
-                                    </div>
-                                    <Badge className={`${getStatusColor(ticket.status)} text-white px-3 py-1 rounded-full`}>
-                                        {ticket.status}
-                                    </Badge>
-                                </div>
-                                <div className="flex items-center justify-between text-sm text-gray-600">
-                                    <span>Assigned to: {ticket.assignedTo}</span>
-                                    <span>Created: {ticket.createdAt}</span>
-                                </div>
-                                <div className="flex space-x-2 mt-4">
-                                    <Button size="sm" variant="outline" className="border-2 border-black text-black hover:bg-black hover:text-white rounded-xl">
-                                        <Eye className="w-4 h-4 mr-1" />
-                                        View
-                                    </Button>
-                                    <Button size="sm" variant="outline" className="border-2 border-[#f7e833] text-[#f7e833] hover:bg-[#f7e833] hover:text-black rounded-xl">
-                                        <Edit className="w-4 h-4 mr-1" />
-                                        Assign
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-    );
-
     const renderContent = () => {
         switch (activeSection) {
             case "dashboard":
-                return renderDashboard();
-            case "clients":
-                return renderClients();
-            case "activity":
-                return renderActivityLogs();
+                return (
+                    <AdminDashboard
+                        setActiveSection={setActiveSection}
+                    />
+                );
             case "packages":
-                return renderPackages();
-            case "campaigns":
-                return renderCampaigns();
-            case "analytics":
-                return renderAnalytics();
+                return (
+                    <AdminPackagesAndClients
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        filterStatus={filterStatus}
+                        setFilterStatus={setFilterStatus}
+                    />
+                );
+            case "activity":
+                return <AdminActivityLogs adminData={adminData} />;
             case "brandkits":
-                return renderBrandKits();
-            case "support":
-                return renderSupport();
+                return (
+                    <AdminBrandKits
+                        brandKits={brandKits}
+                        loadingBrandKits={loadingBrandKits}
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        filterStatus={filterStatus}
+                        setFilterStatus={setFilterStatus}
+                        fetchBrandKits={fetchBrandKits}
+                        downloadBrandKit={downloadBrandKit}
+                        downloadAllBrandKits={downloadAllBrandKits}
+                    />
+                );
+            case "revisions":
+                return <AdminRevisions />;
+            case "deliverable-upload":
+                return <UploadDeliverable />;
+            case "client-requests":
+                return <AdminClientRequests />;
             default:
-                return renderDashboard();
+                return (
+                    <AdminDashboard
+                        setActiveSection={setActiveSection}
+                    />
+                );
         }
     };
 
@@ -1675,125 +1540,22 @@ export default function AdminPortal() {
             )}
 
             {/* Sidebar */}
-            <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-black border-r border-gray-800 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:z-auto ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="flex flex-col h-screen">
-                    {/* Sidebar Header - Fixed */}
-                    <div className="flex-shrink-0 flex items-center justify-between p-8 border-b border-gray-800">
-                        <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-[#f7e833] rounded-2xl flex items-center justify-center shadow-lg">
-                                <span className="text-black font-bold text-lg">A</span>
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-bold text-white">Alta Media</h2>
-                                <p className="text-sm text-gray-400">Admin Portal</p>
-                            </div>
-                        </div>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSidebarOpen(false)}
-                            className="lg:hidden text-gray-400 hover:text-white hover:bg-gray-800"
-                        >
-                            <X className="w-5 h-5" />
-                        </Button>
-                    </div>
-
-                    {/* Navigation - Scrollable */}
-                    <nav className="flex-1 p-6 space-y-3 overflow-y-auto sidebar-scroll">
-                        {sidebarItems.map((item) => {
-                            const Icon = item.icon;
-                            return (
-                                <button
-                                    key={item.id}
-                                    onClick={() => {
-                                        setActiveSection(item.id);
-                                        setSidebarOpen(false);
-                                    }}
-                                    className={`w-full flex items-center space-x-4 px-6 py-4 rounded-2xl text-left transition-all duration-200 ${activeSection === item.id
-                                        ? 'bg-[#f7e833] text-black shadow-lg transform scale-105'
-                                        : 'text-gray-300 hover:text-white hover:bg-gray-800 hover:scale-105'
-                                        }`}
-                                >
-                                    <Icon className={`w-6 h-6 ${activeSection === item.id ? 'text-black' : 'text-gray-400'}`} />
-                                    <span className="font-medium text-lg">{item.label}</span>
-                                    {activeSection === item.id && (
-                                        <ChevronRight className="w-5 h-5 ml-auto text-black" />
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </nav>
-
-                    {/* Admin Info - Fixed */}
-                    <div className="flex-shrink-0 p-6 border-t border-gray-800">
-                        <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
-                            <p className="text-xs text-gray-400 mb-3 font-medium">Admin Account</p>
-                            <div className="flex items-center space-x-3 mb-4">
-                                <div className="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-[#f7e833] ring-opacity-30">
-                                    <div className="w-full h-full bg-[#f7e833] flex items-center justify-center">
-                                        <span className="text-black font-bold">A</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold text-white">Admin User</p>
-                                    <p className="text-xs text-[#f7e833] font-medium">Super Admin</p>
-                                </div>
-                            </div>
-                            <Button
-                                onClick={handleLogout}
-                                variant="outline"
-                                size="sm"
-                                className="w-full border-red-500 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
-                            >
-                                <LogOut className="w-4 h-4 mr-2" />
-                                Logout
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <AdminSidebar
+                activeSection={activeSection}
+                setActiveSection={setActiveSection}
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+                onLogout={handleLogout}
+            />
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 bg-gray-50">
+            <div className="flex-1 flex flex-col min-w-0 bg-gray-50 lg:ml-72">
                 {/* Top Bar */}
-                <div className="bg-white border-b border-gray-200 px-6 py-6 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-6">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSidebarOpen(true)}
-                                className="lg:hidden text-gray-600 hover:text-black hover:bg-gray-100"
-                            >
-                                <Menu className="w-6 h-6" />
-                            </Button>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">
-                                    {sidebarItems.find(item => item.id === activeSection)?.label}
-                                </h1>
-                                <p className="text-gray-500 mt-1">
-                                    Manage your clients and monitor their activities
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black hover:bg-gray-100">
-                                <Bell className="w-5 h-5" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black hover:bg-gray-100">
-                                <Settings className="w-5 h-5" />
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleLogout}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                                <LogOut className="w-5 h-5" />
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+                <AdminTopBar
+                    activeSection={activeSection}
+                    setSidebarOpen={setSidebarOpen}
+                    onLogout={handleLogout}
+                />
 
                 {/* Page Content */}
                 <div className="flex-1 p-6 lg:p-8 overflow-auto bg-gray-50">

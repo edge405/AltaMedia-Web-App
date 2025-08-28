@@ -6,12 +6,11 @@ import apiService from './api';
 export const organizationApi = {
   /**
    * Save form data for a specific step
-   * @param {number} userId - User ID
    * @param {Object} stepData - Form data for the current step
    * @param {number} currentStep - Current step number (1-4)
    * @returns {Promise<Object>} API response
    */
-  saveFormData: async (userId, stepData, currentStep) => {
+  saveFormData: async (stepData, currentStep) => {
     try {
       console.log('🔍 Frontend API - stepData:', stepData);
       console.log('🔍 Frontend API - referenceMaterials:', stepData.referenceMaterials);
@@ -41,7 +40,6 @@ export const organizationApi = {
       if (hasFiles) {
         // Use FormData for file uploads
         const formData = new FormData();
-        formData.append('userId', userId);
         formData.append('currentStep', currentStep);
         
         // Add non-file data as JSON string (use transformed data)
@@ -63,7 +61,6 @@ export const organizationApi = {
       } else {
         // Use regular JSON for non-file data
         const response = await apiService.put('/organization/save', {
-          userId,
           stepData: transformedData,
           currentStep
         });
@@ -76,17 +73,21 @@ export const organizationApi = {
   },
 
   /**
-   * Get form data for a user
-   * @param {number} userId - User ID
+   * Get form data for current user
    * @returns {Promise<Object>} API response with form data
    */
-  getFormData: async (userId) => {
+  getFormData: async () => {
     try {
-      const response = await apiService.get(`/organization/data/${userId}`);
+      const response = await apiService.get('/organization/data');
       return response;
     } catch (error) {
       console.error('Error fetching organization form data:', error);
-      throw new Error(error.message || 'Failed to fetch organization form data');
+      // Return a graceful response instead of throwing an error
+      return {
+        success: false,
+        message: 'Failed to fetch organization form data',
+        data: null
+      };
     }
   }
 };
@@ -97,6 +98,12 @@ export const organizationApi = {
  * @returns {Object} Database format data (snake_case)
  */
 export const transformToDatabaseFormat = (frontendData) => {
+  // Ensure frontendData is an object
+  if (!frontendData || typeof frontendData !== 'object') {
+    console.log('⚠️ frontendData is not a valid object, using empty object:', frontendData);
+    frontendData = {};
+  }
+
   const transformed = {};
   
   // Map frontend field names to database field names
@@ -118,6 +125,7 @@ export const transformToDatabaseFormat = (frontendData) => {
   for (const [frontendKey, value] of Object.entries(frontendData)) {
     const dbKey = fieldMappings[frontendKey] || frontendKey;
     
+    // Ensure the value is not undefined or null
     if (value !== undefined && value !== null) {
       // Handle special cases
       if (Array.isArray(value) && value.length === 0) {
@@ -125,6 +133,8 @@ export const transformToDatabaseFormat = (frontendData) => {
       } else {
         transformed[dbKey] = value;
       }
+    } else {
+      transformed[dbKey] = null;
     }
   }
 
@@ -137,6 +147,12 @@ export const transformToDatabaseFormat = (frontendData) => {
  * @returns {Object} Frontend format data (camelCase)
  */
 export const transformToFrontendFormat = (dbData) => {
+  // Ensure dbData is an object
+  if (!dbData || typeof dbData !== 'object') {
+    console.log('⚠️ dbData is not a valid object, using empty object:', dbData);
+    dbData = {};
+  }
+
   const transformed = {};
   
   // Map database field names to frontend field names
@@ -158,6 +174,7 @@ export const transformToFrontendFormat = (dbData) => {
   for (const [dbKey, value] of Object.entries(dbData)) {
     const frontendKey = fieldMappings[dbKey] || dbKey;
     
+    // Ensure the value is not undefined or null
     if (value !== undefined && value !== null) {
       // Handle special cases
       if (dbKey === 'reference_materials' && typeof value === 'string') {
@@ -176,6 +193,8 @@ export const transformToFrontendFormat = (dbData) => {
       } else {
         transformed[frontendKey] = value;
       }
+    } else {
+      transformed[frontendKey] = null;
     }
   }
 

@@ -3,9 +3,9 @@ const router = express.Router();
 const { 
   saveFormData, 
   getFormData,
-  getAllFormDataFromMariaDB
+  getAllForms
 } = require('../controllers/brandKitController');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireRole } = require('../middleware/auth');
 const { handleMultipleFileUploads, handleFileUploadError } = require('../middleware/fileUpload');
 
 // Simple validation middleware
@@ -31,7 +31,7 @@ router.get('/test', (req, res) => {
  * @access  Private
  */
 router.put('/save', 
-  // authenticateToken, // Temporarily disabled for testing
+  authenticateToken,
   handleMultipleFileUploads([
     { name: 'reference_materials', maxCount: 10 },
     { name: 'inspiration_links', maxCount: 10 }
@@ -46,20 +46,19 @@ router.put('/save',
  * @access  Private
  */
 router.get('/data/:userId', 
-  // authenticateToken, // Temporarily disabled for testing
+  authenticateToken,
   getFormData
 );
 
-
-
 /**
- * @route   GET /api/brandkit/all/mariadb
- * @desc    Get all BrandKit form data from MariaDB (for admin purposes)
- * @access  Private
+ * @route   GET /api/brandkit/admin/all
+ * @desc    Get all BrandKit forms (Admin)
+ * @access  Private (Admin)
  */
-router.get('/all/mariadb', 
-  // authenticateToken, // Temporarily disabled for testing
-  getAllFormDataFromMariaDB
+router.get('/admin/all', 
+  authenticateToken,
+  requireRole(['admin']),
+  getAllForms
 );
 
 module.exports = router; 

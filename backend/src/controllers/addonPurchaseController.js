@@ -1,4 +1,4 @@
-const { supabase, supabaseAdmin } = require('../config/supabase');
+const { executeQuery } = require('../config/mysql');
 
 /**
  * Get user's independent addon purchases
@@ -9,26 +9,19 @@ const getUserAddonPurchases = async (req, res) => {
     const userId = req.user.id;
 
     // Get all independent addon purchases
-    const { data: addonPurchases, error } = await supabase
-      .from('purchased_addons')
-      .select(`
-        *,
-        addons:addon_id (
-          id,
-          name,
-          description,
-          price_type,
-          base_price
-        )
-      `)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+    const addonPurchases = await executeQuery(`
+      SELECT pa.*, a.id as addon_id, a.name as addon_name, a.description as addon_description,
+             a.price_type, a.base_price
+      FROM purchased_addons pa
+      LEFT JOIN addons a ON pa.addon_id = a.id
+      WHERE pa.user_id = ?
+      ORDER BY pa.created_at DESC
+    `, [userId]);
 
-    if (error) {
+    if (!addonPurchases) {
       return res.status(500).json({
         success: false,
-        message: 'Failed to fetch addon purchases',
-        error: error.message
+        message: 'Failed to fetch addon purchases'
       });
     }
 
@@ -44,11 +37,11 @@ const getUserAddonPurchases = async (req, res) => {
         created_at: purchase.created_at
       },
       addon_details: {
-        addon_id: purchase.addons.id,
-        addon_name: purchase.addons.name,
-        addon_description: purchase.addons.description,
-        price_type: purchase.addons.price_type,
-        base_price: purchase.addons.base_price
+        addon_id: purchase.addon_id,
+        addon_name: purchase.addon_name,
+        addon_description: purchase.addon_description,
+        price_type: purchase.price_type,
+        base_price: purchase.base_price
       }
     }));
 
@@ -81,54 +74,50 @@ const getAddonPurchaseById = async (req, res) => {
     const userId = req.user.id;
 
     // Get addon purchase details
-    const { data: addonPurchase, error: purchaseError } = await supabase
-      .from('purchased_addons')
-      .select(`
-        *,
-        addons:addon_id (
-          id,
-          name,
-          description,
-          price_type,
-          base_price
-        )
-      `)
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single();
+    const addonPurchases = await executeQuery(`
+      SELECT pa.*, a.id as addon_id, a.name as addon_name, a.description as addon_description,
+             a.price_type, a.base_price
+      FROM purchased_addons pa
+      LEFT JOIN addons a ON pa.addon_id = a.id
+      WHERE pa.id = ? AND pa.user_id = ?
+    `, [id, userId]);
 
-    if (purchaseError || !addonPurchase) {
+    if (!addonPurchases || addonPurchases.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Addon purchase not found'
       });
     }
 
+    const addonPurchase = addonPurchases[0];
+
+    const purchaseWithDetails = {
+      addon_purchase_id: addonPurchase.id,
+      purchase_info: {
+        purchase_date: addonPurchase.purchase_date,
+        status: addonPurchase.status,
+        base_price: addonPurchase.base_price,
+        price_type: addonPurchase.price_type,
+        duration: addonPurchase.duration,
+        created_at: addonPurchase.created_at
+      },
+      addon_details: {
+        addon_id: addonPurchase.addon_id,
+        addon_name: addonPurchase.addon_name,
+        addon_description: addonPurchase.addon_description,
+        price_type: addonPurchase.price_type,
+        base_price: addonPurchase.base_price
+      }
+    };
+
     res.json({
       success: true,
-      message: 'Addon purchase details retrieved successfully',
-      data: {
-        addon_purchase_id: addonPurchase.id,
-        purchase_info: {
-          purchase_date: addonPurchase.purchase_date,
-          status: addonPurchase.status,
-          base_price: addonPurchase.base_price,
-          price_type: addonPurchase.price_type,
-          duration: addonPurchase.duration,
-          created_at: addonPurchase.created_at
-        },
-        addon_details: {
-          addon_id: addonPurchase.addons.id,
-          addon_name: addonPurchase.addons.name,
-          addon_description: addonPurchase.addons.description,
-          price_type: addonPurchase.addons.price_type,
-          base_price: addonPurchase.addons.base_price
-        }
-      }
+      message: 'Addon purchase retrieved successfully',
+      data: purchaseWithDetails
     });
 
   } catch (error) {
-    console.error('Get addon purchase error:', error);
+    console.error('Get addon purchase by ID error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -137,72 +126,77 @@ const getAddonPurchaseById = async (req, res) => {
 };
 
 /**
- * Create new independent addon purchase
+ * Create addon purchase
  * POST /api/addon-purchases
  */
 const createAddonPurchase = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { addon_id } = req.body;
+    const { addon_id, base_price, price_type = 'one-time', duration = null } = req.body;
 
-    // Get addon details
-    const { data: addon, error: addonError } = await supabase
-      .from('addons')
-      .select('*')
-      .eq('id', addon_id)
-      .eq('is_active', true)
-      .single();
+    if (!addon_id || !base_price) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: addon_id, base_price'
+      });
+    }
 
-    if (addonError || !addon) {
+    // Validate addon exists and is active
+    const addons = await executeQuery(`
+      SELECT * FROM addons WHERE id = ? AND is_active = TRUE
+    `, [addon_id]);
+
+    if (!addons || addons.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Addon not found'
+        message: 'Addon not found or inactive'
       });
     }
 
-    // Create addon purchase using the existing purchased_addons table
-    const { data: addonPurchase, error: purchaseError } = await supabaseAdmin
-      .from('purchased_addons')
-      .insert({
-        user_id: userId,
-        addon_id: addon_id,
-        base_price: addon.base_price,
-        price_type: addon.price_type,
-        duration: null,
-        status: 'active'
-      })
-      .select()
-      .single();
+    const addon = addons[0];
 
-    if (purchaseError) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to create addon purchase',
-        error: purchaseError.message
-      });
-    }
+    // Create addon purchase
+    const purchaseResult = await executeQuery(`
+      INSERT INTO purchased_addons (user_id, addon_id, base_price, price_type, duration, status)
+      VALUES (?, ?, ?, ?, ?, 'active')
+    `, [userId, addon_id, base_price, price_type, duration]);
+
+    const purchaseId = purchaseResult.insertId;
+
+    // Get the created purchase
+    const createdPurchases = await executeQuery(`
+      SELECT pa.*, a.id as addon_id, a.name as addon_name, a.description as addon_description,
+             a.price_type, a.base_price
+      FROM purchased_addons pa
+      LEFT JOIN addons a ON pa.addon_id = a.id
+      WHERE pa.id = ?
+    `, [purchaseId]);
+
+    const createdPurchase = createdPurchases[0];
+
+    const purchaseWithDetails = {
+      addon_purchase_id: createdPurchase.id,
+      purchase_info: {
+        purchase_date: createdPurchase.purchase_date,
+        status: createdPurchase.status,
+        base_price: createdPurchase.base_price,
+        price_type: createdPurchase.price_type,
+        duration: createdPurchase.duration,
+        created_at: createdPurchase.created_at
+      },
+      addon_details: {
+        addon_id: createdPurchase.addon_id,
+        addon_name: createdPurchase.addon_name,
+        addon_description: createdPurchase.addon_description,
+        price_type: createdPurchase.price_type,
+        base_price: createdPurchase.base_price
+      }
+    };
 
     res.status(201).json({
       success: true,
       message: 'Addon purchase created successfully',
-      data: {
-        addon_purchase_id: addonPurchase.id,
-        purchase_info: {
-          purchase_date: addonPurchase.purchase_date,
-          status: addonPurchase.status,
-          base_price: addonPurchase.base_price,
-          price_type: addonPurchase.price_type,
-          duration: addonPurchase.duration,
-          created_at: addonPurchase.created_at
-        },
-        addon_details: {
-          addon_id: addon.id,
-          addon_name: addon.name,
-          addon_description: addon.description,
-          price_type: addon.price_type,
-          base_price: addon.base_price
-        }
-      }
+      data: purchaseWithDetails
     });
 
   } catch (error) {
@@ -215,39 +209,50 @@ const createAddonPurchase = async (req, res) => {
 };
 
 /**
- * Cancel addon purchase
- * PUT /api/addon-purchases/:id/cancel
+ * Update addon purchase status
+ * PUT /api/addon-purchases/:id/status
  */
-const cancelAddonPurchase = async (req, res) => {
+const updateAddonPurchaseStatus = async (req, res) => {
   try {
     const { id } = req.params;
+    const { status } = req.body;
     const userId = req.user.id;
 
-    const { data: addonPurchase, error } = await supabaseAdmin
-      .from('purchased_addons')
-      .update({ status: 'cancelled' })
-      .eq('id', id)
-      .select()
-      .single();
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status is required'
+      });
+    }
 
-    if (error || !addonPurchase) {
+    const validStatuses = ['active', 'inactive', 'cancelled', 'expired'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be one of: active, inactive, cancelled, expired'
+      });
+    }
+
+    const result = await executeQuery(`
+      UPDATE purchased_addons 
+      SET status = ?
+      WHERE id = ? AND user_id = ?
+    `, [status, id, userId]);
+
+    if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Addon purchase not found or already cancelled'
+        message: 'Addon purchase not found'
       });
     }
 
     res.json({
       success: true,
-      message: 'Addon purchase cancelled successfully',
-      data: {
-        addon_purchase_id: addonPurchase.id,
-        status: addonPurchase.status
-      }
+      message: 'Addon purchase status updated successfully'
     });
 
   } catch (error) {
-    console.error('Cancel addon purchase error:', error);
+    console.error('Update addon purchase status error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -256,68 +261,34 @@ const cancelAddonPurchase = async (req, res) => {
 };
 
 /**
- * Get all addon purchases (Admin only)
- * GET /api/admin/addon-purchases
+ * Get all addon purchases (Admin)
+ * GET /api/addon-purchases/admin/all
  */
 const getAllAddonPurchases = async (req, res) => {
   try {
-    // Get all addon purchases with user and addon details
-    const { data: addonPurchases, error } = await supabaseAdmin
-      .from('purchased_addons')
-      .select(`
-        *,
-        addons:addon_id (
-          id,
-          name,
-          description,
-          price_type,
-          base_price
-        ),
-        users:user_id (
-          id,
-          email
-        )
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      return res.status(500).json({
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
         success: false,
-        message: 'Failed to fetch addon purchases',
-        error: error.message
+        message: 'Access denied. Admin privileges required.'
       });
     }
 
-    // Organize addon purchases with clear labeling
-    const labeledAddonPurchases = addonPurchases.map(purchase => ({
-      addon_purchase_id: purchase.id,
-      purchase_info: {
-        purchase_date: purchase.purchase_date,
-        status: purchase.status,
-        base_price: purchase.base_price,
-        price_type: purchase.price_type,
-        duration: purchase.duration,
-        created_at: purchase.created_at
-      },
-      user_details: {
-        user_id: purchase.users?.id || null,
-        user_email: purchase.users?.email || null
-      },
-      addon_details: {
-        addon_id: purchase.addons.id,
-        addon_name: purchase.addons.name,
-        addon_description: purchase.addons.description,
-        price_type: purchase.addons.price_type,
-        base_price: purchase.addons.base_price
-      }
-    }));
+    const addonPurchases = await executeQuery(`
+      SELECT pa.*, a.name as addon_name, a.description as addon_description,
+             u.email as user_email, u.fullname as user_name
+      FROM purchased_addons pa
+      LEFT JOIN addons a ON pa.addon_id = a.id
+      LEFT JOIN users u ON pa.user_id = u.id
+      ORDER BY pa.created_at DESC
+    `);
 
     res.json({
       success: true,
       message: 'All addon purchases retrieved successfully',
       data: {
-        total_addon_purchases: labeledAddonPurchases.length,
-        addon_purchases: labeledAddonPurchases
+        total_addon_purchases: addonPurchases.length,
+        addon_purchases: addonPurchases
       }
     });
 
@@ -330,10 +301,97 @@ const getAllAddonPurchases = async (req, res) => {
   }
 };
 
+/**
+ * Get addon purchases by user ID (Admin)
+ * GET /api/addon-purchases/admin/user/:userId
+ */
+const getAddonPurchasesByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+
+    const addonPurchases = await executeQuery(`
+      SELECT pa.*, a.name as addon_name, a.description as addon_description
+      FROM purchased_addons pa
+      LEFT JOIN addons a ON pa.addon_id = a.id
+      WHERE pa.user_id = ?
+      ORDER BY pa.created_at DESC
+    `, [userId]);
+
+    res.json({
+      success: true,
+      message: 'User addon purchases retrieved successfully',
+      data: {
+        user_id: userId,
+        total_addon_purchases: addonPurchases.length,
+        addon_purchases: addonPurchases
+      }
+    });
+
+  } catch (error) {
+    console.error('Get addon purchases by user ID error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Delete addon purchase (Admin)
+ * DELETE /api/addon-purchases/admin/:id
+ */
+const deleteAddonPurchase = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+
+    const result = await executeQuery(
+      'DELETE FROM purchased_addons WHERE id = ?',
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Addon purchase not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Addon purchase deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Delete addon purchase error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   getUserAddonPurchases,
   getAddonPurchaseById,
   createAddonPurchase,
-  cancelAddonPurchase,
-  getAllAddonPurchases
+  updateAddonPurchaseStatus,
+  getAllAddonPurchases,
+  getAddonPurchasesByUserId,
+  deleteAddonPurchase
 }; 

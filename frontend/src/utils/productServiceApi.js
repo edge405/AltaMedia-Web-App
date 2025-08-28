@@ -6,6 +6,12 @@ import apiService from './api';
  * @returns {Object} - Database formatted data
  */
 const transformToDatabaseFormat = (formData) => {
+  // Ensure formData is an object
+  if (!formData || typeof formData !== 'object') {
+    console.log('⚠️ formData is not a valid object, using empty object:', formData);
+    formData = {};
+  }
+
   const transformed = {};
 
   // Map frontend field names to database column names
@@ -39,7 +45,8 @@ const transformToDatabaseFormat = (formData) => {
   // Transform each field
   Object.keys(formData).forEach(key => {
     const dbKey = fieldMappings[key] || key;
-    transformed[dbKey] = formData[key];
+    // Ensure the value is not undefined or null
+    transformed[dbKey] = formData[key] !== undefined && formData[key] !== null ? formData[key] : null;
   });
 
   return transformed;
@@ -51,6 +58,12 @@ const transformToDatabaseFormat = (formData) => {
  * @returns {Object} - Frontend formatted data
  */
 const transformToFrontendFormat = (dbData) => {
+  // Ensure dbData is an object
+  if (!dbData || typeof dbData !== 'object') {
+    console.log('⚠️ dbData is not a valid object, using empty object:', dbData);
+    dbData = {};
+  }
+
   const transformed = {};
 
   // Map database field names to frontend field names
@@ -89,7 +102,8 @@ const transformToFrontendFormat = (dbData) => {
     if (key === 'reference_materials' && typeof dbData[key] === 'string') {
       transformed[frontendKey] = dbData[key] ? dbData[key].split(',').filter(path => path.trim()) : [];
     } else {
-      transformed[frontendKey] = dbData[key];
+      // Ensure the value is not undefined or null
+      transformed[frontendKey] = dbData[key] !== undefined && dbData[key] !== null ? dbData[key] : null;
     }
   });
 
@@ -103,9 +117,15 @@ const transformToFrontendFormat = (dbData) => {
  * @param {number} currentStep - Current step number
  * @returns {Promise<Object>} - API response
  */
-export const saveFormData = async (userId, stepData, currentStep) => {
+export const saveFormData = async (stepData, currentStep) => {
   try {
+    console.log('🔄 Original step data:', stepData);
+    console.log('🔄 Original step data keys:', Object.keys(stepData));
+    console.log('🔄 Original step data values:', Object.values(stepData));
     const transformedData = transformToDatabaseFormat(stepData);
+    console.log('🔄 Transformed data:', transformedData);
+    console.log('🔄 Transformed data keys:', Object.keys(transformedData));
+    console.log('🔄 Transformed data values:', Object.values(transformedData));
     
     // Check if there are files to upload (ensure they are arrays and have files)
     const hasFiles = Array.isArray(transformedData.reference_materials) && transformedData.reference_materials.length > 0;
@@ -113,7 +133,6 @@ export const saveFormData = async (userId, stepData, currentStep) => {
     if (hasFiles) {
       // Use FormData for file uploads
       const formData = new FormData();
-      formData.append('userId', userId);
       formData.append('currentStep', currentStep);
       
       // Add non-file data as JSON string
@@ -131,7 +150,6 @@ export const saveFormData = async (userId, stepData, currentStep) => {
     } else {
       // Use regular JSON for non-file data
       const response = await apiService.put('/productservice/save', {
-        userId,
         stepData: transformedData,
         currentStep
       });
@@ -148,18 +166,38 @@ export const saveFormData = async (userId, stepData, currentStep) => {
  * @param {number} userId - User ID
  * @returns {Promise<Object>} - API response with form data
  */
-export const getFormData = async (userId) => {
+export const getFormData = async () => {
   try {
-    const response = await apiService.get(`/productservice/data/${userId}`);
+    console.log('🔄 Fetching ProductService form data...');
+    const response = await apiService.get('/productservice/data');
+    console.log('🔄 Raw API response:', response);
     
     // Transform the data to frontend format if it exists
-    if (response.success && response.data.formData) {
+    if (response.success && response.data && response.data.formData) {
+      console.log('🔄 Transforming form data...');
       response.data.formData = transformToFrontendFormat(response.data.formData);
+      console.log('🔄 Transformed form data:', response.data);
     }
 
     return response;
   } catch (error) {
     console.error('Error fetching ProductService form data:', error);
+    throw error;
+  }
+};
+
+/**
+ * Mark ProductService form as completed
+ * @returns {Promise<Object>} - API response
+ */
+export const completeForm = async () => {
+  try {
+    console.log('🔄 Marking ProductService form as completed...');
+    const response = await apiService.put('/productservice/complete');
+    console.log('🔄 Complete form response:', response);
+    return response;
+  } catch (error) {
+    console.error('Error completing ProductService form:', error);
     throw error;
   }
 };

@@ -142,7 +142,6 @@ const BrandKitForm = () => {
 
     // Debug: Component mount
     useEffect(() => {
-        alert('BrandKitForm MOUNTED - Component is loading');
         console.log('BrandKitForm component mounted');
         console.log('Initial form data:', formData);
         console.error('TEST ERROR LOG');
@@ -158,9 +157,6 @@ const BrandKitForm = () => {
 
     // Handle step navigation
     const handleNext = () => {
-        // Multiple logging approaches to ensure we see something
-        alert(`Step ${currentStep} - Starting data collection...`);
-
         console.log('handleNext called for step:', currentStep);
         console.error('ERROR LOG - Step:', currentStep);
         console.warn('WARNING LOG - Step:', currentStep);
@@ -204,7 +200,7 @@ const BrandKitForm = () => {
         // Simulate API call
         setTimeout(() => {
             setIsSubmitting(false);
-            alert('BrandKit form submitted successfully! Check console for data.');
+            console.log('BrandKit form submitted successfully! Check console for data.');
         }, 2000);
     };
 
@@ -451,7 +447,6 @@ const BrandKitForm = () => {
 
                         <Button
                             onClick={() => {
-                                alert('NEXT BUTTON CLICKED!');
                                 console.log('NEXT BUTTON CLICKED!');
                                 console.error('NEXT BUTTON ERROR LOG');
                                 console.warn('NEXT BUTTON WARNING LOG');
