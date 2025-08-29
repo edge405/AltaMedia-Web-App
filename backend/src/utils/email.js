@@ -107,7 +107,7 @@ const sendWelcomeEmail = async (email, password, fullname, purchasedPackage, fea
         </p>
         
         <div style="text-align: center; margin-top: 30px;">
-          <a href="${`https://altamedia-web-app.onrender.com`}/login" 
+          <a href="${`https://builder.altamedia.ai/login`}/login" 
              style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
             Login to Your Account
           </a>

@@ -249,9 +249,9 @@ export default function PackagePurchasesStatusUpdateTest() {
                 <div className="mt-4 p-4 bg-slate-50 rounded-lg">
                     <h4 className="font-medium text-slate-800 mb-2">What This Tests:</h4>
                     <ul className="text-sm text-slate-600 space-y-1">
-                        <li>• Fetching package purchases from /api/package-purchases endpoint</li>
-                        <li>• Verifying features structure in package_details</li>
-                        <li>• Testing status update API functionality</li>
+                        <li>• Package purchase functionality (endpoint removed)</li>
+                        <li>• Status update functionality (endpoint removed)</li>
+                        <li>• UI components for package management</li>
                         <li>• Real-time status management with dropdown selectors</li>
                         <li>• Automatic refresh after status updates</li>
                     </ul>

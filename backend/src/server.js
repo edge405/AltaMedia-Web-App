@@ -10,16 +10,10 @@ const { initializePool, testConnection } = require('./config/mysql');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
-const packageRoutes = require('./routes/packageRoutes');
-const addonRoutes = require('./routes/addonRoutes');
-const purchaseRoutes = require('./routes/purchaseRoutes');
-const addonPurchaseRoutes = require('./routes/addonPurchaseRoutes');
-const packagePurchaseRoutes = require('./routes/packagePurchaseRoutes');
 const brandKitRoutes = require('./routes/brandKitRoutes');
 const brandKitConsolidationRoutes = require('./routes/brandKitConsolidationRoutes');
 const brandKitQuestionnaireRoutes = require('./routes/brandKitQuestionnaireRoutes');
 const organizationRoutes = require('./routes/organizationRoutes');
-const packageFeatureCommentRoutes = require('./routes/packageFeatureCommentRoutes');
 const aiSuggestionsRoutes = require('./routes/aiSuggestionsRoutes');
 const emailRoutes = require('./routes/emailRoutes');
 const userPackageRoutes = require('./routes/userPackageRoutes');
@@ -103,15 +97,9 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
-app.use('/api/packages', packageRoutes);
-app.use('/api/addons', addonRoutes);
-app.use('/api/purchases', purchaseRoutes);
-app.use('/api/addon-purchases', addonPurchaseRoutes);
-app.use('/api/package-purchases', packagePurchaseRoutes);
 app.use('/api/brandkit', brandKitRoutes);
 app.use('/api/brandkit', brandKitConsolidationRoutes);
 app.use('/api/organization', organizationRoutes);
-app.use('/api/package-feature-comments', packageFeatureCommentRoutes);
 app.use('/api/ai-suggestions', aiSuggestionsRoutes);
 app.use('/api/brandkit-questionnaire', brandKitQuestionnaireRoutes);
 app.use('/api/email', emailRoutes);

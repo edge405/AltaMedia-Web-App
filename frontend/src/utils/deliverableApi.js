@@ -1,4 +1,5 @@
 import apiService from './api';
+import API_CONFIG from '../config/api';
 
 const BASE_URL = '/deliverables';
 
@@ -84,7 +85,7 @@ export const deliverableApi = {
   // Download deliverable file
   downloadFile: (filePath) => {
     // Construct the full URL for file download
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+    const baseUrl = API_CONFIG.BASE_URL;
     
     if (!filePath) {
       console.error('No file path provided for download');
@@ -94,12 +95,17 @@ export const deliverableApi = {
     // Remove any leading slashes and normalize path separators
     const cleanPath = filePath.replace(/^[\/\\]+/, '').replace(/\\/g, '/');
     
-    // If the path already includes 'uploads', use it as is
+    // If the path already includes 'uploads/', use it as is
     if (cleanPath.startsWith('uploads/')) {
       return `${baseUrl}/${cleanPath}`;
     }
     
-    // Otherwise, assume it's a relative path and prepend 'uploads/'
+    // If it's just a filename without path, prepend 'uploads/'
+    if (!cleanPath.includes('/')) {
+      return `${baseUrl}/uploads/${cleanPath}`;
+    }
+    
+    // For any other relative path, prepend 'uploads/'
     return `${baseUrl}/uploads/${cleanPath}`;
   },
 

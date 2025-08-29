@@ -249,11 +249,11 @@ export default function DashboardPackagePurchasesTest() {
                 <div className="mt-4 p-4 bg-slate-50 rounded-lg">
                     <h4 className="font-medium text-slate-800 mb-2">What This Tests:</h4>
                     <ul className="text-sm text-slate-600 space-y-1">
-                        <li>• Fetching package purchases from /api/package-purchases endpoint</li>
-                        <li>• Verifying features structure in package_details</li>
-                        <li>• Testing dashboard service with real package purchase data</li>
-                        <li>• Displaying actual features with statuses from the database</li>
+                        <li>• Package purchase functionality (endpoint removed)</li>
+                        <li>• Dashboard service with package purchase data</li>
+                        <li>• Displaying features with statuses from the database</li>
                         <li>• Checking feature structure includes title, status, and description</li>
+                        <li>• UI components for package management</li>
                     </ul>
                 </div>
             </CardContent>

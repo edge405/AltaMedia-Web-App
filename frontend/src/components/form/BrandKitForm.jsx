@@ -10,7 +10,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, ArrowRight, Check, Building2, Palette, Target, Users, Globe, FileText, Image, Settings, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Building2, Palette, Target, Users, Globe, FileText, Image, Settings, Zap, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import FormField from './FormField';
 import ProgressBar from './ProgressBar';
 import ColorPicker from './ColorPicker';
@@ -134,14 +135,111 @@ const BrandKitForm = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, dispatch] = useReducer(formReducer, initialFormState);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [validationErrors, setValidationErrors] = useState([]);
 
     // Handle field updates
     const handleFieldChange = (field, value) => {
         dispatch({ type: 'UPDATE_FIELD', field, value });
     };
 
+    // Validation function for current step
+    const validateCurrentStep = () => {
+        const errors = [];
+
+        switch (currentStep) {
+            case 1:
+                if (!formData.buildingType) {
+                    errors.push('Please select what you are building');
+                }
+                if (!formData.businessEmail) {
+                    errors.push('Business email is required');
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.businessEmail)) {
+                    errors.push('Please enter a valid email address');
+                }
+                if (!formData.businessName) {
+                    errors.push('Business name is required');
+                }
+                break;
+
+            case 2:
+                if (!formData.industry || formData.industry.length === 0) {
+                    errors.push('Please select at least one industry or niche');
+                }
+                if (!formData.yearStarted) {
+                    errors.push('Please select the year your business started');
+                }
+                if (!formData.primaryLocation) {
+                    errors.push('Primary location is required');
+                }
+                if (!formData.wantToAttract) {
+                    errors.push('Please describe who you want to attract');
+                }
+                break;
+
+            case 3:
+                if (!formData.desiredEmotion) {
+                    errors.push('Please select the desired emotion for your audience');
+                }
+                break;
+
+            case 5:
+                if (!formData.reason1) {
+                    errors.push('Please provide at least one reason for your brand');
+                }
+                if (!formData.brandSoul) {
+                    errors.push('Brand soul is required');
+                }
+                break;
+
+            case 6:
+                if (!formData.hasLogo) {
+                    errors.push('Please indicate if you have a logo');
+                }
+                break;
+
+            case 7:
+                if (!formData.brandKitUse || formData.brandKitUse.length === 0) {
+                    errors.push('Please select how you will use your brand kit');
+                }
+                break;
+
+            case 8:
+                if (!formData.primaryGoal) {
+                    errors.push('Primary goal is required');
+                }
+                break;
+
+            case 9:
+                if (!formData.businessDescription) {
+                    errors.push('Business description is required');
+                }
+                break;
+
+            case 10:
+                if (!formData.timeline) {
+                    errors.push('Timeline is required');
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        return errors;
+    };
+
     // Handle step navigation
     const handleNext = () => {
+        const errors = validateCurrentStep();
+
+        if (errors.length > 0) {
+            setValidationErrors(errors);
+            toast.error('Please fill in all required fields before proceeding');
+            return;
+        }
+
+        setValidationErrors([]);
+
         if (currentStep < 11) {
             setCurrentStep(currentStep + 1);
         } else {
@@ -379,6 +477,27 @@ const BrandKitForm = () => {
                     />
 
                     <Separator className="my-6" />
+
+                    {/* Validation Errors */}
+                    {validationErrors.length > 0 && (
+                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                            <div className="flex items-start gap-2">
+                                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
+                                        Please fix the following errors:
+                                    </h4>
+                                    <ul className="list-disc list-inside space-y-1">
+                                        {validationErrors.map((error, index) => (
+                                            <li key={index} className="text-red-700 dark:text-red-300 text-sm">
+                                                {error}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Step Content */}
                     <div className="min-h-[400px]">

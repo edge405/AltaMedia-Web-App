@@ -124,14 +124,14 @@ export default function FormStatusIndicator() {
                     <div
                         key={form.type}
                         className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-200 ${form.completed
-                                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                                : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                            : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30'
                             }`}
                     >
                         <div className="flex items-center space-x-3">
                             <div className={`p-2 rounded-full ${form.completed
-                                    ? 'bg-green-100 dark:bg-green-800 text-green-600 dark:text-green-400'
-                                    : 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-400'
+                                ? 'bg-green-100 dark:bg-green-800 text-green-600 dark:text-green-400'
+                                : 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-400'
                                 }`}>
                                 {form.completed ? (
                                     <CheckCircle className="w-5 h-5" />

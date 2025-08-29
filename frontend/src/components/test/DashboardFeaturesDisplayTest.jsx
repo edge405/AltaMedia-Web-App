@@ -225,10 +225,10 @@ export default function DashboardFeaturesDisplayTest() {
                 <div className="mt-4 p-4 bg-slate-50 rounded-lg">
                     <h4 className="font-medium text-slate-800 mb-2">What This Tests:</h4>
                     <ul className="text-sm text-slate-600 space-y-1">
-                        <li>• Fetching purchases from /api/purchases endpoint</li>
-                        <li>• Verifying features JSON structure in purchase data</li>
-                        <li>• Testing dashboard service with real purchase data</li>
-                        <li>• Displaying actual features with statuses from the database</li>
+                        <li>• Purchase functionality (endpoint removed)</li>
+                        <li>• Features JSON structure in purchase data</li>
+                        <li>• Dashboard service with purchase data</li>
+                        <li>• Displaying features with statuses from the database</li>
                     </ul>
                 </div>
             </CardContent>

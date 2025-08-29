@@ -232,102 +232,7 @@ class ApiService {
     localStorage.removeItem('user');
   }
 
-  // Package methods
-  async getPackages() {
-    return this.get('/packages');
-  }
 
-  async getPackageById(id) {
-    return this.get(`/packages/${id}`);
-  }
-
-  async createPackage(packageData) {
-    return this.post('/packages', packageData);
-  }
-
-  async updatePackage(id, packageData) {
-    return this.put(`/packages/${id}`, packageData);
-  }
-
-  async deletePackage(id) {
-    return this.delete(`/packages/${id}`);
-  }
-
-  // Package Purchase methods
-  async getUserPackagePurchases() {
-    return this.get('/package-purchases');
-  }
-
-  async getPackagePurchaseById(id) {
-    return this.get(`/package-purchases/${id}`);
-  }
-
-  async getAllPackagePurchases() {
-    return this.get('/package-purchases/admin/all');
-  }
-
-  // Addon methods
-  async getAddons() {
-    return this.get('/addons');
-  }
-
-  async getAddonById(id) {
-    return this.get(`/addons/${id}`);
-  }
-
-  async getUserAddons() {
-    return this.get('/addons/user');
-  }
-
-  async createAddon(addonData) {
-    return this.post('/addons', addonData);
-  }
-
-  async updateAddon(id, addonData) {
-    return this.put(`/addons/${id}`, addonData);
-  }
-
-  async deleteAddon(id) {
-    return this.delete(`/addons/${id}`);
-  }
-
-  // Addon Purchase methods
-  async getUserAddonPurchases() {
-    return this.get('/addon-purchases');
-  }
-
-  async getAddonPurchaseById(id) {
-    return this.get(`/addon-purchases/${id}`);
-  }
-
-  async createAddonPurchase(addonId) {
-    return this.post('/addon-purchases', { addon_id: addonId });
-  }
-
-  async cancelAddonPurchase(id) {
-    return this.put(`/addon-purchases/${id}/cancel`);
-  }
-
-  async getAllAddonPurchases() {
-    return this.get('/addon-purchases/admin/all');
-  }
-
-  // Combined Purchase methods (for compatibility)
-  async getUserPurchases() {
-    return this.get('/purchases');
-  }
-
-  async getPurchaseById(id) {
-    return this.get(`/purchases/${id}`);
-  }
-
-  async createPurchase(purchaseData) {
-    return this.post('/purchases', purchaseData);
-  }
-
-  async getAllPurchases() {
-    return this.get('/purchases/admin/all');
-  }
 
   // Brand Kit methods
   async getBrandKitForms() {
@@ -412,20 +317,14 @@ class ApiService {
   // Dashboard specific methods
   async getDashboardData() {
     try {
-      const [packagePurchases, addonPurchases, packages, addons] = await Promise.all([
-        this.getUserPackagePurchases(),
-        this.getUserAddonPurchases(),
-        this.getPackages(),
-        this.getAddons()
-      ]);
-
+      // Return empty data since package/addon related endpoints have been removed
       return {
         success: true,
         data: {
-          packagePurchases: packagePurchases.data || {},
-          addonPurchases: addonPurchases.data || {},
-          availablePackages: packages.data || {},
-          availableAddons: addons.data || {}
+          packagePurchases: {},
+          addonPurchases: {},
+          availablePackages: {},
+          availableAddons: {}
         }
       };
     } catch (error) {
@@ -443,40 +342,7 @@ class ApiService {
     return this.get('/analytics/user');
   }
 
-  // Package Feature Comments methods
-  async createFeatureComment(packageFeatureId, userId, commentText) {
-    return this.post('/package-feature-comments', {
-      package_feature_id: packageFeatureId,
-      user_id: userId,
-      comment_text: commentText
-    });
-  }
 
-  async getCommentsByFeature(packageFeatureId) {
-    return this.get(`/package-feature-comments/feature/${packageFeatureId}`);
-  }
-
-  async getCommentsByUser(userId) {
-    return this.get(`/package-feature-comments/user/${userId}`);
-  }
-
-  async getCommentsByFeatureAndUser(packageFeatureId, userId) {
-    return this.get(`/package-feature-comments/feature/${packageFeatureId}/user/${userId}`);
-  }
-
-  async getCommentById(commentId) {
-    return this.get(`/package-feature-comments/${commentId}`);
-  }
-
-  async updateFeatureComment(commentId, commentText) {
-    return this.put(`/package-feature-comments/${commentId}`, {
-      comment_text: commentText
-    });
-  }
-
-  async deleteFeatureComment(commentId) {
-    return this.delete(`/package-feature-comments/${commentId}`);
-  }
 }
 
 // Create and export a singleton instance

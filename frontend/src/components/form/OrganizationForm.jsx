@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Check, Send, ArrowLeft, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Send, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,6 +32,7 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
     const [isSaving, setIsSaving] = useState(false);
     const [isNextLoading, setIsNextLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [validationErrors, setValidationErrors] = useState([]);
 
     const totalSteps = 4;
     const steps = [
@@ -111,7 +112,67 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
         }
     };
 
+    // Validation function for current step
+    const validateCurrentStep = () => {
+        const errors = [];
+
+        switch (currentStep) {
+            case 1:
+                if (!safeFormData.organizationName) {
+                    errors.push('Organization name is required');
+                }
+                if (!safeFormData.socialMediaGoals) {
+                    errors.push('Social media goals are required');
+                }
+                if (!safeFormData.brandUniqueness) {
+                    errors.push('Please describe what makes your brand unique');
+                }
+                break;
+
+            case 2:
+                if (!safeFormData.desiredEmotion) {
+                    errors.push('Please select the desired emotion');
+                }
+                if (!safeFormData.targetPlatforms || safeFormData.targetPlatforms.length === 0) {
+                    errors.push('Please select at least one target platform');
+                }
+                if (!safeFormData.contentTypes || safeFormData.contentTypes.length === 0) {
+                    errors.push('Please select at least one content type');
+                }
+                break;
+
+            case 3:
+                if (!safeFormData.deliverables || safeFormData.deliverables.length === 0) {
+                    errors.push('Please select at least one deliverable');
+                }
+                if (!safeFormData.timeline) {
+                    errors.push('Timeline is required');
+                }
+                break;
+
+            case 4:
+                if (!safeFormData.mainContact) {
+                    errors.push('Main contact person is required');
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        return errors;
+    };
+
     const nextStep = async () => {
+        const errors = validateCurrentStep();
+
+        if (errors.length > 0) {
+            setValidationErrors(errors);
+            toast.error('Please fill in all required fields before proceeding');
+            return;
+        }
+
+        setValidationErrors([]);
 
         // For testing, use a default user ID if not authenticated
         const userId = user?.id || 1;
@@ -480,6 +541,27 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
             {error && (
                 <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                     <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
+                </div>
+            )}
+
+            {/* Validation Errors */}
+            {validationErrors.length > 0 && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <div className="flex items-start gap-2">
+                        <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                        <div>
+                            <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
+                                Please fix the following errors:
+                            </h4>
+                            <ul className="list-disc list-inside space-y-1">
+                                {validationErrors.map((error, index) => (
+                                    <li key={index} className="text-red-700 dark:text-red-300 text-sm">
+                                        {error}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             )}
 

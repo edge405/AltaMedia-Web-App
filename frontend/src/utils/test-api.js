@@ -3,10 +3,8 @@ import apiService from './api';
 // Test function to verify API integration
 export const testPackagePurchaseAPI = async () => {
   try {
-    // Test getting user package purchases
-    const response = await apiService.getUserPackagePurchases();
-    
-    return response;
+    // Package purchase API has been removed
+    return { success: false, message: 'Package purchase API has been removed' };
   } catch (error) {
     throw error;
   }
@@ -15,10 +13,8 @@ export const testPackagePurchaseAPI = async () => {
 // Test function for feature comments API
 export const testFeatureCommentsAPI = async () => {
   try {
-    // Test creating a comment (this would require valid IDs)
-    // const response = await apiService.createFeatureComment(1, 1, "Test comment");
-    
-    return { success: true, message: 'Feature comments API ready' };
+    // Feature comments API has been removed
+    return { success: false, message: 'Feature comments API has been removed' };
   } catch (error) {
     throw error;
   }

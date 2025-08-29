@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Check, Send, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Send, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,6 +26,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState(null);
+    const [validationErrors, setValidationErrors] = useState([]);
 
     // Load existing form data on component mount
     useEffect(() => {
@@ -79,7 +80,97 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
         }));
     };
 
+    // Validation function for current step
+    const validateCurrentStep = () => {
+        const errors = [];
+
+        switch (currentStep) {
+            case 1:
+                if (!formData.brandName) {
+                    errors.push('Brand name is required');
+                }
+                if (!formData.brandDescription) {
+                    errors.push('Brand description is required');
+                }
+                if (!formData.primaryCustomers) {
+                    errors.push('Please describe your primary customers');
+                }
+                break;
+
+            case 2:
+                if (!formData.desiredEmotion) {
+                    errors.push('Please select the desired emotion');
+                }
+                if (!formData.unfairAdvantage) {
+                    errors.push('Please describe your unfair advantage');
+                }
+                break;
+
+            case 3:
+                if (!formData.competitors || formData.competitors.length === 0) {
+                    errors.push('Please list at least one competitor');
+                }
+                if (!formData.brandDifferentiation) {
+                    errors.push('Please describe how your brand is different');
+                }
+                break;
+
+            case 4:
+                if (!formData.brandKitUse || formData.brandKitUse.length === 0) {
+                    errors.push('Please select how you will use your brand kit');
+                }
+                break;
+
+            case 5:
+                if (!formData.brandVoice || formData.brandVoice.length === 0) {
+                    errors.push('Please select your brand voice characteristics');
+                }
+                break;
+
+            case 6:
+                if (!formData.hasExistingColors) {
+                    errors.push('Please indicate if you have existing colors');
+                }
+                break;
+
+            case 7:
+                if (!formData.fileFormats || formData.fileFormats.length === 0) {
+                    errors.push('Please select required file formats');
+                }
+                break;
+
+            case 8:
+                if (!formData.inspirationBrands || formData.inspirationBrands.length === 0) {
+                    errors.push('Please provide at least one inspiration brand');
+                }
+                break;
+
+            case 9:
+                if (!formData.mission) {
+                    errors.push('Mission statement is required');
+                }
+                if (!formData.vision) {
+                    errors.push('Vision statement is required');
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        return errors;
+    };
+
     const nextStep = async () => {
+        const errors = validateCurrentStep();
+
+        if (errors.length > 0) {
+            setValidationErrors(errors);
+            toast.error('Please fill in all required fields before proceeding');
+            return;
+        }
+
+        setValidationErrors([]);
 
         // For testing, use a default user ID if not authenticated
         const userId = user?.id || 1;
@@ -802,6 +893,27 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
             {error && (
                 <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                     <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
+                </div>
+            )}
+
+            {/* Validation Errors */}
+            {validationErrors.length > 0 && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <div className="flex items-start gap-2">
+                        <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                        <div>
+                            <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
+                                Please fix the following errors:
+                            </h4>
+                            <ul className="list-disc list-inside space-y-1">
+                                {validationErrors.map((error, index) => (
+                                    <li key={index} className="text-red-700 dark:text-red-300 text-sm">
+                                        {error}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             )}
 

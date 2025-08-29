@@ -10,18 +10,13 @@ class DashboardService {
    */
   async getDashboardData() {
     try {
-      const [packagePurchases, addonPurchases, availableAddons] = await Promise.all([
-        apiService.getUserPackagePurchases(),
-        apiService.getUserAddonPurchases(),
-        apiService.getAddons()
-      ]);
-
+      // Return empty data since package/addon related endpoints have been removed
       return {
         success: true,
         data: {
-          packagePurchases: packagePurchases.data || {},
-          addonPurchases: addonPurchases.data || {},
-          availableAddons: availableAddons.data || {}
+          packagePurchases: {},
+          addonPurchases: {},
+          availableAddons: {}
         }
       };
     } catch (error) {
