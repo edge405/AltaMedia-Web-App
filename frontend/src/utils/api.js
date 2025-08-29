@@ -3,10 +3,10 @@ class ApiService {
     console.log('Environment variables:', import.meta.env);
     console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
     
-    // In production, API calls should be relative to the same domain
+    // In production, use the deployed backend URL
     // In development, use the environment variable
     if (import.meta.env.PROD) {
-      this.baseURL = '/api';
+      this.baseURL = 'https://builder.altamedia.ai/api';
     } else {
       // Check if VITE_API_BASE_URL already includes /api
       const envUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';

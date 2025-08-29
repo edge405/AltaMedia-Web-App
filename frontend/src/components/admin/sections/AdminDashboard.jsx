@@ -24,6 +24,7 @@ import {
     AlertTriangle
 } from 'lucide-react';
 import { userPackageApi } from '@/utils/userPackageApi';
+import apiService from '@/utils/api';
 
 export default function AdminDashboard({ setActiveSection }) {
     const [dashboardData, setDashboardData] = useState(null);
@@ -31,6 +32,11 @@ export default function AdminDashboard({ setActiveSection }) {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        // Log the API base URL being used
+        console.log('🔗 AdminDashboard - API Base URL:', apiService.baseURL);
+        console.log('🔗 AdminDashboard - Environment:', import.meta.env.MODE);
+        console.log('🔗 AdminDashboard - VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+
         fetchDashboardData();
     }, []);
 

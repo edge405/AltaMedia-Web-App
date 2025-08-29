@@ -62,7 +62,9 @@ const AISuggestion = ({
         formData: JSON.stringify(formData)
       });
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/ai-suggestions?${params}`, {
+      // Use the correct API URL for production/development
+      const apiBaseUrl = import.meta.env.PROD ? 'https://builder.altamedia.ai' : (import.meta.env.VITE_API_URL || 'http://localhost:3000');
+      const response = await fetch(`${apiBaseUrl}/api/ai-suggestions?${params}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

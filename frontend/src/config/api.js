@@ -2,9 +2,9 @@
 // This file handles API base URL configuration for different environments
 
 const getApiBaseUrl = () => {
-  // In production, use relative URLs to avoid CORS issues
-  if (process.env.NODE_ENV === 'production') {
-    return '/api';
+  // In production, use your deployed backend URL
+  if (import.meta.env.PROD) {
+    return 'https://builder.altamedia.ai';
   }
   
   // In development, use localhost
