@@ -656,7 +656,7 @@ const determineFieldType = (fieldName) => {
 
 const getAISuggestions = async (req, res) => {
   try {
-    const { fieldName, formData } = req.query;
+    const { fieldName, formData } = req.body;
 
     if (!fieldName) {
       return res.status(400).json({
@@ -665,15 +665,8 @@ const getAISuggestions = async (req, res) => {
       });
     }
 
-    // Parse form data
-    let parsedFormData = {};
-    if (formData) {
-      try {
-        parsedFormData = JSON.parse(formData);
-              } catch (e) {
-          // Failed to parse formData
-        }
-    }
+    // Use form data directly from request body
+    let parsedFormData = formData || {};
 
     console.log(`Generating AI suggestion for field: ${fieldName}`);
     console.log("Form data context:", JSON.stringify(parsedFormData, null, 2));

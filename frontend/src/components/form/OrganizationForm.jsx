@@ -32,7 +32,6 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
     const [isSaving, setIsSaving] = useState(false);
     const [isNextLoading, setIsNextLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [validationErrors, setValidationErrors] = useState([]);
 
     const totalSteps = 4;
     const steps = [
@@ -112,67 +111,14 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
         }
     };
 
-    // Validation function for current step
+    // Validation function for current step - removed validation requirements
     const validateCurrentStep = () => {
-        const errors = [];
-
-        switch (currentStep) {
-            case 1:
-                if (!safeFormData.organizationName) {
-                    errors.push('Organization name is required');
-                }
-                if (!safeFormData.socialMediaGoals) {
-                    errors.push('Social media goals are required');
-                }
-                if (!safeFormData.brandUniqueness) {
-                    errors.push('Please describe what makes your brand unique');
-                }
-                break;
-
-            case 2:
-                if (!safeFormData.desiredEmotion) {
-                    errors.push('Please select the desired emotion');
-                }
-                if (!safeFormData.targetPlatforms || safeFormData.targetPlatforms.length === 0) {
-                    errors.push('Please select at least one target platform');
-                }
-                if (!safeFormData.contentTypes || safeFormData.contentTypes.length === 0) {
-                    errors.push('Please select at least one content type');
-                }
-                break;
-
-            case 3:
-                if (!safeFormData.deliverables || safeFormData.deliverables.length === 0) {
-                    errors.push('Please select at least one deliverable');
-                }
-                if (!safeFormData.timeline) {
-                    errors.push('Timeline is required');
-                }
-                break;
-
-            case 4:
-                if (!safeFormData.mainContact) {
-                    errors.push('Main contact person is required');
-                }
-                break;
-
-            default:
-                break;
-        }
-
-        return errors;
+        // Return empty array to allow proceeding without validation
+        return [];
     };
 
     const nextStep = async () => {
-        const errors = validateCurrentStep();
-
-        if (errors.length > 0) {
-            setValidationErrors(errors);
-            toast.error('Please fill in all required fields before proceeding');
-            return;
-        }
-
-        setValidationErrors([]);
+        // Validation removed - allow proceeding without field validation
 
         // For testing, use a default user ID if not authenticated
         const userId = user?.id || 1;
@@ -306,7 +252,7 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
                 </p>
             </FormField>
 
-            <FormField label="What's the name of your organization, brand, or page?" type="Short Text" required>
+            <FormField label="What's the name of your organization, brand, or page?" type="Short Text">
                 <Input
                     value={safeFormData.organizationName || ''}
                     onChange={(e) => updateFormData('organizationName', e.target.value)}
@@ -315,7 +261,7 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
                 />
             </FormField>
 
-            <FormField label="Briefly describe your social media goals and who you want to reach." type="Long Text" required aiSuggestions>
+            <FormField label="Briefly describe your social media goals and who you want to reach." type="Long Text">
                 <Textarea
                     placeholder="e.g., raise awareness among young professionals, drive sales to moms, build community for hobbyists"
                     value={safeFormData.socialMediaGoals || ''}
@@ -323,15 +269,9 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
                     rows={4}
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 />
-                <AISuggestion
-                    fieldName="socialMediaGoals"
-                    currentValue={safeFormData.socialMediaGoals}
-                    onApplySuggestion={(suggestion) => updateFormData('socialMediaGoals', suggestion)}
-                    formData={formData}
-                />
             </FormField>
 
-            <FormField label="What makes your brand unique, and how should it sound online? (tone/style)" type="Long Text" required aiSuggestions>
+            <FormField label="What makes your brand unique, and how should it sound online? (tone/style)" type="Long Text">
                 <Textarea
                     placeholder="Describe your brand's unique qualities and online voice"
                     value={safeFormData.brandUniqueness || ''}
@@ -339,15 +279,9 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
                     rows={4}
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 />
-                <AISuggestion
-                    fieldName="brandUniqueness"
-                    currentValue={safeFormData.brandUniqueness}
-                    onApplySuggestion={(suggestion) => updateFormData('brandUniqueness', suggestion)}
-                    formData={formData}
-                />
             </FormField>
 
-            <FormField label="What feeling do you want your audience to have after engaging with your content?" type="Dropdown" required>
+            <FormField label="What feeling do you want your audience to have after engaging with your content?" type="Dropdown">
                 <Select value={safeFormData.desiredEmotion} onValueChange={(value) => updateFormData('desiredEmotion', value)}>
                     <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                         <SelectValue placeholder="Select desired emotional response" />
@@ -364,7 +298,7 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
 
     const renderStep2 = () => (
         <div className="space-y-8">
-            <FormField label="Which platforms should we focus on?" type="Checkbox" required>
+            <FormField label="Which platforms should we focus on?" type="Checkbox">
                 <CheckboxGroup
                     options={['Facebook', 'Instagram', 'TikTok', 'YouTube', 'LinkedIn']}
                     value={safeFormData.targetPlatforms || []}
@@ -372,17 +306,11 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
                 />
             </FormField>
 
-            <FormField label="What types of content should we prioritize?" type="Checkbox" aiSuggestions>
+            <FormField label="What types of content should we prioritize?" type="Checkbox">
                 <CheckboxGroup
                     options={['Short Videos/Reels', 'Static Graphics', 'Carousel Posts', 'Motion Graphics', 'Long-Form Videos']}
                     value={safeFormData.contentTypes || []}
                     onChange={(value) => updateFormData('contentTypes', value)}
-                />
-                <AISuggestion
-                    fieldName="contentTypes"
-                    currentValue={safeFormData.contentTypes?.join(', ')}
-                    onApplySuggestion={(suggestion) => updateFormData('contentTypes', suggestion.split(', '))}
-                    formData={formData}
                 />
             </FormField>
         </div>
@@ -390,7 +318,7 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
 
     const renderStep3 = () => (
         <div className="space-y-8">
-            <FormField label="What do you need us to create?" type="Checkbox" required>
+            <FormField label="What do you need us to create?" type="Checkbox">
                 <CheckboxGroup
                     options={[
                         'Social Media Calendar',
@@ -406,7 +334,7 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
                 />
             </FormField>
 
-            <FormField label="When do you want the first batch ready by?" type="Dropdown" required>
+            <FormField label="When do you want the first batch ready by?" type="Dropdown">
                 <Select value={safeFormData.timeline} onValueChange={(value) => updateFormData('timeline', value)}>
                     <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                         <SelectValue placeholder="Select timeline" />
@@ -423,7 +351,7 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
 
     const renderStep4 = () => (
         <div className="space-y-8">
-            <FormField label="Who will be our main point of contact?" type="Short Text" required>
+            <FormField label="Who will be our main point of contact?" type="Short Text">
                 <Input
                     value={safeFormData.mainContact || ''}
                     onChange={(e) => updateFormData('mainContact', e.target.value)}
@@ -544,26 +472,7 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
                 </div>
             )}
 
-            {/* Validation Errors */}
-            {validationErrors.length > 0 && (
-                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                    <div className="flex items-start gap-2">
-                        <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                        <div>
-                            <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
-                                Please fix the following errors:
-                            </h4>
-                            <ul className="list-disc list-inside space-y-1">
-                                {validationErrors.map((error, index) => (
-                                    <li key={index} className="text-red-700 dark:text-red-300 text-sm">
-                                        {error}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            )}
+
 
             <div className={`transition-opacity duration-300 ${isNextLoading ? 'opacity-50' : 'opacity-100'}`}>
                 <ProgressBar

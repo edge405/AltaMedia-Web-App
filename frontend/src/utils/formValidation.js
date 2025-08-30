@@ -98,83 +98,8 @@ export const validateBrandKitFormStep = (step, formData) => {
 };
 
 export const validateBrandKitQuestionnaireStep = (step, formData) => {
-  const errors = [];
-
-  switch (step) {
-    case 1:
-      if (!formData.brandName) {
-        errors.push('Brand name is required');
-      }
-      if (!formData.brandDescription) {
-        errors.push('Brand description is required');
-      }
-      if (!formData.primaryCustomers) {
-        errors.push('Please describe your primary customers');
-      }
-      break;
-
-    case 2:
-      if (!formData.desiredEmotion) {
-        errors.push('Please select the desired emotion');
-      }
-      if (!formData.unfairAdvantage) {
-        errors.push('Please describe your unfair advantage');
-      }
-      break;
-
-    case 3:
-      if (!formData.competitors || formData.competitors.length === 0) {
-        errors.push('Please list at least one competitor');
-      }
-      if (!formData.brandDifferentiation) {
-        errors.push('Please describe how your brand is different');
-      }
-      break;
-
-    case 4:
-      if (!formData.brandKitUse || formData.brandKitUse.length === 0) {
-        errors.push('Please select how you will use your brand kit');
-      }
-      break;
-
-    case 5:
-      if (!formData.brandVoice || formData.brandVoice.length === 0) {
-        errors.push('Please select your brand voice characteristics');
-      }
-      break;
-
-    case 6:
-      if (!formData.hasExistingColors) {
-        errors.push('Please indicate if you have existing colors');
-      }
-      break;
-
-    case 7:
-      if (!formData.fileFormats || formData.fileFormats.length === 0) {
-        errors.push('Please select required file formats');
-      }
-      break;
-
-    case 8:
-      if (!formData.inspirationBrands || formData.inspirationBrands.length === 0) {
-        errors.push('Please provide at least one inspiration brand');
-      }
-      break;
-
-    case 9:
-      if (!formData.mission) {
-        errors.push('Mission statement is required');
-      }
-      if (!formData.vision) {
-        errors.push('Vision statement is required');
-      }
-      break;
-
-    default:
-      break;
-  }
-
-  return errors;
+  // Temporarily disabled validation - return empty array
+  return [];
 };
 
 export const validateOrganizationFormStep = (step, formData) => {

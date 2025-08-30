@@ -60,7 +60,10 @@ async function checkBackendStatus() {
   try {
     // Test 3: AI suggestions without auth (should return 401)
     console.log('\n3️⃣ Testing AI suggestions endpoint...');
-    const aiResponse = await axios.get(`${baseUrl}/api/ai-suggestions?fieldName=test&formData={}`, {
+    const aiResponse = await axios.post(`${baseUrl}/api/ai-suggestions`, {
+      fieldName: 'test',
+      formData: {}
+    }, {
       timeout: 10000,
       validateStatus: () => true
     });

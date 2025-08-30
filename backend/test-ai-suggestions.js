@@ -38,12 +38,10 @@ async function testAISuggestionsWithAuth() {
       targetAudience: 'Health-conscious consumers'
     };
     
-    const params = new URLSearchParams({
+    const aiResponse = await axios.post(`${baseUrl}/api/ai-suggestions`, {
       fieldName: 'problemSolved',
-      formData: JSON.stringify(testData)
-    });
-    
-    const aiResponse = await axios.get(`${baseUrl}/api/ai-suggestions?${params}`, {
+      formData: testData
+    }, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -79,7 +77,8 @@ console.log('');
 console.log('Or test manually in Postman:');
 console.log('1. POST https://builder.altamedia.ai/api/auth/login');
 console.log('2. Copy the token from the response');
-console.log('3. GET https://builder.altamedia.ai/api/ai-suggestions?fieldName=problemSolved&formData={"brandName":"Water Bottle"}');
+console.log('3. POST https://builder.altamedia.ai/api/ai-suggestions');
+console.log('   Body: {"fieldName":"problemSolved","formData":{"brandName":"Water Bottle"}}');
 console.log('4. Add Authorization header: Bearer YOUR_TOKEN');
 console.log('');
 

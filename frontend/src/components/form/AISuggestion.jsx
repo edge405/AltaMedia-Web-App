@@ -57,19 +57,19 @@ const AISuggestion = ({
       console.log('Sending form data to AI:', formData);
       console.log('Field name:', fieldName);
 
-      const params = new URLSearchParams({
-        fieldName,
-        formData: JSON.stringify(formData)
-      });
-
-      // Use the correct API URL for production/development
-      const apiBaseUrl = import.meta.env.PROD ? 'https://builder.altamedia.ai' : (import.meta.env.VITE_API_URL || 'http://localhost:3000');
-      const response = await fetch(`${apiBaseUrl}/api/ai-suggestions?${params}`, {
-        method: 'GET',
+      // Use the correct API URL - check if running locally first
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const apiBaseUrl = isLocalhost ? 'http://localhost:3000' : (import.meta.env.PROD ? 'https://builder.altamedia.ai' : (import.meta.env.VITE_API_URL || 'http://localhost:3000'));
+      const response = await fetch(`${apiBaseUrl}/api/ai-suggestions`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          fieldName: fieldName,
+          formData: formData
+        }),
       });
 
       if (!response.ok) {

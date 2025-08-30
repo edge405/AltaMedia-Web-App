@@ -4,10 +4,10 @@ const { getAISuggestions } = require('../controllers/aiSuggestionsController');
 const { authenticateToken } = require('../middleware/auth');
 
 /**
- * @route   GET /api/ai-suggestions
+ * @route   POST /api/ai-suggestions
  * @desc    Get AI suggestions for form fields
  * @access  Private
  */
-router.get('/', authenticateToken, getAISuggestions);
+router.post('/', authenticateToken, getAISuggestions);
 
 module.exports = router;
