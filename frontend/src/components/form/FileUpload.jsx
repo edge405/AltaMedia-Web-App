@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Upload, File, X, Image as ImageIcon } from "lucide-react";
+import { Upload, File as FileIcon, X, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -22,7 +22,7 @@ const FileUpload = ({ value, onChange, placeholder }) => {
           const parsed = JSON.parse(value);
           if (Array.isArray(parsed)) {
             setUploadedFiles(parsed);
-            generateImagePreviews(parsed);
+            generateImagePreviews(parsed, 0);
           }
         } catch (e) {
           // If JSON parsing fails, check if it's a comma-separated list of file paths
@@ -36,7 +36,7 @@ const FileUpload = ({ value, onChange, placeholder }) => {
               type: 'application/octet-stream'
             }));
             setUploadedFiles(fileObjects);
-            generateImagePreviews(fileObjects);
+            generateImagePreviews(fileObjects, 0);
           } else {
             // Single file path or empty string
             setUploadedFiles([]);
@@ -51,31 +51,29 @@ const FileUpload = ({ value, onChange, placeholder }) => {
   }, [value]);
 
   // Generate image previews for uploaded files
-  const generateImagePreviews = (files) => {
-    const newPreviews = {};
-
+  const generateImagePreviews = (files, startIndex = 0) => {
+    // Don't clear existing previews - add new ones
     files.forEach((file, index) => {
       if (file.type && file.type.startsWith('image/')) {
-        if (file instanceof File) {
+        if (file instanceof window.File) {
           // For new file uploads
           const reader = new FileReader();
           reader.onload = (e) => {
             setImagePreviews(prev => ({
               ...prev,
-              [index]: e.target.result
+              [startIndex + index]: e.target.result
             }));
           };
           reader.readAsDataURL(file);
         } else if (file.path) {
           // For existing files from database (file paths)
-          newPreviews[index] = file.path;
+          setImagePreviews(prev => ({
+            ...prev,
+            [startIndex + index]: file.path
+          }));
         }
       }
     });
-
-    if (Object.keys(newPreviews).length > 0) {
-      setImagePreviews(prev => ({ ...prev, ...newPreviews }));
-    }
   };
 
   const handleDrag = (e) => {
@@ -107,11 +105,14 @@ const FileUpload = ({ value, onChange, placeholder }) => {
 
   const handleFiles = (files) => {
     const fileArray = Array.from(files);
+
+    // Always add new files to existing files for multiple file support
+    // This allows users to upload multiple files in multiple sessions
     const newUploadedFiles = [...uploadedFiles, ...fileArray];
     setUploadedFiles(newUploadedFiles);
 
-    // Generate previews for new image files
-    generateImagePreviews(fileArray);
+    // Generate previews for new image files only
+    generateImagePreviews(fileArray, uploadedFiles.length);
 
     // Call onChange with all file objects for form submission
     onChange(newUploadedFiles);
@@ -161,7 +162,7 @@ const FileUpload = ({ value, onChange, placeholder }) => {
       >
         <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
         <p className="text-sm text-muted-foreground mb-2">
-          Drag and drop files here, or click to browse
+          Drag and drop multiple files here, or click to browse
         </p>
         <Button
           type="button"
@@ -227,7 +228,7 @@ const FileUpload = ({ value, onChange, placeholder }) => {
                 ) : (
                   // Non-image file display
                   <div className="flex items-center gap-2">
-                    <File className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <FileIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <span className="text-sm truncate block">{file.name}</span>
                       {file.size > 0 && (

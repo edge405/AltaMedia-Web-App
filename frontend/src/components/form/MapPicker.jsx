@@ -17,24 +17,29 @@ const MapPicker = ({ value, onChange, placeholder }) => {
         // If value is already a string (address), use it directly
         if (typeof value === 'string') {
           setPlaceName(value);
-        } else if (typeof value === 'object') {
+        } else if (typeof value === 'object' && value !== null) {
           // If it's an object, extract the address
           setPlaceName(value.address || value.placeName || value.fullAddress || JSON.stringify(value));
-          if (value.coordinates) {
+          if (value.coordinates && typeof value.coordinates.latitude === 'number' && typeof value.coordinates.longitude === 'number') {
             setSelectedLocation(value.coordinates);
           }
         } else {
           // Try to parse as JSON
           const parsed = JSON.parse(value);
           setPlaceName(parsed.address || parsed.placeName || parsed.fullAddress || value);
-          if (parsed.coordinates) {
+          if (parsed.coordinates && typeof parsed.coordinates.latitude === 'number' && typeof parsed.coordinates.longitude === 'number') {
             setSelectedLocation(parsed.coordinates);
           }
         }
-      } catch {
+      } catch (error) {
+        console.warn('Error parsing location value:', error);
         // If not JSON, treat as place name
         setPlaceName(value);
       }
+    } else {
+      // Clear state when value is empty
+      setPlaceName('');
+      setSelectedLocation(null);
     }
   }, [value]);
 
@@ -45,7 +50,16 @@ const MapPicker = ({ value, onChange, placeholder }) => {
   };
 
   const handleLocationSelect = (location) => {
-    setSelectedLocation(location);
+    // Validate coordinates before setting
+    if (location &&
+      typeof location.latitude === 'number' &&
+      typeof location.longitude === 'number' &&
+      location.latitude >= -90 && location.latitude <= 90 &&
+      location.longitude >= -180 && location.longitude <= 180) {
+      setSelectedLocation(location);
+    } else {
+      console.warn('Invalid coordinates received:', location);
+    }
   };
 
   const handleMapSelection = async () => {
@@ -63,15 +77,17 @@ const MapPicker = ({ value, onChange, placeholder }) => {
           setPlaceName(placeName);
           onChange(placeName);
         } else {
-          // Fallback to a generic place name
-          setPlaceName('Selected Location');
-          onChange('Selected Location');
+          // Fallback to a generic place name with coordinates
+          const fallbackName = `Selected Location (${selectedLocation.latitude.toFixed(4)}, ${selectedLocation.longitude.toFixed(4)})`;
+          setPlaceName(fallbackName);
+          onChange(fallbackName);
         }
       } catch (error) {
         console.error('Error getting place name:', error);
-        // Fallback to a generic place name
-        setPlaceName('Selected Location');
-        onChange('Selected Location');
+        // Fallback to a generic place name with coordinates
+        const fallbackName = `Selected Location (${selectedLocation.latitude.toFixed(4)}, ${selectedLocation.longitude.toFixed(4)})`;
+        setPlaceName(fallbackName);
+        onChange(fallbackName);
       }
 
       setIsOpen(false);
@@ -119,6 +135,16 @@ const MapPicker = ({ value, onChange, placeholder }) => {
                 initialLocation={selectedLocation}
                 useCurrentLocation={false}
               />
+
+              {/* Instructions */}
+              <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                <p>💡 <strong>How to use:</strong></p>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Click anywhere on the map to place a marker</li>
+                  <li>Drag the marker to adjust the exact location</li>
+                  <li>Use the navigation controls to zoom and pan</li>
+                </ul>
+              </div>
 
               {/* Action Buttons */}
               <div className="flex gap-2 justify-end">

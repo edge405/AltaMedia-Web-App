@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Search, Download, Eye, AlertCircle, CheckCircle, Clock, History, RefreshCw, Globe, Package, Edit } from 'lucide-react';
 import { toast } from 'sonner';
@@ -403,37 +404,31 @@ export default function DeliverablesSection({
         <CardContent className="p-8">
           {/* Package Selector - Only show if user has multiple packages */}
           {clientData.userPackages && clientData.userPackages.length > 1 && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Package className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-900">Switch Package</h3>
-                    <p className="text-xs text-gray-500">View deliverables for different packages</p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
+            <div className="mb-6">
+              <Select
+                onValueChange={(val) => clientData.onPackageSelect(parseInt(val))}
+                value={clientData.selectedPackageId ? clientData.selectedPackageId.toString() : ''}
+              >
+                <SelectTrigger className="w-full h-10 border border-gray-300 bg-white text-gray-900 focus:border-[#f7e833] focus:ring-1 focus:ring-[#f7e833]">
+                  <SelectValue placeholder="Switch Package" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 shadow-lg">
                   {clientData.userPackages.map((pkg) => (
-                    <Button
+                    <SelectItem
                       key={pkg.id}
-                      variant={clientData.selectedPackageId === pkg.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => clientData.onPackageSelect(pkg.id)}
-                      className={`text-xs px-3 py-1.5 h-auto ${clientData.selectedPackageId === pkg.id
-                        ? 'bg-[#f7e833] text-black hover:bg-yellow-300 border-[#f7e833]'
-                        : 'text-gray-700 border-gray-300 hover:bg-gray-100 hover:border-gray-400'
-                        }`}
+                      value={pkg.id.toString()}
+                      className="hover:bg-[#f7e833] focus:bg-[#f7e833] data-[highlighted]:bg-[#f7e833] text-gray-900 hover:text-black focus:text-black data-[highlighted]:text-black"
                     >
-                      {pkg.package_name}
-                      {pkg.status === 'active' && (
-                        <Badge className="ml-1.5 bg-green-100 text-green-800 text-xs px-1.5 py-0.5">
-                          Active
-                        </Badge>
-                      )}
-                    </Button>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{pkg.package_name}</span>
+                        {pkg.status === 'active' && (
+                          <span className="text-xs bg-[#f7e833] text-black px-2 py-0.5 rounded-full ml-2 font-medium">Active</span>
+                        )}
+                      </div>
+                    </SelectItem>
                   ))}
-                </div>
-              </div>
+                </SelectContent>
+              </Select>
             </div>
           )}
 

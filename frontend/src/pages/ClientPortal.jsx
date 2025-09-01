@@ -119,7 +119,7 @@ export default function ClientPortal() {
     return {
       name: pkg.package_name,
       price: `₱${parseFloat(pkg.total_amount).toLocaleString()}`,
-      status: pkg.status === 'active' ? 'Active' : 'Inactive',
+      status: pkg.status === 'active' ? 'Active' : 'Expired',
       startDate: pkg.purchase_date ? new Date(pkg.purchase_date).toISOString().split('T')[0] : '',
       endDate: pkg.expiration_date ? new Date(pkg.expiration_date).toISOString().split('T')[0] : '',
       id: pkg.id,

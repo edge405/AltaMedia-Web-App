@@ -729,11 +729,17 @@ const Forms = () => {
                 />
             </FormField>
 
-            <FormField label="If your brand had a soul, how would you describe it?" type="Short Text">
+            <FormField label="If your brand had a soul, how would you describe it?" type="Short Text" aiSuggestions>
                 <Input
                     placeholder="Describe your brand's soul"
                     value={formData.brandSoul || ''}
                     onChange={(e) => handleFieldChange('brandSoul', e.target.value)}
+                />
+                <AISuggestion
+                    fieldName="brandSoul"
+                    currentValue={formData.brandSoul}
+                    onApplySuggestion={(suggestion) => handleFieldChange('brandSoul', suggestion)}
+                    formData={formData}
                 />
             </FormField>
 

@@ -57,7 +57,7 @@ export default function BrandKitSection({
             <div className="w-10 h-10 bg-[#f7e833] rounded-2xl flex items-center justify-center">
               <Palette className="w-6 h-6 text-black" />
             </div>
-            <span>BrandKit Forms Status</span>
+            <span>BrandKit Forms</span>
           </CardTitle>
           <p className="text-gray-300 mt-2">
             Track your brand identity forms completion

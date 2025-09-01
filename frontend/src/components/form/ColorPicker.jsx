@@ -11,10 +11,23 @@ const ColorPicker = ({ value, onChange, placeholder }) => {
   // Handle value as array of colors or single color
   const colors = Array.isArray(value) ? value : (value ? [value] : []);
 
+  // Simplified preset colors - basic, commonly used colors
   const presetColors = [
-    "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7",
-    "#DDA0DD", "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E9",
-    "#F8C471", "#82E0AA", "#F1948A", "#85C1E9", "#D7BDE2"
+    "#000000", // Black
+    "#FFFFFF", // White
+    "#FF0000", // Red
+    "#00FF00", // Green
+    "#0000FF", // Blue
+    "#FFFF00", // Yellow
+    "#FF00FF", // Magenta
+    "#00FFFF", // Cyan
+    "#FFA500", // Orange
+    "#800080", // Purple
+    "#008000", // Dark Green
+    "#000080", // Navy
+    "#FFC0CB", // Pink
+    "#A52A2A", // Brown
+    "#808080", // Gray
   ];
 
   const addColor = (color) => {
@@ -44,23 +57,23 @@ const ColorPicker = ({ value, onChange, placeholder }) => {
 
   return (
     <div className="space-y-3">
-      {/* Display selected colors as tags */}
+      {/* Display selected colors as simple chips */}
       {colors.length > 0 && (
-        <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto form-scroll">
+        <div className="flex flex-wrap gap-2">
           {colors.map((color) => (
             <div
               key={color}
-              className="flex items-center gap-2 px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+              className="flex items-center gap-2 px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
             >
               <div
-                className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600"
+                className="w-3 h-3 rounded border border-gray-300 dark:border-gray-600"
                 style={{ backgroundColor: color }}
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">{color}</span>
+              <span className="text-xs text-gray-700 dark:text-gray-300">{color}</span>
               <button
                 type="button"
                 onClick={() => removeColor(color)}
-                className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
+                className="text-gray-400 hover:text-red-500"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -69,13 +82,13 @@ const ColorPicker = ({ value, onChange, placeholder }) => {
         </div>
       )}
 
-      {/* Color input and picker */}
+      {/* Simple color picker interface */}
       <div className="flex gap-2">
         <Input
           value={inputValue}
           onChange={handleInputChange}
           onKeyPress={handleInputKeyPress}
-          placeholder={placeholder || "Enter hex color (e.g., #FF6B6B) or press Enter"}
+          placeholder={placeholder || "Type color name or hex code"}
           className="flex-1"
         />
 
@@ -85,30 +98,34 @@ const ColorPicker = ({ value, onChange, placeholder }) => {
               type="button"
               variant="outline"
               size="sm"
-              className="flex items-center gap-2"
+              className="flex items-center gap-1"
             >
               <Palette className="w-4 h-4" />
-              Pick
+              Colors
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 p-3">
+          <PopoverContent className="w-48 p-3">
             <div className="space-y-3">
-              <div className="grid grid-cols-5 gap-2">
+              {/* Simple preset colors grid */}
+              <div className="grid grid-cols-5 gap-1">
                 {presetColors.map((color) => (
                   <button
                     key={color}
                     type="button"
-                    className="w-8 h-8 rounded border-2 border-gray-300 dark:border-gray-600 hover:border-blue-500 transition-colors"
+                    className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600 hover:border-blue-500 transition-colors"
                     style={{ backgroundColor: color }}
                     onClick={() => addColor(color)}
+                    title={color}
                   />
                 ))}
               </div>
-              <div className="border-t pt-3">
+
+              {/* Simple color input */}
+              <div className="border-t pt-2">
                 <Input
                   type="color"
                   onChange={(e) => addColor(e.target.value)}
-                  className="w-full h-10"
+                  className="w-full h-8"
                 />
               </div>
             </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Package,
   CheckCircle,
@@ -132,35 +133,31 @@ export default function PackageDetailsSection({ clientData, packageDetails }) {
         <CardContent className="p-8 space-y-6">
           {/* Package Selector - Only show if user has multiple packages */}
           {clientData.userPackages && clientData.userPackages.length > 1 && (
-            <div className="bg-gray-50 rounded-2xl p-6 mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Select Package</h3>
-                  <p className="text-sm text-gray-600">You have {clientData.userPackages.length} packages. Choose which one to view:</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
+            <div className="mb-6">
+              <Select
+                onValueChange={(val) => clientData.onPackageSelect(parseInt(val))}
+                value={clientData.selectedPackageId ? clientData.selectedPackageId.toString() : ''}
+              >
+                <SelectTrigger className="w-full h-10 border border-gray-300 bg-white text-gray-900 focus:border-[#f7e833] focus:ring-1 focus:ring-[#f7e833]">
+                  <SelectValue placeholder="Switch Package" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 shadow-lg">
                   {clientData.userPackages.map((pkg) => (
-                    <Button
+                    <SelectItem
                       key={pkg.id}
-                      variant={clientData.selectedPackageId === pkg.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => clientData.onPackageSelect(pkg.id)}
-                      className={`${clientData.selectedPackageId === pkg.id
-                        ? 'bg-[#f7e833] text-black hover:bg-yellow-300'
-                        : 'text-gray-700 border-gray-300 hover:bg-gray-100'
-                        }`}
+                      value={pkg.id.toString()}
+                      className="hover:bg-[#f7e833] focus:bg-[#f7e833] data-[highlighted]:bg-[#f7e833] text-gray-900 hover:text-black focus:text-black data-[highlighted]:text-black"
                     >
-                      <Package className="w-4 h-4 mr-2" />
-                      {pkg.package_name}
-                      {pkg.status === 'active' && (
-                        <Badge className="ml-2 bg-green-100 text-green-800 text-xs">
-                          Active
-                        </Badge>
-                      )}
-                    </Button>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{pkg.package_name}</span>
+                        {pkg.status === 'active' && (
+                          <span className="text-xs bg-[#f7e833] text-black px-2 py-0.5 rounded-full ml-2 font-medium">Active</span>
+                        )}
+                      </div>
+                    </SelectItem>
                   ))}
-                </div>
-              </div>
+                </SelectContent>
+              </Select>
             </div>
           )}
 
@@ -173,9 +170,15 @@ export default function PackageDetailsSection({ clientData, packageDetails }) {
               </div>
               <div>
                 <p className="text-sm text-gray-500 font-medium">Status</p>
-                <Badge className="bg-[#f7e833] text-black font-bold px-4 py-2 rounded-full">
-                  {clientData.activePackage.status}
-                </Badge>
+                {clientData.activePackage.status === "Active" ? (
+                  <Badge className="bg-[#f7e833] hover:bg-yellow-300 text-black font-bold px-4 py-2 rounded-full text-sm">
+                    Active
+                  </Badge>
+                ) : (
+                  <Badge className="bg-gray-200 text-gray-800 font-bold px-4 py-2 rounded-full text-sm hover:bg-gray-300">
+                    {clientData.activePackage.status}
+                  </Badge>
+                )}
               </div>
               <div>
                 <p className="text-sm text-gray-500 font-medium">Expiration Date</p>

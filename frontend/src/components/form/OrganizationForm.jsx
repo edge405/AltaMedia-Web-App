@@ -147,12 +147,8 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
                         onRefreshStatuses();
                     }
 
-                    // Update progress in database for the next step (in background)
-                    try {
-                        await organizationApi.saveFormData(formData || { buildingType: 'organization' }, nextStepNumber);
-                    } catch (progressError) {
-                        console.error('Error updating progress:', progressError);
-                    }
+                    // Note: Removed duplicate saveFormData call to prevent file duplication
+                    // Progress is already tracked in the main saveFormData call
                 }
             } else {
                 setError('Failed to save form data');
@@ -303,6 +299,8 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
                     options={['Facebook', 'Instagram', 'TikTok', 'YouTube', 'LinkedIn']}
                     value={safeFormData.targetPlatforms || []}
                     onChange={(value) => updateFormData('targetPlatforms', value)}
+                    enableCustomInput={true}
+                    customInputPlaceholder="Add custom platform..."
                 />
             </FormField>
 
@@ -311,6 +309,8 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
                     options={['Short Videos/Reels', 'Static Graphics', 'Carousel Posts', 'Motion Graphics', 'Long-Form Videos']}
                     value={safeFormData.contentTypes || []}
                     onChange={(value) => updateFormData('contentTypes', value)}
+                    enableCustomInput={true}
+                    customInputPlaceholder="Add custom content type..."
                 />
             </FormField>
         </div>
@@ -331,6 +331,8 @@ const OrganizationForm = ({ onFormTypeChange = () => { }, embedded = false, onCo
                     ]}
                     value={safeFormData.deliverables || []}
                     onChange={(value) => updateFormData('deliverables', value)}
+                    enableCustomInput={true}
+                    customInputPlaceholder="Add custom deliverable..."
                 />
             </FormField>
 

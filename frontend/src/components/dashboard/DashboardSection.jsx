@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -23,6 +24,9 @@ export default function DashboardSection({ clientData, onViewPackage, onViewDeli
   const [recentDeliverables, setRecentDeliverables] = useState([]);
   const [isLoadingDeliverables, setIsLoadingDeliverables] = useState(true);
   const [deliverablesError, setDeliverablesError] = useState(null);
+
+  console.log("package status: ", clientData.activePackage.status);
+
 
   // Load recent deliverables
   useEffect(() => {
@@ -119,27 +123,33 @@ export default function DashboardSection({ clientData, onViewPackage, onViewDeli
         <CardContent className="p-8">
           {clientData.activePackage ? (
             <div className="space-y-6">
-              {/* Package Status */}
-              {clientData.activePackage.status && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm text-gray-600">Package Status</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-white hover:bg-white/10"
-                    >
-                      {clientData.activePackage.status}
-                    </Button>
-                    {clientData.activePackage.status === 'Active' && (
-                      <Badge className="ml-2 bg-green-100 text-green-800 text-xs">
-                        Active
-                      </Badge>
-                    )}
-                  </div>
+              {/* Package Selector - Only show if user has multiple packages */}
+              {clientData.userPackages && clientData.userPackages.length > 1 && (
+                <div className="mb-4">
+                  <Select
+                    onValueChange={(val) => clientData.onPackageSelect(parseInt(val))}
+                    value={clientData.selectedPackageId ? clientData.selectedPackageId.toString() : ''}
+                  >
+                    <SelectTrigger className="w-full h-10 border border-gray-300 bg-white text-gray-900 focus:border-[#f7e833] focus:ring-1 focus:ring-[#f7e833]">
+                      <SelectValue placeholder="Switch Package" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                      {clientData.userPackages.map((pkg) => (
+                        <SelectItem
+                          key={pkg.id}
+                          value={pkg.id.toString()}
+                          className="hover:bg-[#f7e833] focus:bg-[#f7e833] data-[highlighted]:bg-[#f7e833] text-gray-900 hover:text-black focus:text-black data-[highlighted]:text-black"
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <span>{pkg.package_name}</span>
+                            {pkg.status === 'active' && (
+                              <span className="text-xs bg-[#f7e833] text-black px-2 py-0.5 rounded-full ml-2 font-medium">Active</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
@@ -150,9 +160,15 @@ export default function DashboardSection({ clientData, onViewPackage, onViewDeli
                   </h3>
                   <p className="text-lg text-gray-600 font-medium">{clientData.activePackage.price}</p>
                 </div>
-                <Badge className="bg-[#f7e833] hover:bg-yellow-300 text-black font-bold px-4 py-2 rounded-full text-sm">
-                  {clientData.activePackage.status}
-                </Badge>
+                {clientData.activePackage.status === "Active" ? (
+                  <Badge className="bg-[#f7e833] hover:bg-yellow-300 text-black font-bold px-4 py-2 rounded-full text-sm animate-pulse">
+                    Active
+                  </Badge>
+                ) : (
+                  <Badge className="bg-gray-200 text-gray-800 font-bold px-4 py-2 rounded-full text-sm hover:bg-gray-300">
+                    {clientData.activePackage.status}
+                  </Badge>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

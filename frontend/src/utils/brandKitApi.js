@@ -16,7 +16,8 @@ export const brandKitApi = {
       // Check if there are files to upload (ensure they are arrays and have files)
       const hasReferenceFiles = Array.isArray(stepData.reference_materials) && stepData.reference_materials.length > 0;
       const hasInspirationFiles = Array.isArray(stepData.inspiration_links) && stepData.inspiration_links.length > 0;
-      const hasFiles = hasReferenceFiles || hasInspirationFiles;
+      const hasWebsiteFiles = Array.isArray(stepData.website_files) && stepData.website_files.length > 0;
+      const hasFiles = hasReferenceFiles || hasInspirationFiles || hasWebsiteFiles;
       
       if (hasFiles) {
         // Use FormData for file uploads
@@ -28,6 +29,7 @@ export const brandKitApi = {
         const nonFileData = { ...stepData };
         delete nonFileData.reference_materials;
         delete nonFileData.inspiration_links;
+        delete nonFileData.website_files;
         formData.append('stepData', JSON.stringify(nonFileData));
         
         // Add files
@@ -40,6 +42,12 @@ export const brandKitApi = {
         if (hasInspirationFiles) {
           stepData.inspiration_links.forEach(file => {
             formData.append('inspiration_links', file);
+          });
+        }
+        
+        if (hasWebsiteFiles) {
+          stepData.website_files.forEach(file => {
+            formData.append('website_files', file);
           });
         }
         
@@ -185,7 +193,11 @@ export const transformToDatabaseFormat = (frontendData) => {
     snapchatUsername: 'snapchat_username',
     otherSocialMediaUrls: 'other_social_media_urls',
     wantToCreateSocialMedia: 'want_to_create_social_media',
-    desiredSocialMediaPlatforms: 'desired_social_media_platforms'
+    desiredSocialMediaPlatforms: 'desired_social_media_platforms',
+    hasWebsite: 'has_website',
+    websiteFiles: 'website_files',
+    websiteUrl: 'website_url',
+    wantWebsite: 'want_website'
   };
 
   for (const [frontendKey, value] of Object.entries(frontendData)) {
@@ -306,7 +318,11 @@ export const transformToFrontendFormat = (dbData) => {
     snapchat_username: 'snapchatUsername',
     other_social_media_urls: 'otherSocialMediaUrls',
     want_to_create_social_media: 'wantToCreateSocialMedia',
-    desired_social_media_platforms: 'desiredSocialMediaPlatforms'
+    desired_social_media_platforms: 'desiredSocialMediaPlatforms',
+    has_website: 'hasWebsite',
+    website_files: 'websiteFiles',
+    website_url: 'websiteUrl',
+    want_website: 'wantWebsite'
   };
 
   for (const [dbKey, value] of Object.entries(dbData)) {

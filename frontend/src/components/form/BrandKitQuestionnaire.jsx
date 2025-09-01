@@ -124,12 +124,8 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                         onRefreshStatuses();
                     }
 
-                    // Update progress in database for the next step (in background)
-                    try {
-                        await brandKitQuestionnaireApi.saveFormData(userId, formData, nextStepNumber);
-                    } catch (progressError) {
-                        console.error('Error updating progress:', progressError);
-                    }
+                    // Note: Removed duplicate saveFormData call to prevent file duplication
+                    // Progress is already tracked in the main saveFormData call
 
                     // Scroll to top when moving to next step
                     window.scrollTo({ top: 10, behavior: 'smooth' });
@@ -210,7 +206,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
     // Step 1: Brand Identity
     const renderStep1 = () => (
         <div className="space-y-8">
-            <FormField label="What is the name of your product/brand?" type="Short Text" required>
+            <FormField label="What is the name of your product/brand?" type="Short Text">
                 <Input
                     value={formData.brandName || ''}
                     onChange={(e) => updateFormData('brandName', e.target.value)}
@@ -219,7 +215,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                 />
             </FormField>
 
-            <FormField label="In one sentence, how would you describe your brand?" type="Short Text" required aiSuggestions>
+            <FormField label="In one sentence, how would you describe your brand?" type="Short Text" aiSuggestions>
                 <Input
                     value={formData.brandDescription || ''}
                     onChange={(e) => updateFormData('brandDescription', e.target.value)}
@@ -239,7 +235,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
     // Step 2: Target Audience & Positioning
     const renderStep2 = () => (
         <div className="space-y-8">
-            <FormField label="Who are your primary customers? (demographics, psychographics, behaviors)" type="Long Text" required>
+            <FormField label="Who are your primary customers? (demographics, psychographics, behaviors)" type="Long Text">
                 <Textarea
                     value={formData.primaryCustomers || ''}
                     onChange={(e) => updateFormData('primaryCustomers', e.target.value)}
@@ -249,7 +245,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                 />
             </FormField>
 
-            <FormField label="How do you want your audience to feel when they interact with your brand?" type="Dropdown" required>
+            <FormField label="How do you want your audience to feel when they interact with your brand?" type="Dropdown">
                 <Select value={formData.desiredEmotion} onValueChange={(value) => updateFormData('desiredEmotion', value)}>
                     <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                         <SelectValue placeholder="Select desired emotional response" />
@@ -262,7 +258,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                 </Select>
             </FormField>
 
-            <FormField label="What makes your product unique vs. competitors? (your 'unfair advantage')" type="Long Text" required>
+            <FormField label="What makes your product unique vs. competitors? (your 'unfair advantage')" type="Long Text">
                 <Textarea
                     value={formData.unfairAdvantage || ''}
                     onChange={(e) => updateFormData('unfairAdvantage', e.target.value)}
@@ -282,7 +278,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                 />
             </FormField>
 
-            <FormField label="What problem does your product solve for them?" type="Long Text" required aiSuggestions>
+            <FormField label="What problem does your product solve for them?" type="Long Text" aiSuggestions>
                 <Textarea
                     value={formData.problemSolved || ''}
                     onChange={(e) => updateFormData('problemSolved', e.target.value)}
@@ -303,7 +299,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
     // Step 3: Competitive Landscape
     const renderStep3 = () => (
         <div className="space-y-8">
-            <FormField label="Who are your top 3 competitors?" type="Tags" required>
+            <FormField label="Who are your top 3 competitors?" type="Tags">
                 <TagInput
                     value={formData.competitors || []}
                     onChange={(value) => updateFormData('competitors', value)}
@@ -333,7 +329,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                 />
             </FormField>
 
-            <FormField label="How should your brand stand apart?" type="Long Text" required>
+            <FormField label="How should your brand stand apart?" type="Long Text">
                 <Textarea
                     value={formData.brandDifferentiation || ''}
                     onChange={(e) => updateFormData('brandDifferentiation', e.target.value)}
@@ -348,7 +344,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
     // Step 4: Applications & Use Cases
     const renderStep4 = () => (
         <div className="space-y-8">
-            <FormField label="Where will your brand kit primarily be used?" type="Checkbox" required>
+            <FormField label="Where will your brand kit primarily be used?" type="Checkbox">
                 <CheckboxGroup
                     options={['Website', 'Social Media', 'Packaging', 'Presentations', 'Merchandise', 'Business Cards', 'Email Marketing', 'Print Materials']}
                     value={formData.brandKitUse || []}
@@ -356,7 +352,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                 />
             </FormField>
 
-            <FormField label="Do you need templates?" type="Checkbox" required>
+            <FormField label="Do you need templates?" type="Checkbox">
                 <CheckboxGroup
                     options={['Social Posts', 'Business Cards', 'Email Signatures', 'Pitch Decks', 'Letterhead', 'Social Media Templates']}
                     value={formData.templates || []}
@@ -374,7 +370,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
 
             <FormField label="Any specific formats or sizes you want included?" type="Checkbox">
                 <CheckboxGroup
-                    options={['PNG', 'JPG', 'PDF', 'AI', 'EPS', 'SVG', 'Figma', 'PSD']}
+                    options={['PNG', 'JPG', 'PDF', 'EPS', 'SVG', 'Figma', 'PSD']}
                     value={formData.fileFormats || []}
                     onChange={(value) => updateFormData('fileFormats', value)}
                 />
@@ -515,6 +511,9 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                     options={['Serif', 'Sans-serif', 'Script', 'Display', 'Monospace']}
                     value={formData.fontTypes || []}
                     onChange={(value) => updateFormData('fontTypes', value)}
+                    enableCustomInput={true}
+                    customInputPlaceholder="e.g., Roboto, Open Sans, Playfair Display, Comic Sans..."
+                    fontBasedStyling={true}
                 />
             </FormField>
 
@@ -523,6 +522,8 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                     options={['Modern', 'Classic', 'Playful', 'Professional', 'Elegant']}
                     value={formData.fontStyles || []}
                     onChange={(value) => updateFormData('fontStyles', value)}
+                    enableCustomInput={true}
+                    customInputPlaceholder="Add custom font style..."
                 />
             </FormField>
 
@@ -543,7 +544,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
         <div className="space-y-8">
             <FormField label="Do you need source files delivered?" type="Checkbox">
                 <CheckboxGroup
-                    options={['AI', 'PSD', 'Figma', 'Sketch', 'XD']}
+                    options={['PSD', 'Figma', 'Sketch', 'XD']}
                     value={formData.sourceFiles || []}
                     onChange={(value) => updateFormData('sourceFiles', value)}
                 />
@@ -594,7 +595,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
     // Step 9: Closing Information (All AI-assisted)
     const renderStep9 = () => (
         <div className="space-y-8">
-            <FormField label="What 3 words should people use to describe your brand?" type="Tags" required aiSuggestions>
+            <FormField label="What 3 words should people use to describe your brand?" type="Tags" aiSuggestions>
                 <TagInput
                     value={formData.brandWords || []}
                     onChange={(value) => updateFormData('brandWords', value)}
@@ -609,7 +610,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                 />
             </FormField>
 
-            <FormField label="What 3 words should people never use to describe your brand?" type="Tags" required aiSuggestions>
+            <FormField label="What 3 words should people never use to describe your brand?" type="Tags" aiSuggestions>
                 <TagInput
                     value={formData.brandAvoidWords || []}
                     onChange={(value) => updateFormData('brandAvoidWords', value)}
@@ -639,7 +640,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                 />
             </FormField>
 
-            <FormField label="What is your brand's mission?" type="Long Text" required aiSuggestions>
+            <FormField label="What is your brand's mission?" type="Long Text" aiSuggestions>
                 <Textarea
                     value={formData.mission || ''}
                     onChange={(e) => updateFormData('mission', e.target.value)}
@@ -655,7 +656,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                 />
             </FormField>
 
-            <FormField label="What is your long-term vision?" type="Long Text" required aiSuggestions>
+            <FormField label="What is your long-term vision?" type="Long Text" aiSuggestions>
                 <Textarea
                     value={formData.vision || ''}
                     onChange={(e) => updateFormData('vision', e.target.value)}
@@ -671,7 +672,7 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                 />
             </FormField>
 
-            <FormField label="What core values should always be reflected in your brand?" type="Tags" required aiSuggestions>
+            <FormField label="What core values should always be reflected in your brand?" type="Tags" aiSuggestions>
                 <TagInput
                     value={formData.coreValues || []}
                     onChange={(value) => updateFormData('coreValues', value)}

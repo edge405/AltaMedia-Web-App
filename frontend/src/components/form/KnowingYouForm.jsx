@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Check, Send, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Send, ArrowLeft, Loader2, AlertCircle, Info, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import authService from '@/utils/authService';
@@ -28,7 +29,87 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    buildingType: initialFormType || ''
+    buildingType: initialFormType || '',
+    fontStyles: [],
+    designStyle: [],
+    logoType: [],
+    imageryStyle: [],
+    brandKitUse: [],
+    brandElements: [],
+    fileFormats: [],
+    longTermVision: '',
+    businessEmail: '',
+    hasProventousId: '',
+    proventousId: '',
+    businessName: '',
+    contactNumber: '',
+    preferredContact: '',
+    industry: [],
+    yearStarted: '',
+    primaryLocation: '',
+    businessStage: '',
+    businessDescription: '',
+    hasSocialMedia: '',
+    socialMediaPlatforms: [],
+    facebookUrl: '',
+    instagramUrl: '',
+    twitterUrl: '',
+    linkedinUrl: '',
+    tiktokUrl: '',
+    youtubeUrl: '',
+    pinterestUrl: '',
+    snapchatUsername: '',
+    otherSocialMediaUrls: '',
+    wantToCreateSocialMedia: '',
+    desiredSocialMediaPlatforms: [],
+    currentCustomers: [],
+    wantToAttract: '',
+    spendingType: '',
+    secondaryAudience: '',
+    desiredEmotion: '',
+    targetInterests: [],
+    targetProfessions: [],
+    reachLocations: [],
+    ageGroups: [],
+    currentInterests: [],
+    spendingHabits: [],
+    audienceBehavior: [],
+    interactionMethods: [],
+    customerChallenges: '',
+    purchaseMotivators: '',
+    emotionalGoal: '',
+    cultureWords: [],
+    cultureDescription: '',
+    teamTraditions: '',
+    behindBrand: '',
+    inspiration: '',
+    reason1: '',
+    reason2: '',
+    reason3: '',
+    brandSoul: '',
+    brandPersonality: [],
+    brandTone: [],
+    brand1: '',
+    brand2: '',
+    brand3: '',
+    brandAvoid: '',
+    hasLogo: '',
+    logoAction: [],
+    preferredColors: '',
+    colorsToAvoid: '',
+    inspirationLinks: '',
+    primaryGoal: '',
+    shortTermGoals: '',
+    longTermGoal: '',
+    midTermGoals: '',
+    bigPictureVision: '',
+    successMetrics: [],
+    missionStatement: '',
+    coreValues: [],
+    specialNotes: '',
+    timeline: '',
+    approver: '',
+    referenceMaterials: ''
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -87,7 +168,6 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
   }, [user?.id, initialFormType]);
 
   const updateFormData = (field, value) => {
-
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -103,101 +183,14 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
     updateFormData(field, value);
   };
 
-  // Validation function for current step
+  // Validation function for current step - validation disabled to allow flexible form completion
   const validateCurrentStep = () => {
-    const errors = [];
-
-    switch (currentStep) {
-      case 1:
-        if (!formData.buildingType) {
-          errors.push('Please select what you are building');
-        }
-        if (!formData.businessEmail) {
-          errors.push('Business email is required');
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.businessEmail)) {
-          errors.push('Please enter a valid email address');
-        }
-        if (!formData.businessName) {
-          errors.push('Business name is required');
-        }
-        break;
-
-      case 2:
-        if (!formData.industry || formData.industry.length === 0) {
-          errors.push('Please select at least one industry or niche');
-        }
-        if (!formData.yearStarted) {
-          errors.push('Please select the year your business started');
-        }
-        if (!formData.primaryLocation) {
-          errors.push('Primary location is required');
-        }
-        if (!formData.wantToAttract) {
-          errors.push('Please describe who you want to attract');
-        }
-        break;
-
-      case 3:
-        if (!formData.desiredEmotion) {
-          errors.push('Please select the desired emotion for your audience');
-        }
-        break;
-
-      case 5:
-        if (!formData.reason1) {
-          errors.push('Please provide at least one reason for your brand');
-        }
-        if (!formData.brandSoul) {
-          errors.push('Brand soul is required');
-        }
-        break;
-
-      case 6:
-        if (!formData.hasLogo) {
-          errors.push('Please indicate if you have a logo');
-        }
-        break;
-
-      case 7:
-        if (!formData.brandKitUse || formData.brandKitUse.length === 0) {
-          errors.push('Please select how you will use your brand kit');
-        }
-        break;
-
-      case 8:
-        if (!formData.primaryGoal) {
-          errors.push('Primary goal is required');
-        }
-        break;
-
-      case 9:
-        if (!formData.businessDescription) {
-          errors.push('Business description is required');
-        }
-        break;
-
-      case 10:
-        if (!formData.timeline) {
-          errors.push('Timeline is required');
-        }
-        break;
-
-      default:
-        break;
-    }
-
-    return errors;
+    // Return empty array to allow proceeding without validation
+    return [];
   };
 
   const nextStep = async () => {
-    const errors = validateCurrentStep();
-
-    if (errors.length > 0) {
-      setValidationErrors(errors);
-      toast.error('Please fill in all required fields before proceeding');
-      return;
-    }
-
+    // Validation disabled - allow proceeding without field validation
     setValidationErrors([]);
 
     // For testing, use a default user ID if not authenticated
@@ -229,12 +222,8 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
             onRefreshStatuses();
           }
 
-          // Update progress in database for the next step (in background)
-          try {
-            await brandKitApi.saveFormData(userId, stepData, nextStepNumber);
-          } catch (progressError) {
-            console.error('Error updating progress:', progressError);
-          }
+          // Note: Removed duplicate saveFormData call to prevent file duplication
+          // Progress is already tracked in the main saveFormData call
 
           // Scroll to top when moving to next step
           window.scrollTo({ top: 10, behavior: 'smooth' });
@@ -360,7 +349,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
 
   const renderStep1 = () => (
     <div className="space-y-8">
-      <FormField label="What are you building?" type="Dropdown" required>
+      <FormField label="What are you building?" type="Dropdown">
         <Select value={formData.buildingType} onValueChange={(value) => updateFormData('buildingType', value)} disabled>
           <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed">
             <SelectValue placeholder="Business/Company (Locked)" />
@@ -376,7 +365,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
         </p>
       </FormField>
 
-      <FormField label="Business Email" type="Short Text" required>
+      <FormField label="Business Email" type="Short Text">
         <Input
           type="email"
           value={formData.businessEmail || ''}
@@ -408,7 +397,8 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
           />
         </FormField>
       )}
-      <FormField label="Full Name of Business/Organization" type="Short Text" required>
+
+      <FormField label="Full Name of Business/Organization" type="Short Text">
         <Input
           value={formData.businessName || ''}
           onChange={(e) => updateFormData('businessName', e.target.value)}
@@ -448,7 +438,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
         </Select>
       </FormField>
 
-      <FormField label="Industry or Niche" type="Tags" required>
+      <FormField label="Industry or Niche" type="Tags">
         <TagInput
           value={formData.industry || []}
           onChange={(value) => updateFormData('industry', value)}
@@ -457,7 +447,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
         />
       </FormField>
 
-      <FormField label="Year Officially Started" type="Dropdown" required>
+      <FormField label="Year Officially Started" type="Dropdown">
         <Select value={formData.yearStarted} onValueChange={(value) => updateFormData('yearStarted', value)}>
           <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
             <SelectValue placeholder="Select year" />
@@ -470,13 +460,83 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
         </Select>
       </FormField>
 
-      <FormField label="Primary Location" type="Map" required>
+      <FormField label="Primary Location" type="Map">
         <MapPicker
           value={formData.primaryLocation || ''}
           onChange={(value) => updateFormData('primaryLocation', value)}
           placeholder="Enter your primary location"
         />
       </FormField>
+
+      {/* Website Section */}
+      <FormField label="Does your brand have a web page?" type="Dropdown">
+        <Select value={formData.hasWebsite} onValueChange={(value) => updateFormData('hasWebsite', value)}>
+          <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            <SelectValue placeholder="Select an option" />
+          </SelectTrigger>
+          <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+            <SelectItem value="yes">Yes, I have a website</SelectItem>
+            <SelectItem value="no">No, I don't have a website</SelectItem>
+          </SelectContent>
+        </Select>
+      </FormField>
+
+      {formData.hasWebsite === 'yes' && (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Upload your current website files
+              </Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="w-4 h-4 text-gray-500 hover:text-gray-700 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>Upload your current website files (HTML, CSS, images, etc.) or provide a link to your existing website. This helps us understand your current web presence.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <FileUpload
+              value={formData.websiteFiles || ''}
+              onChange={(files) => updateFormData('websiteFiles', files)}
+              placeholder="Upload website files or provide website URL"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Website URL (if applicable)
+            </Label>
+            <Input
+              type="url"
+              value={formData.websiteUrl || ''}
+              onChange={(e) => updateFormData('websiteUrl', e.target.value)}
+              placeholder="https://yourwebsite.com"
+              className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+            />
+          </div>
+        </div>
+      )}
+
+      {formData.hasWebsite === 'no' && (
+        <FormField label="Do you want to have a compelling web page or sales funnel for your brand?" type="Dropdown">
+          <Select value={formData.wantWebsite} onValueChange={(value) => updateFormData('wantWebsite', value)}>
+            <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+              <SelectValue placeholder="Select an option" />
+            </SelectTrigger>
+            <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+              <SelectItem value="yes">Yes, I want a professional website</SelectItem>
+              <SelectItem value="sales-funnel">Yes, I want a sales funnel</SelectItem>
+              <SelectItem value="both">Yes, I want both a website and sales funnel</SelectItem>
+              <SelectItem value="no">No, not interested at this time</SelectItem>
+              <SelectItem value="maybe">Maybe, I'm not sure yet</SelectItem>
+            </SelectContent>
+          </Select>
+        </FormField>
+      )}
 
       <FormField label="Where is your business currently in its journey?" type="Dropdown">
         <Select value={formData.businessStage} onValueChange={(value) => updateFormData('businessStage', value)}>
@@ -520,20 +580,120 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
 
       {formData.hasSocialMedia === 'yes' && (
         <>
-          <FormField label="Which social media platforms do you currently use?" type="Checkbox">
-            <CheckboxGroup
-              options={['Facebook', 'Instagram', 'Twitter/X', 'LinkedIn', 'TikTok', 'YouTube', 'Pinterest', 'Snapchat', 'Other']}
-              value={formData.socialMediaPlatforms || []}
-              onChange={(value) => updateFormData('socialMediaPlatforms', value)}
-            />
-          </FormField>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Which social media platforms do you currently use?
+              </Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="w-4 h-4 text-gray-500 hover:text-gray-700 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>Select all social media platforms where you currently have active accounts. This helps us understand your existing online presence.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="space-y-3 sm:space-y-4">
+              {/* Select All / Clear All buttons */}
+              <div className="flex flex-col sm:flex-row gap-2 mb-3 sm:mb-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateFormData('socialMediaPlatforms', ['Facebook', 'Instagram', 'Twitter/X', 'LinkedIn', 'TikTok', 'YouTube', 'Pinterest', 'Snapchat', 'Other'])}
+                  disabled={(formData.socialMediaPlatforms || []).length === 9}
+                  className="flex items-center gap-2 text-xs border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 w-full sm:w-auto"
+                >
+                  <Check className="w-3 h-3" />
+                  Select All
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateFormData('socialMediaPlatforms', [])}
+                  disabled={(formData.socialMediaPlatforms || []).length === 0}
+                  className="flex items-center gap-2 text-xs border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 w-full sm:w-auto"
+                >
+                  <X className="w-3 h-3" />
+                  Clear All
+                </Button>
+              </div>
+
+              {/* Social Media Platforms with Tooltips */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 max-h-48 sm:max-h-64 overflow-y-auto form-scroll">
+                {[
+                  { name: 'Facebook', tooltip: 'Social networking platform for connecting with friends, family, and customers. Great for community building and local business promotion.' },
+                  { name: 'Instagram', tooltip: 'Visual platform for sharing photos and videos. Perfect for showcasing products, behind-the-scenes content, and lifestyle branding.' },
+                  { name: 'Twitter/X', tooltip: 'Micro-blogging platform for real-time updates, news, and conversations. Ideal for customer service and industry engagement.' },
+                  { name: 'LinkedIn', tooltip: 'Professional networking platform for B2B connections, industry insights, and professional brand building.' },
+                  { name: 'TikTok', tooltip: 'Short-form video platform for creative content and viral marketing. Great for reaching younger audiences and trending topics.' },
+                  { name: 'YouTube', tooltip: 'Video platform for long-form content, tutorials, and brand storytelling. Excellent for educational content and product demonstrations.' },
+                  { name: 'Pinterest', tooltip: 'Visual discovery platform for inspiration and product discovery. Perfect for lifestyle brands and visual content marketing.' },
+                  { name: 'Snapchat', tooltip: 'Ephemeral messaging and story platform for casual, authentic content. Good for behind-the-scenes and temporary promotions.' },
+                  { name: 'Other', tooltip: 'Any other social media platforms not listed above. Please specify in the additional fields below.' }
+                ].map(({ name, tooltip }) => (
+                  <div key={name} className="flex items-center space-x-2 sm:space-x-3">
+                    <Checkbox
+                      id={`checkbox-${name}`}
+                      checked={(formData.socialMediaPlatforms || []).includes(name)}
+                      onCheckedChange={() => {
+                        const current = formData.socialMediaPlatforms || [];
+                        const newValue = current.includes(name)
+                          ? current.filter(v => v !== name)
+                          : [...current, name];
+                        updateFormData('socialMediaPlatforms', newValue);
+                      }}
+                      className="border-gray-300 dark:border-gray-600"
+                    />
+                    <div className="flex items-center gap-1">
+                      <Label
+                        htmlFor={`checkbox-${name}`}
+                        className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 cursor-pointer leading-tight"
+                      >
+                        {name}
+                      </Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-3 h-3 text-gray-400 hover:text-gray-600 cursor-help flex-shrink-0" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>{tooltip}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {formData.socialMediaPlatforms && formData.socialMediaPlatforms.length > 0 && (
             <div className="space-y-4">
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Please provide links to your social media accounts:</h4>
 
               {formData.socialMediaPlatforms.includes('Facebook') && (
-                <FormField label="Facebook URL" type="Short Text">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Facebook URL
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-4 h-4 text-gray-500 hover:text-gray-700 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Provide the URL to your Facebook page or profile. This should be the public URL that visitors can use to find your page.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Input
                     type="url"
                     value={formData.facebookUrl || ''}
@@ -541,11 +701,26 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
                     placeholder="https://facebook.com/yourpage"
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
-                </FormField>
+                </div>
               )}
 
               {formData.socialMediaPlatforms.includes('Instagram') && (
-                <FormField label="Instagram URL" type="Short Text">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Instagram URL
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-4 h-4 text-gray-500 hover:text-gray-700 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Provide the URL to your Instagram profile. This should be the public URL that visitors can use to find your Instagram account.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Input
                     type="url"
                     value={formData.instagramUrl || ''}
@@ -553,11 +728,26 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
                     placeholder="https://instagram.com/yourhandle"
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
-                </FormField>
+                </div>
               )}
 
               {formData.socialMediaPlatforms.includes('Twitter/X') && (
-                <FormField label="Twitter/X URL" type="Short Text">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Twitter/X URL
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-4 h-4 text-gray-500 hover:text-gray-700 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Provide the URL to your Twitter/X profile. This should be the public URL that visitors can use to find your Twitter/X account.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Input
                     type="url"
                     value={formData.twitterUrl || ''}
@@ -565,11 +755,26 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
                     placeholder="https://twitter.com/yourhandle"
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
-                </FormField>
+                </div>
               )}
 
               {formData.socialMediaPlatforms.includes('LinkedIn') && (
-                <FormField label="LinkedIn URL" type="Short Text">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      LinkedIn URL
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-4 h-4 text-gray-500 hover:text-gray-700 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Provide the URL to your LinkedIn company page or personal profile. This should be the public URL that visitors can use to find your LinkedIn presence.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Input
                     type="url"
                     value={formData.linkedinUrl || ''}
@@ -577,11 +782,26 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
                     placeholder="https://linkedin.com/company/yourcompany"
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
-                </FormField>
+                </div>
               )}
 
               {formData.socialMediaPlatforms.includes('TikTok') && (
-                <FormField label="TikTok URL" type="Short Text">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      TikTok URL
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-4 h-4 text-gray-500 hover:text-gray-700 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Provide the URL to your TikTok profile. This should be the public URL that visitors can use to find your TikTok account.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Input
                     type="url"
                     value={formData.tiktokUrl || ''}
@@ -589,11 +809,26 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
                     placeholder="https://tiktok.com/@yourhandle"
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
-                </FormField>
+                </div>
               )}
 
               {formData.socialMediaPlatforms.includes('YouTube') && (
-                <FormField label="YouTube URL" type="Short Text">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      YouTube URL
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-4 h-4 text-gray-500 hover:text-gray-700 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Provide the URL to your YouTube channel. This should be the public URL that visitors can use to find your YouTube channel.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Input
                     type="url"
                     value={formData.youtubeUrl || ''}
@@ -601,11 +836,26 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
                     placeholder="https://youtube.com/@yourchannel"
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
-                </FormField>
+                </div>
               )}
 
               {formData.socialMediaPlatforms.includes('Pinterest') && (
-                <FormField label="Pinterest URL" type="Short Text">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Pinterest URL
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-4 h-4 text-gray-500 hover:text-gray-700 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Provide the URL to your Pinterest profile. This should be the public URL that visitors can use to find your Pinterest account.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Input
                     type="url"
                     value={formData.pinterestUrl || ''}
@@ -613,22 +863,52 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
                     placeholder="https://pinterest.com/yourprofile"
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
-                </FormField>
+                </div>
               )}
 
               {formData.socialMediaPlatforms.includes('Snapchat') && (
-                <FormField label="Snapchat Username" type="Short Text">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Snapchat Username
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-4 h-4 text-gray-500 hover:text-gray-700 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Provide your Snapchat username (without the @ symbol). This is how users can find and add you on Snapchat.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Input
                     value={formData.snapchatUsername || ''}
                     onChange={(e) => updateFormData('snapchatUsername', e.target.value)}
                     placeholder="your_snapchat_username"
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
-                </FormField>
+                </div>
               )}
 
               {formData.socialMediaPlatforms.includes('Other') && (
-                <FormField label="Other Social Media URLs" type="Long Text">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Other Social Media URLs
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-4 h-4 text-gray-500 hover:text-gray-700 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>List any other social media platforms and their URLs that you use. Please provide one platform and URL per line for better organization.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Textarea
                     value={formData.otherSocialMediaUrls || ''}
                     onChange={(e) => updateFormData('otherSocialMediaUrls', e.target.value)}
@@ -636,7 +916,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
                     rows={3}
                     className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
-                </FormField>
+                </div>
               )}
             </div>
           )}
@@ -679,7 +959,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
             />
           </FormField>
 
-          <FormField label="Who Do You Want to Attract?" type="Long Text" required>
+          <FormField label="Who Do You Want to Attract?" type="Long Text">
             <Textarea
               value={formData.wantToAttract || ''}
               onChange={(e) => updateFormData('wantToAttract', e.target.value)}
@@ -689,7 +969,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
             />
           </FormField>
 
-          <FormField label="What's their spending type?" type="Dropdown" required>
+          <FormField label="What's their spending type?" type="Dropdown">
             <Select value={formData.spendingType} onValueChange={(value) => updateFormData('spendingType', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select spending type" />
@@ -724,7 +1004,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
           <div className="space-y-6">
             <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Target Market</h3>
 
-            <FormField label="Desired Emotional Response" type="Dropdown" required>
+            <FormField label="Desired Emotional Response" type="Dropdown">
               <Select value={formData.desiredEmotion} onValueChange={(value) => updateFormData('desiredEmotion', value)}>
                 <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                   <SelectValue placeholder="Select desired emotional response" />
@@ -966,12 +1246,18 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
         />
       </FormField>
 
-      <FormField label="If Your Brand Had a Soul, How would you describe it?" type="Short Text">
+      <FormField label="If Your Brand Had a Soul, How would you describe it?" type="Short Text" aiSuggestions>
         <Input
           value={formData.brandSoul || ''}
           onChange={(e) => updateFormData('brandSoul', e.target.value)}
           placeholder="What would your brand's soul be like?"
           className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+        />
+        <AISuggestion
+          fieldName="brandSoul"
+          currentValue={formData.brandSoul}
+          onApplySuggestion={(suggestion) => updateFormData('brandSoul', suggestion)}
+          formData={formData}
         />
       </FormField>
 
@@ -1009,6 +1295,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
         <CheckboxGroup
           options={['Professional', 'Casual', 'Friendly', 'Authoritative', 'Playful', 'Sophisticated']}
           value={formData.brandTone || []}
+          enableCustomInput={true}
           onChange={(value) => updateFormData('brandTone', value)}
         />
       </FormField>
@@ -1057,7 +1344,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
 
   const renderStep6 = () => (
     <div className="space-y-8">
-      <FormField label="Do You Already Have a Logo?" type="Dropdown" required>
+      <FormField label="Do You Already Have a Logo?" type="Dropdown">
         <Select value={formData.hasLogo} onValueChange={(value) => updateFormData('hasLogo', value)}>
           <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
             <SelectValue placeholder="Select an option" />
@@ -1100,7 +1387,13 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
           options={['Serif', 'Sans-serif', 'Script', 'Display', 'Monospace']}
           value={formData.fontStyles || []}
           onChange={(value) => updateFormData('fontStyles', value)}
+          enableCustomInput={true}
+          customInputPlaceholder="e.g., Roboto, Open Sans, Playfair Display, Comic Sans..."
+          fontBasedStyling={true}
         />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          💡 Tip: Add custom fonts like "Roboto", "Open Sans", or "Comic Sans" to see them applied to the text!
+        </p>
       </FormField>
 
       <FormField label="Design Style" type="Checkbox">
@@ -1108,6 +1401,8 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
           options={['Minimalist', 'Modern', 'Vintage', 'Bold', 'Elegant', 'Playful', 'Professional']}
           value={formData.designStyle || []}
           onChange={(value) => updateFormData('designStyle', value)}
+          enableCustomInput={true}
+          customInputPlaceholder="Add custom design style..."
         />
       </FormField>
 
@@ -1116,6 +1411,8 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
           options={['Wordmark', 'Symbol', 'Combination', 'Emblem', 'Lettermark']}
           value={formData.logoType || []}
           onChange={(value) => updateFormData('logoType', value)}
+          enableCustomInput={true}
+          customInputPlaceholder="Add custom logo type..."
         />
       </FormField>
 
@@ -1124,6 +1421,8 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
           options={['Photography', 'Illustration', 'Abstract', 'Geometric', 'Organic', 'Mixed Media']}
           value={formData.imageryStyle || []}
           onChange={(value) => updateFormData('imageryStyle', value)}
+          enableCustomInput={true}
+          customInputPlaceholder="Add custom imagery style..."
         />
       </FormField>
 
@@ -1139,27 +1438,33 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
 
   const renderStep7 = () => (
     <div className="space-y-8">
-      <FormField label="Where Will the Brand Kit Be Used?" type="Checkbox" required>
+      <FormField label="Where Will the Brand Kit Be Used?" type="Checkbox">
         <CheckboxGroup
-          options={['Website', 'Social Media', 'Print Materials', 'Business Cards', 'Email Marketing', 'Packaging', 'Signage', 'Apparel']}
+          options={['Website', 'Social Media', 'Print Materials', 'Business Cards', 'Email Marketing', 'Packaging', 'Apparel']}
           value={formData.brandKitUse || []}
           onChange={(value) => updateFormData('brandKitUse', value)}
+          enableCustomInput={true}
+          customInputPlaceholder="Add custom usage channel..."
         />
       </FormField>
 
-      <FormField label="Brand Elements Needed" type="Checkbox" required>
+      <FormField label="Brand Elements Needed" type="Checkbox">
         <CheckboxGroup
           options={['Logo', 'Color Palette', 'Typography', 'Business Cards', 'Letterhead', 'Social Media Templates', 'Email Signature', 'Brand Guidelines']}
           value={formData.brandElements || []}
           onChange={(value) => updateFormData('brandElements', value)}
+          enableCustomInput={true}
+          customInputPlaceholder="Add custom brand element..."
         />
       </FormField>
 
-      <FormField label="File Format Preferences" type="Checkbox" required>
+      <FormField label="File Format Preferences" type="Checkbox">
         <CheckboxGroup
-          options={['PNG', 'JPG', 'PDF', 'AI', 'EPS', 'SVG']}
+          options={['PNG', 'JPG', 'PDF', 'EPS', 'SVG']}
           value={formData.fileFormats || []}
           onChange={(value) => updateFormData('fileFormats', value)}
+          enableCustomInput={true}
+          customInputPlaceholder="Add custom file format..."
         />
       </FormField>
     </div>
@@ -1167,7 +1472,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
 
   const renderStep8 = () => (
     <div className="space-y-8">
-      <FormField label="#1 Goal This Year" type="Short Text" required>
+      <FormField label="#1 Goal This Year" type="Short Text">
         <Input
           value={formData.primaryGoal || ''}
           onChange={(e) => updateFormData('primaryGoal', e.target.value)}
@@ -1217,6 +1522,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
         <CheckboxGroup
           options={['Revenue Growth', 'Customer Satisfaction', 'Brand Recognition', 'Market Share', 'Social Media Engagement', 'Website Traffic', 'Customer Retention', 'Employee Satisfaction']}
           value={formData.successMetrics || []}
+          enableCustomInput={true}
           onChange={(value) => updateFormData('successMetrics', value)}
         />
       </FormField>
@@ -1244,14 +1550,14 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
       <FormField label="What's your long-term vision?" type="Long Text" aiSuggestions>
         <Textarea
           placeholder="Describe your long-term vision"
-          value={formData.visionStatement || ''}
-          onChange={(e) => updateFormData('visionStatement', e.target.value)}
+          value={formData.longTermVision || ''}
+          onChange={(e) => updateFormData('longTermVision', e.target.value)}
           rows={4}
         />
         <AISuggestion
-          fieldName="visionStatement"
-          currentValue={formData.visionStatement}
-          onApplySuggestion={(suggestion) => updateFormData('visionStatement', suggestion)}
+          fieldName="longTermVision"
+          currentValue={formData.longTermVision}
+          onApplySuggestion={(suggestion) => updateFormData('longTermVision', suggestion)}
           formData={formData}
         />
       </FormField>
