@@ -110,13 +110,11 @@ const saveFormData = async (req, res) => {
       console.log('📁 Processing reference_materials files:', req.files.reference_materials);
       
       try {
-        // Extract file paths from uploaded files
-        const filePaths = extractFileUploads(processedStepData || {}, req.files.reference_materials, 'reference_materials');
+        // When new files are uploaded, replace existing files completely
+        const newFilePaths = req.files.reference_materials.map(file => file.path);
+        processedStepData.reference_materials = JSON.stringify(newFilePaths);
         
-        // Store file paths as JSON array in the database (same as brandKit)
-        processedStepData.reference_materials = JSON.stringify(filePaths || []);
-        
-        console.log('📁 reference_materials file paths:', filePaths);
+        console.log('📁 reference_materials new file paths:', newFilePaths);
         console.log('📁 Final processedStepData.reference_materials:', processedStepData.reference_materials);
       } catch (fileError) {
         console.error('❌ Error processing files:', fileError);
@@ -124,8 +122,13 @@ const saveFormData = async (req, res) => {
       }
     } else {
       console.log('📁 No reference_materials files found in request');
-      // Ensure reference_materials is set to empty array if no files
-      processedStepData.reference_materials = JSON.stringify([]);
+      // Preserve existing files if no new files uploaded
+      if (processedStepData.reference_materials) {
+        console.log('📁 Preserving existing reference_materials files:', processedStepData.reference_materials);
+      } else {
+        // Ensure reference_materials is set to empty array if no files
+        processedStepData.reference_materials = JSON.stringify([]);
+      }
     }
 
     logger.info(`Saving Organization form data for user ${userId}, step ${currentStep}`);

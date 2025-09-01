@@ -132,17 +132,24 @@ const processUploadedFiles = (files, baseUrl = '') => {
 const extractFileUploads = (formData, uploadedFiles, fieldName) => {
   const filePaths = [];
   
+  // If there are new uploaded files, use only those (replace existing)
   if (uploadedFiles && uploadedFiles.length > 0) {
-    // Add uploaded files
+    // Add only the newly uploaded files
     uploadedFiles.forEach(file => {
       filePaths.push(file.path);
     });
+    return filePaths; // Return only new files, don't merge with existing
   }
   
-  // Check if there are existing file paths in form data
+  // If no new files uploaded, preserve existing files from form data
+  // But only if they are actual file paths (not File objects from frontend)
   if (formData[fieldName]) {
     if (Array.isArray(formData[fieldName])) {
-      filePaths.push(...formData[fieldName]);
+      // Filter out File objects and keep only string paths
+      const existingPaths = formData[fieldName].filter(item => 
+        typeof item === 'string' && (item.includes('/') || item.includes('\\'))
+      );
+      filePaths.push(...existingPaths);
     } else if (typeof formData[fieldName] === 'string') {
       // If it's a string, it might be a single path or comma-separated paths
       const paths = formData[fieldName].split(',').map(p => p.trim()).filter(p => p);

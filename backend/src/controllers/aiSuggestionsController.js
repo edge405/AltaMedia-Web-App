@@ -159,7 +159,7 @@ const hasSufficientContext = (context) => {
   const requiredFields = ['businessName', 'industry', 'businessType', 'brandName'];
   const hasRequired = requiredFields.some(field => context[field] && context[field].trim() !== '');
   
-  const optionalFields = ['mission', 'vision', 'targetAudience', 'brandDescription', 'behindBrand', 'primaryCustomers', 'problemSolved', 'unfairAdvantage'];
+  const optionalFields = ['mission', 'vision', 'targetAudience', 'brandDescription', 'behindBrand', 'primaryCustomers', 'problemSolved', 'unfairAdvantage', 'inspiration', 'primaryGoal', 'brandPersonality', 'desiredEmotion', 'brandTone', 'designStyle', 'brandKitUse', 'timeline', 'yearStarted'];
   const hasOptional = optionalFields.some(field => context[field] && context[field].trim() !== '');
   
   return hasRequired || hasOptional;
@@ -268,8 +268,8 @@ Business Context:
     
     // Vision Statement
     visionStatement: hasContext
-      ? `Based on the business context, write a visionary statement that describes the future this business wants to create. Make it aspirational and forward-looking.`
-      : `Write a visionary statement that describes the future a business wants to create. Focus on innovation, growth, and positive change. Make it aspirational and forward-looking.`,
+      ? `Based on the business context, write a revolutionary vision statement that imagines how this business could fundamentally transform the world. Think beyond current limitations and imagine the most audacious, world-changing possibilities. Consider how emerging technologies (AI, quantum computing, biotechnology, space exploration, renewable energy, etc.) could amplify this business's impact. Imagine how this business could solve global challenges, create new industries, or change human behavior on a massive scale. Consider the ripple effects - how this business could inspire other companies, influence policy, or create entirely new markets. Focus on the 10-20 year horizon and imagine the most ambitious, transformative future possible. Make it inspiring, bold, and revolutionary.`
+      : `Write a revolutionary vision statement that imagines how a business could fundamentally transform the world. Think beyond current limitations and imagine the most audacious, world-changing possibilities. Consider how emerging technologies (AI, quantum computing, biotechnology, space exploration, renewable energy, etc.) could amplify a business's impact. Imagine how a business could solve global challenges, create new industries, or change human behavior on a massive scale. Consider the ripple effects - how a business could inspire other companies, influence policy, or create entirely new markets. Focus on the 10-20 year horizon and imagine the most ambitious, transformative future possible. Make it inspiring, bold, and revolutionary.`,
     
     // Business Description
     businessDescription: hasContext
@@ -357,6 +357,11 @@ Business Context:
     cultureWords: hasContext
       ? `Based on the business context, suggest 3 words that describe the company culture. Return only the words as comma-separated tags.`
       : `Suggest 3 words that describe a positive company culture. Focus on collaboration, innovation, and growth. Return only the words as comma-separated tags.`,
+    
+    // Brand Soul
+    brandSoul: hasContext
+      ? `Based on the business context, describe the soul of this brand in one powerful word or short phrase. What is the essence, spirit, or core identity that makes this brand unique?`
+      : `Describe the soul of a brand in one powerful word or short phrase. What is the essence, spirit, or core identity that makes a brand unique?`,
     
     // Brand Tone
     brandTone: hasContext
@@ -472,8 +477,8 @@ Business Context:
       ? `Based on the business context, describe mid-term goals for the next 2-3 years.`
       : `Describe mid-term goals for a business in the next 2-3 years. Focus on market expansion, product development, and team growth.`,
     bigPictureVision: hasContext
-      ? `Based on the business context, describe the big-picture vision for the brand's long-term impact.`
-      : `Describe the big-picture vision for a brand's long-term impact. Focus on industry leadership, innovation, and positive change.`,
+      ? `Based on the business context, describe the revolutionary big-picture vision for how this brand could fundamentally transform the world. Think beyond current limitations and imagine the most audacious, world-changing possibilities. Consider how emerging technologies, global megatrends, and societal shifts could amplify this brand's impact. Imagine how this brand could solve humanity's biggest challenges, create entirely new industries, or change human behavior on a massive scale. Consider the ripple effects and second-order consequences of the brand's success. Focus on the 10-20 year horizon and imagine the most ambitious, transformative future possible. Make it inspiring, bold, and revolutionary.`
+      : `Describe the revolutionary big-picture vision for how a brand could fundamentally transform the world. Think beyond current limitations and imagine the most audacious, world-changing possibilities. Consider how emerging technologies, global megatrends, and societal shifts could amplify a brand's impact. Imagine how a brand could solve humanity's biggest challenges, create entirely new industries, or change human behavior on a massive scale. Consider the ripple effects and second-order consequences of the brand's success. Focus on the 10-20 year horizon and imagine the most ambitious, transformative future possible. Make it inspiring, bold, and revolutionary.`,
     
     // Special Notes
     specialNotes: hasContext
@@ -619,8 +624,8 @@ Business Context:
       : `Write a compelling mission statement that captures the essence of what a brand does and why it exists. Make it inspiring and authentic.`,
     
     vision: hasContext
-      ? `Based on the business context, write a visionary statement that describes the future this brand wants to create. Make it aspirational and forward-looking.`
-      : `Write a visionary statement that describes the future a brand wants to create. Make it aspirational and forward-looking.`,
+      ? `Based on the business context, write a revolutionary vision statement that imagines how this brand could fundamentally transform the world. Think beyond current limitations and imagine the most audacious, world-changing possibilities. Consider how emerging technologies (AI, quantum computing, biotechnology, space exploration, renewable energy, etc.) could amplify this brand's impact. Imagine how this brand could solve global challenges, create new industries, or change human behavior on a massive scale. Consider the ripple effects - how this brand could inspire other companies, influence policy, or create entirely new markets. Focus on the 10-20 year horizon and imagine the most ambitious, transformative future possible. Make it inspiring, bold, and revolutionary.`
+      : `Write a revolutionary vision statement that imagines how a brand could fundamentally transform the world. Think beyond current limitations and imagine the most audacious, world-changing possibilities. Consider how emerging technologies (AI, quantum computing, biotechnology, space exploration, renewable energy, etc.) could amplify a brand's impact. Imagine how a brand could solve global challenges, create new industries, or change human behavior on a massive scale. Consider the ripple effects - how a brand could inspire other companies, influence policy, or create entirely new markets. Focus on the 10-20 year horizon and imagine the most ambitious, transformative future possible. Make it inspiring, bold, and revolutionary.`,
     
     coreValues: hasContext
       ? `Based on the business context, suggest 3-5 core values that should always be reflected in this brand. Return only the values as comma-separated tags.`
@@ -634,12 +639,28 @@ Business Context:
 
   const prompt = fieldPrompts[fieldName] || fieldPrompts.default;
   
+  // Add special enhancement for vision-related fields
+  let visionEnhancement = '';
+  if (fieldName === 'vision' || fieldName === 'visionStatement' || fieldName === 'bigPictureVision' || fieldName === 'longlongTermVision') {
+    visionEnhancement = `\n\nRevolutionary Vision Enhancement: Consider the following when crafting this world-changing vision:
+- Emerging technologies (AI, quantum computing, biotechnology, space exploration, renewable energy, nanotechnology, brain-computer interfaces, etc.)
+- Global megatrends (climate change, urbanization, aging populations, digital transformation, etc.)
+- How this business could solve humanity's biggest challenges
+- Industry disruption and creation of entirely new markets
+- The business's potential to influence global policy and societal change
+- Ripple effects and second-order consequences of the business's success
+- 10-20 year timeframe for maximum transformative impact
+- Think beyond current limitations and imagine the most audacious, world-changing possibilities
+- Consider how this business could inspire a movement or change human behavior on a massive scale
+- Imagine the business's role in shaping the future of humanity and the planet`;
+  }
+  
   // Add context awareness note
   const contextNote = hasContext 
     ? `\n\nNote: Use the provided business context to create a tailored suggestion.`
     : `\n\nNote: Since limited business context is available, create a general but professional suggestion based on industry best practices.`;
   
-  return `${contextString}\n\nTask: ${prompt}${contextNote}`;
+  return `${contextString}\n\nTask: ${prompt}${visionEnhancement}${contextNote}`;
 };
 
 // Determine field type and format response accordingly
@@ -692,7 +713,7 @@ const getAISuggestions = async (req, res) => {
         systemMessage = `You are an expert brand strategist. Provide concise, impactful responses that sound natural and human-written. If limited context is available, create professional, general-purpose suggestions that can be customized later. Keep responses brief but compelling.`;
         break;
       case 'long_text':
-        systemMessage = `You are an expert brand strategist. Write natural, conversational responses that sound like they were written by a person. If limited context is available, create professional, general-purpose content that follows industry best practices and can be customized. Be authentic, engaging, and avoid giving instructions or advice - just provide the content. Write in a warm, professional tone.`;
+        systemMessage = `You are an expert brand strategist and revolutionary futurist. Write natural, conversational responses that sound like they were written by a person. Think beyond conventional boundaries and imagine the most audacious, world-changing possibilities - especially for vision statements. Consider how emerging technologies, global megatrends, and societal shifts could create unprecedented opportunities. Imagine how businesses could solve humanity's biggest challenges, create entirely new industries, or change the course of history. If limited context is available, create professional, general-purpose content that follows industry best practices and can be customized. Be authentic, engaging, and avoid giving instructions or advice - just provide the content. Write in a warm, professional tone that inspires and motivates. For vision statements, think like a revolutionary leader who sees possibilities others cannot imagine.`;
         break;
     }
 
@@ -708,8 +729,8 @@ const getAISuggestions = async (req, res) => {
           content: prompt
         }
       ],
-      max_tokens: fieldType === 'tag' ? 100 : fieldType === 'short_text' ? 150 : 300,
-      temperature: 0.7,
+      max_tokens: fieldType === 'tag' ? 100 : fieldType === 'short_text' ? 150 : (fieldName === 'vision' || fieldName === 'visionStatement' || fieldName === 'bigPictureVision') ? 800 : 300,
+      temperature: (fieldName === 'vision' || fieldName === 'visionStatement' || fieldName === 'bigPictureVision') ? 0.95 : 0.7,
     });
 
     let suggestion = completion.choices[0]?.message?.content?.trim();

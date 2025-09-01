@@ -143,13 +143,11 @@ const saveFormData = async (req, res) => {
         if (req.files && req.files[fieldName] && req.files[fieldName].length > 0) {
           console.log(`📁 Processing ${fieldName} files:`, req.files[fieldName]);
           
-          // Extract file paths from uploaded files
-          const filePaths = extractFileUploads(processedStepData, req.files[fieldName], fieldName);
+          // When new files are uploaded, replace existing files completely
+          const newFilePaths = req.files[fieldName].map(file => file.path);
+          processedStepData[fieldName] = JSON.stringify(newFilePaths);
           
-          // Store file paths as JSON array in the database
-          processedStepData[fieldName] = JSON.stringify(filePaths);
-          
-          console.log(`📁 ${fieldName} file paths:`, filePaths);
+          console.log(`📁 ${fieldName} new file paths:`, newFilePaths);
           console.log(`📁 ${fieldName} JSON string:`, processedStepData[fieldName]);
         } else {
           console.log(`📁 No files uploaded for ${fieldName}, removing from processed data`);

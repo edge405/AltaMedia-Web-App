@@ -34,7 +34,8 @@ router.put('/save',
   authenticateToken,
   handleMultipleFileUploads([
     { name: 'reference_materials', maxCount: 10 },
-    { name: 'inspiration_links', maxCount: 10 }
+    { name: 'inspiration_links', maxCount: 10 },
+    { name: 'website_files', maxCount: 10 }
   ]),
   handleFileUploadError,
   saveFormData

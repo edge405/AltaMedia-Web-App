@@ -29,7 +29,8 @@ const validateAndCleanFormData = (stepData) => {
     'culture_description', 'business_stage', 'purchase_motivators', 
     'has_social_media', 'social_media_platforms', 'facebook_url', 'instagram_url', 'twitter_url', 'linkedin_url',
     'tiktok_url', 'youtube_url', 'pinterest_url', 'snapchat_username', 'other_social_media_urls',
-    'want_to_create_social_media', 'desired_social_media_platforms'
+    'want_to_create_social_media', 'desired_social_media_platforms',
+    'has_website', 'website_files', 'website_url', 'want_website'
   ];
 
   // Fields that should be stored as JSON in the database
@@ -137,20 +138,24 @@ const saveFormData = async (req, res) => {
       console.log('📁 Processing file uploads...');
       let processedStepData = { ...stepData };
 
-      // Handle file uploads for reference_materials and inspiration_links
-      const fileFields = ['reference_materials', 'inspiration_links'];
+      // Handle file uploads for reference_materials, inspiration_links, and website_files
+      const fileFields = ['reference_materials', 'inspiration_links', 'website_files'];
       
       for (const fieldName of fileFields) {
         if (req.files && req.files[fieldName]) {
           console.log(`📁 Processing ${fieldName} files:`, req.files[fieldName]);
           
-          // Extract file paths from uploaded files
-          const filePaths = extractFileUploads(processedStepData, req.files[fieldName], fieldName);
+          // When new files are uploaded, replace existing files completely
+          const newFilePaths = req.files[fieldName].map(file => file.path);
+          processedStepData[fieldName] = JSON.stringify(newFilePaths);
           
-          // Store file paths as JSON array in the database
-          processedStepData[fieldName] = JSON.stringify(filePaths);
-          
-          console.log(`📁 ${fieldName} file paths:`, filePaths);
+          console.log(`📁 ${fieldName} new file paths:`, newFilePaths);
+        } else {
+          // If no new files uploaded, preserve existing files from stepData
+          if (processedStepData[fieldName]) {
+            // Keep existing files as they are
+            console.log(`📁 Preserving existing ${fieldName} files:`, processedStepData[fieldName]);
+          }
         }
       }
 
