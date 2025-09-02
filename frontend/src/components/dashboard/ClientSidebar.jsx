@@ -13,6 +13,7 @@ import {
   X,
   ChevronRight
 } from "lucide-react";
+import AltamediaLogo from "@/components/AltamediaLogo";
 
 export default function ClientSidebar({
   activeSection,
@@ -54,14 +55,8 @@ export default function ClientSidebar({
         <div className="flex flex-col h-screen">
           {/* Sidebar Header - Fixed */}
           <div className="flex-shrink-0 flex items-center justify-between p-8 border-b border-gray-800">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-[#f7e833] rounded-2xl flex items-center justify-center shadow-lg">
-                <span className="text-black font-bold text-lg">A</span>
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">Alta Media</h2>
-                <p className="text-sm text-gray-400">Client Portal</p>
-              </div>
+            <div className="flex items-center justify-center flex-1">
+              <AltamediaLogo size="xxlarge" className="text-white" />
             </div>
             <Button
               variant="ghost"

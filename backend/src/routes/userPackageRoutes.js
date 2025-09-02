@@ -1,12 +1,14 @@
 const express = require('express');
 const { 
   createUserWithPackage,
+  createUserWithPackageSimple,
   getUserPackages,
   getUserPackageById,
   getUserPackagesDetailed,
   getUserActivePackages,
   updateFeatureStatus,
   getAllUserPackages,
+  getAdminUserPackageById,
   deleteUserPackage,
   getAdminDashboardStats
 } = require('../controllers/userPackageController');
@@ -30,6 +32,16 @@ const router = express.Router();
  * }
  */
 router.post('/create-user-with-package', createUserWithPackageValidation, createUserWithPackage);
+
+/**
+ * @route   POST /api/user-package/create-user-with-package-simple
+ * @desc    Create a new user with package purchase (simplified version)
+ * @access  Public
+ * @body    {
+ *   email: string (required)
+ * }
+ */
+router.post('/create-user-with-package-simple', createUserWithPackageSimple);
 
 /**
  * @route   GET /api/user-package/packages
@@ -79,6 +91,13 @@ router.get('/admin/dashboard-stats', authenticateToken, requireRole(['admin']), 
  * @access  Private (Admin)
  */
 router.get('/admin/all', authenticateToken, requireRole(['admin']), getAllUserPackages);
+
+/**
+ * @route   GET /api/user-package/admin/packages/:id
+ * @desc    Get user package by ID (Admin)
+ * @access  Private (Admin)
+ */
+router.get('/admin/packages/:id', authenticateToken, requireRole(['admin']), getAdminUserPackageById);
 
 /**
  * @route   DELETE /api/user-package/admin/:id

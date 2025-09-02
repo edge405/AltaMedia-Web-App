@@ -295,8 +295,8 @@ Business Context:
     
     // Target Audience
     wantToAttract: hasContext
-      ? `Based on the business context, describe the ideal target audience this business wants to attract. Be specific about demographics, psychographics, and behaviors.`
-      : `Describe an ideal target audience for a business. Consider demographics, psychographics, behaviors, and pain points. Be specific and actionable.`,
+      ? `Based on the business context, provide a comprehensive description of the ideal target audience this business wants to attract. Include specific details about demographics (age, gender, income level, education, location), psychographics (lifestyle, values, interests, personality traits), behaviors (purchasing habits, online behavior, decision-making process), pain points and challenges they face, what motivates them to seek solutions, how they prefer to be reached and communicated with, and their relationship with similar businesses or services. Make this detailed and actionable, providing a complete picture of who this business should be targeting.`
+      : `Provide a comprehensive description of an ideal target audience for a business. Include specific details about demographics, psychographics, behaviors, pain points, motivations, and communication preferences. Make this detailed and actionable, providing a complete picture of who the business should be targeting.`,
     
     // Core Values
     coreValues: hasContext
@@ -455,14 +455,14 @@ Business Context:
     
     // Brand Ideas
     brand1: hasContext
-      ? `Based on the business context, describe a compelling brand concept and why it would work for this business.`
-      : `Describe a compelling brand concept for a business. Focus on professionalism, innovation, and customer focus.`,
+      ? `Based on the business context, provide a comprehensive brand concept description including the brand name, visual identity approach, personality traits, messaging strategy, and why this concept would be highly effective for this specific business. Include details about how it aligns with the business goals, target audience, and market positioning. Make this detailed and compelling.`
+      : `Provide a comprehensive brand concept description including the brand name, visual identity approach, personality traits, messaging strategy, and why this concept would be highly effective. Include details about how it aligns with business goals, target audience, and market positioning. Make this detailed and compelling.`,
     brand2: hasContext
-      ? `Based on the business context, describe an alternative brand concept and why it could work.`
-      : `Describe an alternative brand concept for a business. Focus on different approaches and unique positioning.`,
+      ? `Based on the business context, provide a comprehensive alternative brand concept that takes a different approach from the first concept. Include the brand name, visual identity approach, personality traits, messaging strategy, and why this alternative concept could work well. Explain how it offers different advantages and appeals to different aspects of the business or audience. Make this detailed and compelling.`
+      : `Provide a comprehensive alternative brand concept that takes a different approach. Include the brand name, visual identity approach, personality traits, messaging strategy, and why this alternative concept could work well. Explain how it offers different advantages and appeals to different aspects of the business or audience. Make this detailed and compelling.`,
     brand3: hasContext
-      ? `Based on the business context, describe another brand concept option and its benefits.`
-      : `Describe another brand concept option for a business. Focus on creative approaches and market opportunities.`,
+      ? `Based on the business context, provide a comprehensive third brand concept option that explores creative and innovative approaches. Include the brand name, visual identity approach, personality traits, messaging strategy, and the unique benefits this concept offers. Explain how it could create new market opportunities or appeal to untapped audience segments. Make this detailed and compelling.`
+      : `Provide a comprehensive third brand concept option that explores creative and innovative approaches. Include the brand name, visual identity approach, personality traits, messaging strategy, and the unique benefits this concept offers. Explain how it could create new market opportunities or appeal to untapped audience segments. Make this detailed and compelling.`,
     
     // Brand Avoid
     brandAvoid: hasContext
@@ -717,23 +717,125 @@ const getAISuggestions = async (req, res) => {
         break;
     }
 
+    // Smart token allocation based on field type and importance
+    const getTokenLimit = (fieldName, fieldType) => {
+      // High-priority fields that need detailed responses
+      const highPriorityFields = [
+        'wantToAttract', 'brand1', 'brand2', 'brand3', 'missionStatement', 
+        'visionStatement', 'bigPictureVision', 'longTermVision', 'primaryCustomers',
+        'unfairAdvantage', 'customerMiss', 'problemSolved', 'brandDifferentiation'
+      ];
+      
+      // Medium-priority fields
+      const mediumPriorityFields = [
+        'businessDescription', 'behindBrand', 'inspiration', 'customerChallenges',
+        'purchaseMotivators', 'shortTermGoals', 'midTermGoals', 'specialNotes',
+        'socialMediaGoals', 'brandUniqueness', 'additionalInfo'
+      ];
+      
+      if (fieldType === 'tag') {
+        return 150; // Increased from 100
+      } else if (fieldType === 'short_text') {
+        return 200; // Increased from 150
+      } else if (highPriorityFields.includes(fieldName)) {
+        return 1200; // Significantly increased for important fields
+      } else if (mediumPriorityFields.includes(fieldName)) {
+        return 800; // Increased for medium priority
+      } else {
+        return 600; // Increased default for long text
+      }
+    };
+
+    const maxTokens = getTokenLimit(fieldName, fieldType);
+    
+    // Enhanced system message to ensure complete responses
+    const enhancedSystemMessage = `${systemMessage}
+
+IMPORTANT INSTRUCTIONS:
+- Provide COMPLETE, comprehensive responses that fully address the request
+- Do NOT cut off mid-sentence or leave responses incomplete
+- If the response is getting long, ensure it reaches a natural conclusion
+- For long text fields, provide detailed, well-structured content
+- Always end responses with proper punctuation and complete thoughts
+- If you need to be concise, do so intentionally, not due to token limits`;
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: systemMessage
+          content: enhancedSystemMessage
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      max_tokens: fieldType === 'tag' ? 100 : fieldType === 'short_text' ? 150 : (fieldName === 'vision' || fieldName === 'visionStatement' || fieldName === 'bigPictureVision') ? 800 : 300,
+      max_tokens: maxTokens,
       temperature: (fieldName === 'vision' || fieldName === 'visionStatement' || fieldName === 'bigPictureVision') ? 0.95 : 0.7,
     });
 
     let suggestion = completion.choices[0]?.message?.content?.trim();
+    
+    // Check if response was cut off and handle incomplete responses
+    const isResponseComplete = (text) => {
+      if (!text) return false;
+      
+      // Check for common incomplete patterns
+      const incompletePatterns = [
+        /\.\.\.$/,           // Ends with ellipsis
+        /,$/,                // Ends with comma
+        /and$/,              // Ends with "and"
+        /or$/,               // Ends with "or"
+        /but$/,              // Ends with "but"
+        /however$/,          // Ends with "however"
+        /although$/,         // Ends with "although"
+        /while$/,            // Ends with "while"
+        /because$/,          // Ends with "because"
+        /since$/,            // Ends with "since"
+        /when$/,             // Ends with "when"
+        /where$/,            // Ends with "where"
+        /who$/,              // Ends with "who"
+        /what$/,             // Ends with "what"
+        /why$/,              // Ends with "why"
+        /how$/,              // Ends with "how"
+        /[A-Z][a-z]*$/,      // Ends with capitalized word (likely incomplete sentence)
+      ];
+      
+      return !incompletePatterns.some(pattern => pattern.test(text.trim()));
+    };
+    
+    // If response is incomplete, try to complete it with a follow-up request
+    if (suggestion && !isResponseComplete(suggestion) && fieldType === 'long_text') {
+      console.log(`Response appears incomplete for ${fieldName}, attempting to complete...`);
+      
+      try {
+        const completionRequest = await openai.chat.completions.create({
+          model: "gpt-4",
+          messages: [
+            {
+              role: "system",
+              content: "You are a helpful assistant. Complete the following text naturally, ensuring it reaches a proper conclusion. Do not repeat what was already said, just continue from where it left off."
+            },
+            {
+              role: "user",
+              content: `Please complete this text naturally: "${suggestion}"`
+            }
+          ],
+          max_tokens: 300,
+          temperature: 0.7,
+        });
+        
+        const completion = completionRequest.choices[0]?.message?.content?.trim();
+        if (completion && isResponseComplete(completion)) {
+          suggestion = completion;
+          console.log(`Successfully completed response for ${fieldName}`);
+        }
+      } catch (completionError) {
+        console.log(`Failed to complete response for ${fieldName}:`, completionError.message);
+        // Keep the original suggestion even if incomplete
+      }
+    }
     
     // Clean up tag responses
     if (fieldType === 'tag' && suggestion) {
@@ -742,7 +844,17 @@ const getAISuggestions = async (req, res) => {
       suggestion = suggestion.replace(/\s*,\s*/g, ', ').trim();
     }
 
-    console.log(`Generated suggestion for ${fieldName}:`, suggestion);
+    // Log response quality metrics
+    const responseLength = suggestion ? suggestion.length : 0;
+    const wordCount = suggestion ? suggestion.split(/\s+/).length : 0;
+    const isComplete = suggestion ? isResponseComplete(suggestion) : false;
+    
+    console.log(`Generated suggestion for ${fieldName}:`);
+    console.log(`- Length: ${responseLength} characters`);
+    console.log(`- Word count: ${wordCount} words`);
+    console.log(`- Complete: ${isComplete ? 'Yes' : 'No'}`);
+    console.log(`- Token limit used: ${maxTokens}`);
+    console.log(`- Response: ${suggestion}`);
 
     res.json({
       success: true,

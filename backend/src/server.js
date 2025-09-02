@@ -16,6 +16,7 @@ const brandKitQuestionnaireRoutes = require('./routes/brandKitQuestionnaireRoute
 const organizationRoutes = require('./routes/organizationRoutes');
 const aiSuggestionsRoutes = require('./routes/aiSuggestionsRoutes');
 const emailRoutes = require('./routes/emailRoutes');
+const emailVerificationRoutes = require('./routes/emailVerificationRoutes');
 const userPackageRoutes = require('./routes/userPackageRoutes');
 const deliverableRoutes = require('./routes/deliverableRoutes');
 const revisionRequestRoutes = require('./routes/revisionRequestRoutes');
@@ -103,6 +104,7 @@ app.use('/api/organization', organizationRoutes);
 app.use('/api/ai-suggestions', aiSuggestionsRoutes);
 app.use('/api/brandkit-questionnaire', brandKitQuestionnaireRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api/email-verification', emailVerificationRoutes);
 app.use('/api/user-package', userPackageRoutes);
 app.use('/api/deliverables', deliverableRoutes);
 app.use('/api/revision-requests', revisionRequestRoutes);

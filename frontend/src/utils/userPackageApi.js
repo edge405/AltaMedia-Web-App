@@ -71,6 +71,20 @@ export const userPackageApi = {
   },
 
   /**
+   * Get user package by ID (Admin only)
+   * @param {number} packageId - Package ID
+   * @returns {Promise<Object>} API response with package details
+   */
+  getAdminUserPackageById: async (packageId) => {
+    try {
+      const response = await apiService.get(`/user-package/admin/packages/${packageId}`);
+      return response;
+    } catch (error) {
+      throw new Error(error.message || 'Failed to fetch package details');
+    }
+  },
+
+  /**
    * Get admin dashboard statistics (Admin only)
    * @returns {Promise<Object>} API response with dashboard statistics
    */

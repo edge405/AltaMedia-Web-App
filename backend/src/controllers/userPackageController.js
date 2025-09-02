@@ -142,6 +142,145 @@ const createUserWithPackage = async (req, res) => {
 };
 
 /**
+ * Create user with package (simplified version)
+ * POST /api/user-package/create-user-with-package-simple
+ */
+const createUserWithPackageSimple = async (req, res) => {
+  try {
+    const { 
+      email
+    } = req.body;
+
+    // Validate required fields
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required field: email'
+      });
+    }
+
+    // Static data for the rest
+    const fullname = 'Edjay Lindayao';
+    const package_name = 'META Marketing Package Basic';
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email format'
+      });
+    }
+
+    // Check if user already exists
+    const existingUsers = await executeQuery(
+      'SELECT id, email, fullname, created_at FROM users WHERE email = ?',
+      [email]
+    );
+
+    let user;
+    let isNewUser = false;
+    let generatedPassword = null;
+
+    if (existingUsers.length > 0) {
+      // User exists, use existing user
+      user = existingUsers[0];
+    } else {
+      // User doesn't exist, create new user
+      isNewUser = true;
+      generatedPassword = crypto.randomBytes(5).toString('hex');
+      const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+
+      const userResult = await executeQuery(`
+        INSERT INTO users (email, password, fullname, role)
+        VALUES (?, ?, ?, ?)
+      `, [email, hashedPassword, fullname, 'user']);
+
+      const newUserId = userResult.insertId;
+
+      // Get the created user
+      const newUsers = await executeQuery(
+        'SELECT id, email, fullname, created_at FROM users WHERE id = ?',
+        [newUserId]
+      );
+
+      user = newUsers[0];
+    }
+
+    // Set default values for package
+    const expirationDate = new Date();
+    expirationDate.setFullYear(expirationDate.getFullYear() + 1); // 1 year from now
+    const totalAmount = 0; // Default amount
+    const defaultFeatures = [
+      {
+        feature_id: 1,
+        feature_name: 'Basic Package Feature',
+        status: 'pending',
+        progress: 0,
+        description: 'Default feature for the package'
+      }
+    ];
+
+    // Create purchased package with default features
+    const packageResult = await executeQuery(`
+      INSERT INTO purchased_package_with_features (user_id, package_name, expiration_date, total_amount, features)
+      VALUES (?, ?, ?, ?, ?)
+    `, [user.id, package_name, expirationDate.toISOString().split('T')[0], totalAmount, JSON.stringify(defaultFeatures)]);
+
+    const purchasedPackageId = packageResult.insertId;
+
+    // Get the created purchased package
+    const purchasedPackages = await executeQuery(`
+      SELECT id, user_id, package_name, purchase_date, expiration_date, status, total_amount, features, created_at
+      FROM purchased_package_with_features WHERE id = ?
+    `, [purchasedPackageId]);
+
+    const purchasedPackage = purchasedPackages[0];
+
+    // Send welcome email with generated password (only for new users)
+    if (isNewUser) {
+      try {
+        await sendWelcomeEmail(email, generatedPassword, fullname, purchasedPackage, defaultFeatures);
+      } catch (emailError) {
+        // Don't fail the request if email fails
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      message: isNewUser ? 'User and package created successfully' : 'Package added to existing user successfully',
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          fullname: user.fullname,
+          created_at: user.created_at,
+          is_new_user: isNewUser
+        },
+        package: {
+          id: purchasedPackage.id,
+          package_name: purchasedPackage.package_name,
+          purchase_date: purchasedPackage.purchase_date,
+          expiration_date: purchasedPackage.expiration_date,
+          status: purchasedPackage.status,
+          total_amount: purchasedPackage.total_amount,
+          features: purchasedPackage.features ? JSON.parse(purchasedPackage.features) : [],
+          created_at: purchasedPackage.created_at
+        },
+        generated_password: isNewUser ? generatedPassword : null // Only include for new users
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+/**
  * Get user's purchased packages with features
  * GET /api/user-package/packages
  */
@@ -336,6 +475,57 @@ const getAllUserPackages = async (req, res) => {
     });
 
   } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Get user package by ID (Admin)
+ * GET /api/user-package/admin/packages/:id
+ */
+const getAdminUserPackageById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+
+    const packages = await executeQuery(`
+      SELECT ppwf.*, u.email as user_email, u.fullname as user_name, u.phone_number
+      FROM purchased_package_with_features ppwf
+      LEFT JOIN users u ON ppwf.user_id = u.id
+      WHERE ppwf.id = ?
+    `, [id]);
+    
+    if (packages.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Package not found'
+      });
+    }
+    
+    const package = packages[0];
+    const packageWithFeatures = {
+      ...package,
+      features: package.features ? JSON.parse(package.features) : []
+    };
+
+    res.json({
+      success: true,
+      message: 'Package retrieved successfully',
+      data: packageWithFeatures
+    });
+
+  } catch (error) {
+    console.error('Error in getAdminUserPackageById:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -727,12 +917,14 @@ const getAdminDashboardStats = async (req, res) => {
 
 module.exports = {
   createUserWithPackage,
+  createUserWithPackageSimple,
   getUserPackages,
   getUserPackageById,
   getUserPackagesDetailed,
   getUserActivePackages,
   updateFeatureStatus,
   getAllUserPackages,
+  getAdminUserPackageById,
   deleteUserPackage,
   getAdminDashboardStats
 };

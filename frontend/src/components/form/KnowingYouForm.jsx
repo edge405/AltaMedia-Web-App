@@ -23,6 +23,7 @@ import CheckboxGroup from './CheckboxGroup';
 import MapPicker from './MapPicker';
 import BrandKitQuestionnaire from './BrandKitQuestionnaire';
 import OrganizationForm from './OrganizationForm';
+import EmailVerification from '@/components/ui/EmailVerification';
 
 const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, embedded = false, onComplete = null, onRefreshStatuses = null }) => {
   const navigate = useNavigate();
@@ -116,6 +117,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   const totalSteps = 11;
   const steps = [
@@ -183,15 +185,26 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
     updateFormData(field, value);
   };
 
-  // Validation function for current step - validation disabled to allow flexible form completion
+  // Validation function for current step
   const validateCurrentStep = () => {
-    // Return empty array to allow proceeding without validation
-    return [];
+    const errors = [];
+
+    // Only validate email verification on step 1
+    if (currentStep === 1 && formData.businessEmail && !isEmailVerified) {
+      errors.push('Please verify your business email address before proceeding');
+    }
+
+    return errors;
   };
 
   const nextStep = async () => {
-    // Validation disabled - allow proceeding without field validation
-    setValidationErrors([]);
+    // Validate current step
+    const errors = validateCurrentStep();
+    setValidationErrors(errors);
+
+    if (errors.length > 0) {
+      return;
+    }
 
     // For testing, use a default user ID if not authenticated
     const userId = user?.id || 1;
@@ -248,6 +261,12 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
   };
 
   const handleSubmit = async () => {
+    // Validate email verification before final submission
+    if (formData.businessEmail && !isEmailVerified) {
+      setValidationErrors(['Please verify your business email address before submitting the form']);
+      return;
+    }
+
     // For testing, use a default user ID if not authenticated
     const userId = user?.id || 1;
 
@@ -366,12 +385,15 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
       </FormField>
 
       <FormField label="Business Email" type="Short Text">
-        <Input
-          type="email"
-          value={formData.businessEmail || ''}
-          onChange={(e) => updateFormData('businessEmail', e.target.value)}
-          placeholder="Enter your business email"
-          className="w-full border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+        <EmailVerification
+          email={formData.businessEmail || ''}
+          onEmailChange={(value) => updateFormData('businessEmail', value)}
+          onVerificationComplete={(email) => {
+            setIsEmailVerified(true);
+            updateFormData('businessEmail', email);
+          }}
+          businessName={formData.businessName || ''}
+          disabled={isSaving}
         />
       </FormField>
 
@@ -447,17 +469,19 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
         />
       </FormField>
 
-      <FormField label="Year Officially Started" type="Dropdown">
-        <Select value={formData.yearStarted} onValueChange={(value) => updateFormData('yearStarted', value)}>
-          <SelectTrigger className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-            <SelectValue placeholder="Select year" />
-          </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
-            {Array.from({ length: 25 }, (_, i) => 2024 - i).map(year => (
-              <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <FormField label="Year Officially Started" type="Short Text">
+        <Input
+          type="number"
+          min="1900"
+          max={new Date().getFullYear() + 1}
+          value={formData.yearStarted || ''}
+          onChange={(e) => updateFormData('yearStarted', e.target.value)}
+          placeholder="e.g., 2020 or type 'planning' if not started yet"
+          className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          💡 Tip: Just type the year (like 2020)
+        </p>
       </FormField>
 
       <FormField label="Primary Location" type="Map">
@@ -959,13 +983,19 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
             />
           </FormField>
 
-          <FormField label="Who Do You Want to Attract?" type="Long Text">
+          <FormField label="Who Do You Want to Attract?" type="Long Text" aiSuggestions>
             <Textarea
               value={formData.wantToAttract || ''}
               onChange={(e) => updateFormData('wantToAttract', e.target.value)}
               placeholder="Describe your ideal target audience"
               rows={4}
               className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+            />
+            <AISuggestion
+              fieldName="wantToAttract"
+              currentValue={formData.wantToAttract}
+              onApplySuggestion={(suggestion) => updateFormData('wantToAttract', suggestion)}
+              formData={formData}
             />
           </FormField>
 
@@ -1300,7 +1330,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
         />
       </FormField>
 
-      <FormField label="Brand 1: Name + Why" type="Long Text">
+      <FormField label="Brand 1: Name + Why" type="Long Text" aiSuggestions>
         <Textarea
           value={formData.brand1 || ''}
           onChange={(e) => updateFormData('brand1', e.target.value)}
@@ -1308,9 +1338,15 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
           rows={4}
           className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
+        <AISuggestion
+          fieldName="brand1"
+          currentValue={formData.brand1}
+          onApplySuggestion={(suggestion) => updateFormData('brand1', suggestion)}
+          formData={formData}
+        />
       </FormField>
 
-      <FormField label="Brand 2 (Optional)" type="Long Text">
+      <FormField label="Brand 2 (Optional)" type="Long Text" aiSuggestions>
         <Textarea
           value={formData.brand2 || ''}
           onChange={(e) => updateFormData('brand2', e.target.value)}
@@ -1318,15 +1354,27 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
           rows={4}
           className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
+        <AISuggestion
+          fieldName="brand2"
+          currentValue={formData.brand2}
+          onApplySuggestion={(suggestion) => updateFormData('brand2', suggestion)}
+          formData={formData}
+        />
       </FormField>
 
-      <FormField label="Brand 3 (Optional)" type="Long Text">
+      <FormField label="Brand 3 (Optional)" type="Long Text" aiSuggestions>
         <Textarea
           value={formData.brand3 || ''}
           onChange={(e) => updateFormData('brand3', e.target.value)}
           placeholder="Describe your third brand idea (optional)"
           rows={4}
           className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+        />
+        <AISuggestion
+          fieldName="brand3"
+          currentValue={formData.brand3}
+          onApplySuggestion={(suggestion) => updateFormData('brand3', suggestion)}
+          formData={formData}
         />
       </FormField>
 
@@ -1372,6 +1420,9 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
           onChange={(value) => updateFormData('preferredColors', value)}
           placeholder="Enter your preferred brand colors"
         />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          💡 Examples: "Navy Blue" or "#1E40AF"
+        </p>
       </FormField>
 
       <FormField label="Colors to Avoid" type="Color Picker">
@@ -1380,6 +1431,9 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
           onChange={(value) => updateFormData('colorsToAvoid', value)}
           placeholder="Enter colors you want to avoid"
         />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          💡 Examples: "Neon Pink" or "#FF69B4"
+        </p>
       </FormField>
 
       <FormField label="Preferred Font Styles" type="Checkbox">
@@ -1462,7 +1516,7 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
         <CheckboxGroup
           options={['PNG', 'JPG', 'PDF', 'EPS', 'SVG']}
           value={formData.fileFormats || []}
-          onChange={(value) => updateFormData('fileFormats', value)}
+          onChange={(value) => updateormData('fileFormats', value)}
           enableCustomInput={true}
           customInputPlaceholder="Add custom file format..."
         />

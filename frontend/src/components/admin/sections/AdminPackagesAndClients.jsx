@@ -3,16 +3,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-    Plus,
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import {
     Globe,
     Target,
     BarChart3,
     RefreshCw,
-    Clock,
-    CheckCircle,
-    AlertCircle,
     Search,
-    Users
+    Eye,
+    Calendar,
+    Package,
+    User,
+    Mail
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { userPackageApi } from '@/utils/userPackageApi';
@@ -29,6 +36,10 @@ export default function AdminPackagesAndClients({
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // State for client detail modal
+    const [selectedClient, setSelectedClient] = useState(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
     // Fetch packages and clients data
     const fetchData = async () => {
         setLoading(true);
@@ -44,7 +55,23 @@ export default function AdminPackagesAndClients({
             }
 
             if (clientsResponse.success) {
-                setClients(clientsResponse.data.packages || []);
+                // Group packages by user email to get unique clients
+                const packages = clientsResponse.data.packages || [];
+                const uniqueClients = packages.reduce((acc, pkg) => {
+                    const email = pkg.user_email;
+                    if (!acc[email]) {
+                        acc[email] = {
+                            id: pkg.id,
+                            user_name: pkg.user_name,
+                            user_email: email,
+                            packages: []
+                        };
+                    }
+                    acc[email].packages.push(pkg);
+                    return acc;
+                }, {});
+
+                setClients(Object.values(uniqueClients));
             }
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -90,17 +117,6 @@ export default function AdminPackagesAndClients({
         return stats;
     };
 
-    // Calculate overall progress for a client based on their features
-    const calculateProgress = (features) => {
-        if (!features || features.length === 0) return 0;
-
-        const completedFeatures = features.filter(feature =>
-            feature.status === 'completed' || feature.progress === 100
-        );
-
-        return Math.round((completedFeatures.length / features.length) * 100);
-    };
-
     // Get status color based on package status
     const getStatusColor = (status) => {
         if (status === 'active') return "bg-green-500";
@@ -123,11 +139,10 @@ export default function AdminPackagesAndClients({
     const filteredClients = clients.filter(client => {
         const matchesSearch =
             client.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            client.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            client.package_name?.toLowerCase().includes(searchTerm.toLowerCase());
+            client.user_email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesStatus = filterStatus === 'all' ||
-            getStatusText(client.status, calculateProgress(client.features)) === filterStatus;
+        // For now, show all clients regardless of status filter since we're grouping by client
+        const matchesStatus = filterStatus === 'all';
 
         return matchesSearch && matchesStatus;
     });
@@ -145,6 +160,19 @@ export default function AdminPackagesAndClients({
     // Handle refresh
     const handleRefresh = () => {
         fetchData();
+    };
+
+    // Handle client row click to show details
+    const handleClientClick = (client) => {
+        setSelectedClient(client);
+        setIsDetailModalOpen(true);
+    };
+
+    // Close detail modal
+    const handleCloseModal = () => {
+        setIsDetailModalOpen(false);
+        setSelectedClient(null);
+        setClientDetails(null);
     };
 
     const packageStats = calculatePackageStats();
@@ -241,22 +269,8 @@ export default function AdminPackagesAndClients({
                                 <h3 className="text-xl font-bold text-gray-900 mb-2">Website Development</h3>
                                 <p className="text-gray-600 text-sm">Custom website design and development</p>
                             </div>
-
-                            {/* <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-3xl border border-orange-200">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-3 bg-orange-500 rounded-2xl">
-                                        <Target className="w-6 h-6 text-white" />
-                                    </div>
-                                    <Badge className="bg-orange-500 text-white px-3 py-1 rounded-full">
-                                        {packageStats.googleAds.active}/{packageStats.googleAds.total}
-                                    </Badge>
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-2">Google Ads</h3>
-                                <p className="text-gray-600 text-sm">PPC advertising and campaign management</p>
-                            </div> */}
                         </div>
                     </div>
-
                 </CardContent>
             </Card>
 
@@ -300,12 +314,7 @@ export default function AdminPackagesAndClients({
                             onChange={(e) => setFilterStatus(e.target.value)}
                             className="px-6 py-4 border-2 border-gray-200 rounded-2xl bg-white text-gray-900 focus:border-[#f7e833] focus:outline-none transition-colors font-medium"
                         >
-                            <option value="all">All Status</option>
-                            <option value="Active">Active</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Expired">Expired</option>
+                            <option value="all">All Clients</option>
                         </select>
                     </div>
 
@@ -322,53 +331,65 @@ export default function AdminPackagesAndClients({
                                 <thead>
                                     <tr className="border-b border-gray-200">
                                         <th className="text-left py-4 px-4 font-semibold text-gray-900">Client Name</th>
-                                        <th className="text-left py-4 px-4 font-semibold text-gray-900">Package</th>
-                                        <th className="text-left py-4 px-4 font-semibold text-gray-900">Status</th>
-                                        <th className="text-left py-4 px-4 font-semibold text-gray-900">Purchase Date</th>
-                                        <th className="text-left py-4 px-4 font-semibold text-gray-900">Expiration</th>
+                                        <th className="text-left py-4 px-4 font-semibold text-gray-900">Email</th>
+                                        <th className="text-left py-4 px-4 font-semibold text-gray-900">Total Packages</th>
+                                        <th className="text-left py-4 px-4 font-semibold text-gray-900">Total Spent</th>
+                                        <th className="text-left py-4 px-4 font-semibold text-gray-900">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filteredClients.map((client) => {
-                                        const statusText = getStatusText(client.status);
-                                        const statusColor = getStatusColor(client.status);
+                                        const totalSpent = client.packages.reduce((sum, pkg) =>
+                                            sum + parseFloat(pkg.total_amount || 0), 0
+                                        );
 
                                         return (
-                                            <tr key={client.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                            <tr
+                                                key={client.id}
+                                                className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                                                onClick={() => handleClientClick(client)}
+                                            >
                                                 <td className="py-4 px-4">
-                                                    <div>
-                                                        <p className="font-semibold text-gray-900">
-                                                            {client.user_name || 'Unknown User'}
-                                                        </p>
-                                                        <p className="text-sm text-gray-500">
-                                                            {client.user_email || 'No email'}
-                                                        </p>
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="font-semibold text-gray-900">
+                                                                {client.user_name || 'Unknown User'}
+                                                            </p>
+                                                            <p className="text-sm text-gray-500">
+                                                                Client ID: {client.id}
+                                                            </p>
+                                                        </div>
+                                                        <Eye className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                                                     </div>
                                                 </td>
                                                 <td className="py-4 px-4">
-                                                    <div>
-                                                        <p className="text-gray-900 font-medium">
-                                                            {client.package_name || 'Unknown Package'}
-                                                        </p>
-                                                        <p className="text-sm text-gray-500">
-                                                            ₱{parseFloat(client.total_amount || 0).toLocaleString()}
-                                                        </p>
-                                                    </div>
+                                                    <p className="text-gray-900 font-medium">
+                                                        {client.user_email || 'No email'}
+                                                    </p>
                                                 </td>
                                                 <td className="py-4 px-4">
-                                                    <Badge className={`${statusColor} text-white px-3 py-1 rounded-full`}>
-                                                        {statusText}
+                                                    <Badge className="bg-blue-500 text-white px-3 py-1 rounded-full">
+                                                        {client.packages.length} packages
                                                     </Badge>
                                                 </td>
                                                 <td className="py-4 px-4">
-                                                    <p className="text-gray-600">
-                                                        {formatDate(client.purchase_date)}
+                                                    <p className="text-gray-900 font-medium">
+                                                        ₱{totalSpent.toLocaleString()}
                                                     </p>
                                                 </td>
                                                 <td className="py-4 px-4">
-                                                    <p className="text-gray-600">
-                                                        {formatDate(client.expiration_date)}
-                                                    </p>
+                                                    <Button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleClientClick(client);
+                                                        }}
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                                    >
+                                                        <Eye className="w-4 h-4 mr-2" />
+                                                        View Details
+                                                    </Button>
                                                 </td>
                                             </tr>
                                         );
@@ -379,6 +400,131 @@ export default function AdminPackagesAndClients({
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Client Detail Modal */}
+            <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl font-bold text-gray-900">
+                            Client Details
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    {selectedClient && (
+                        <div className="space-y-6">
+                            {/* Basic Client Information */}
+                            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-0">
+                                <CardContent className="p-6">
+                                    <div className="flex items-center mb-4">
+                                        <div className="p-3 bg-blue-500 rounded-full mr-4">
+                                            <User className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-gray-900">
+                                                {selectedClient.user_name || 'Unknown User'}
+                                            </h3>
+                                            <p className="text-gray-600">
+                                                Client ID: {selectedClient.id}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="flex items-center space-x-3">
+                                            <Mail className="w-5 h-5 text-gray-500" />
+                                            <div>
+                                                <p className="text-sm text-gray-500">Email</p>
+                                                <p className="font-medium text-gray-900">
+                                                    {selectedClient.user_email || 'No email provided'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center space-x-3">
+                                            <Calendar className="w-5 h-5 text-gray-500" />
+                                            <div>
+                                                <p className="text-sm text-gray-500">Member Since</p>
+                                                <p className="font-medium text-gray-900">
+                                                    {formatDate(selectedClient.purchase_date)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* All Packages */}
+                            <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-0">
+                                <CardContent className="p-6">
+                                    <div className="flex items-center mb-4">
+                                        <div className="p-3 bg-green-500 rounded-full mr-4">
+                                            <Package className="w-6 h-6 text-white" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-900">All Purchased Packages</h3>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {selectedClient.packages && selectedClient.packages.length > 0 ? (
+                                            selectedClient.packages.map((pkg, index) => (
+                                                <div key={index} className="bg-white p-4 rounded-xl border border-green-200">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <h4 className="font-semibold text-gray-900">
+                                                            {pkg.package_name || 'Unknown Package'}
+                                                        </h4>
+                                                        <Badge className={`${getStatusColor(pkg.status)} text-white px-3 py-1 rounded-full`}>
+                                                            {getStatusText(pkg.status)}
+                                                        </Badge>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                        <div>
+                                                            <p className="text-sm text-gray-500">Amount</p>
+                                                            <p className="font-medium text-gray-900">
+                                                                ₱{parseFloat(pkg.total_amount || 0).toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm text-gray-500">Purchase Date</p>
+                                                            <p className="font-medium text-gray-900">
+                                                                {formatDate(pkg.purchase_date)}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm text-gray-500">Expiration</p>
+                                                            <p className="font-medium text-gray-900">
+                                                                {formatDate(pkg.expiration_date)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-8">
+                                                <p className="text-gray-500">No packages found for this client.</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-6 p-4 bg-white rounded-xl border border-green-200">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-lg font-semibold text-gray-900">Total Spent</span>
+                                            <span className="text-2xl font-bold text-green-600">
+                                                ₱{selectedClient.packages ?
+                                                    selectedClient.packages.reduce((sum, pkg) =>
+                                                        sum + parseFloat(pkg.total_amount || 0), 0
+                                                    ).toLocaleString() : '0'
+                                                }
+                                            </span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -476,6 +476,9 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                         onChange={(value) => updateFormData('existingColors', value)}
                         placeholder="Enter your existing brand colors"
                     />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        💡 Examples: "Navy Blue (#1E40AF)", "Primary: Navy, Secondary: Green", or "Dark Navy, Sage Green"
+                    </p>
                 </FormField>
             )}
 
@@ -486,6 +489,9 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                         onChange={(value) => updateFormData('preferredColors', value)}
                         placeholder="Enter colors that feel right for your brand"
                     />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        💡 Examples: "Navy Blue", "#1E40AF", "Professional blues", or "Deep ocean blue"
+                    </p>
                 </FormField>
             )}
 
@@ -495,6 +501,9 @@ const BrandKitQuestionnaire = ({ embedded = false, onComplete = null, onFormType
                     onChange={(value) => updateFormData('colorsToAvoid', value)}
                     placeholder="Enter colors you want to avoid"
                 />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    💡 Examples: "Neon Pink", "Bright Yellow", "Pastels", or "Anything too flashy"
+                </p>
             </FormField>
 
             <FormField label="What kind of imagery/photography style fits your brand?" type="Tags">

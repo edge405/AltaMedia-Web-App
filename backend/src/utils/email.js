@@ -224,6 +224,64 @@ const sendNotificationEmail = async (email, subject, message, fullname) => {
 };
 
 /**
+ * Send email verification code
+ * @param {string} email - Recipient email
+ * @param {string} verificationCode - 6-digit verification code
+ * @param {string} businessName - Business name (optional)
+ */
+const sendEmailVerificationCode = async (email, verificationCode, businessName = '') => {
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+        <h1 style="color: #333; margin: 0; text-align: center;">AltaMedia Email Verification</h1>
+      </div>
+      
+      <div style="background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e9ecef;">
+        <h2 style="color: #495057; margin-top: 0;">Verify Your Business Email</h2>
+        
+        <p style="color: #6c757d; line-height: 1.6;">
+          ${businessName ? `Hello from ${businessName},` : 'Hello,'} we need to verify your business email address to continue with your brand kit form.
+        </p>
+        
+        <div style="background-color: #e7f3ff; padding: 20px; border-radius: 8px; border: 2px solid #007bff; margin: 20px 0; text-align: center;">
+          <h3 style="color: #004085; margin: 0 0 10px 0; font-size: 18px;">Your Verification Code</h3>
+          <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #007bff; display: inline-block;">
+            <span style="font-size: 24px; font-weight: bold; color: #007bff; letter-spacing: 3px;">${verificationCode}</span>
+          </div>
+        </div>
+        
+        <p style="color: #6c757d; line-height: 1.6;">
+          Please enter this 6-digit code in the verification field to confirm your email address. 
+          This code will expire in 10 minutes for security reasons.
+        </p>
+        
+        <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin: 20px 0;">
+          <p style="margin: 0; color: #856404;">
+            <strong>Security Note:</strong> Never share this verification code with anyone. 
+            AltaMedia will never ask for this code via phone, text, or email.
+          </p>
+        </div>
+        
+        <p style="color: #6c757d; line-height: 1.6;">
+          If you didn't request this verification, please ignore this email.
+        </p>
+      </div>
+      
+      <div style="text-align: center; margin-top: 20px; color: #6c757d; font-size: 12px;">
+        <p>This is an automated message. Please do not reply to this email.</p>
+        <p>&copy; 2025 AltaMedia. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+
+  return await sendEmail(
+    email,
+    'Verify Your Business Email - AltaMedia',
+    htmlContent
+  );
+};
+
+/**
  * Generate a secure random password
  * @returns {string} Generated password
  */
@@ -266,6 +324,7 @@ module.exports = {
   sendWelcomeEmail,
   sendPasswordResetEmail,
   sendNotificationEmail,
+  sendEmailVerificationCode,
   generatePassword,
   testEmailConfiguration
 };
