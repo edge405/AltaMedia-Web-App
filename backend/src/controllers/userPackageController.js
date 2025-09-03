@@ -148,19 +148,13 @@ const createUserWithPackage = async (req, res) => {
 const createUserWithPackageSimple = async (req, res) => {
   try {
     const { 
-      email
+      email,
+      name,
+      phone
     } = req.body;
 
-    // Validate required fields
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required field: email'
-      });
-    }
-
     // Static data for the rest
-    const fullname = 'Edjay Lindayao';
+    const fullname = name;
     const package_name = 'META Marketing Package Basic';
 
     // Validate email format
@@ -174,7 +168,7 @@ const createUserWithPackageSimple = async (req, res) => {
 
     // Check if user already exists
     const existingUsers = await executeQuery(
-      'SELECT id, email, fullname, created_at FROM users WHERE email = ?',
+      'SELECT id, email, fullname, phone_number, created_at FROM users WHERE email = ?',
       [email]
     );
 
@@ -192,15 +186,15 @@ const createUserWithPackageSimple = async (req, res) => {
       const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
       const userResult = await executeQuery(`
-        INSERT INTO users (email, password, fullname, role)
-        VALUES (?, ?, ?, ?)
-      `, [email, hashedPassword, fullname, 'user']);
+        INSERT INTO users (email, password, fullname, phone_number, role)
+        VALUES (?, ?, ?, ?, ?)
+      `, [email, hashedPassword, fullname, phone, 'user']);
 
       const newUserId = userResult.insertId;
 
       // Get the created user
       const newUsers = await executeQuery(
-        'SELECT id, email, fullname, created_at FROM users WHERE id = ?',
+        'SELECT id, email, fullname, phone_number, created_at FROM users WHERE id = ?',
         [newUserId]
       );
 
@@ -254,6 +248,7 @@ const createUserWithPackageSimple = async (req, res) => {
           id: user.id,
           email: user.email,
           fullname: user.fullname,
+          phone_number: user.phone_number,
           created_at: user.created_at,
           is_new_user: isNewUser
         },

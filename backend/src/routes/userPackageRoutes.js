@@ -38,7 +38,9 @@ router.post('/create-user-with-package', createUserWithPackageValidation, create
  * @desc    Create a new user with package purchase (simplified version)
  * @access  Public
  * @body    {
- *   email: string (required)
+ *   email: string (required),
+ *   name: string (required),
+ *   phone: string (required)
  * }
  */
 router.post('/create-user-with-package-simple', createUserWithPackageSimple);

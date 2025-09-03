@@ -25,7 +25,7 @@ export default function DashboardSection({ clientData, onViewPackage, onViewDeli
   const [isLoadingDeliverables, setIsLoadingDeliverables] = useState(true);
   const [deliverablesError, setDeliverablesError] = useState(null);
 
-  console.log("package status: ", clientData.activePackage.status);
+  console.log("package status: ", clientData.activePackage?.status);
 
 
   // Load recent deliverables
