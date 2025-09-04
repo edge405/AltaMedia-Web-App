@@ -37,7 +37,9 @@ router.put('/save',
   handleMultipleFileUploads([
     { name: 'brand_logo', maxCount: 5 },
     { name: 'reference_materials', maxCount: 10 },
-    { name: 'web_page_upload', maxCount: 5 }
+    { name: 'web_page_upload', maxCount: 5 },
+    { name: 'collaboration_references', maxCount: 10 },
+    { name: 'product_materials', maxCount: 10 }
   ]),
   handleFileUploadError,
   saveFormData

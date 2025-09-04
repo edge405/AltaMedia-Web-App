@@ -21,8 +21,14 @@ const validateAndCleanQuestionnaireData = (stepData) => {
     'existing_colors', 'preferred_colors', 'colors_to_avoid', 'imagery_style',
     'font_types', 'font_styles', 'legal_considerations', 'source_files',
     'required_formats', 'reference_materials', 'inspiration_brands', 'brand_vibe',
-    'brand_words', 'brand_avoid_words', 'tagline', 'mission', 'vision',
-    'core_values', 'has_web_page', 'web_page_upload', 'want_web_page'
+    'has_social_media', 'social_media_platforms', 'facebook_url', 'instagram_url', 'twitter_url', 'linkedin_url',
+    'tiktok_url', 'youtube_url', 'pinterest_url', 'snapchat_username', 'other_social_media_urls',
+    'want_to_create_social_media', 'desired_social_media_platforms', 'brand_words', 'brand_avoid_words', 'tagline', 'mission', 'vision',
+    'core_values', 'has_web_page', 'web_page_upload', 'want_web_page',
+    'main_contact', 'additional_info', 'collaboration_references',
+    // New product detail fields
+    'offering_type', 'product_industry', 'product_industry_other', 'product_type',
+    'product_features', 'product_pricing', 'product_stage', 'product_materials'
   ];
 
   // Fields that should be stored as JSON in the database
@@ -30,7 +36,9 @@ const validateAndCleanQuestionnaireData = (stepData) => {
     'competitors', 'brand_kit_use', 'templates', 'internal_assets', 'file_formats',
     'brand_voice', 'communication_perception', 'existing_colors', 'preferred_colors',
     'colors_to_avoid', 'imagery_style', 'font_types', 'font_styles', 'source_files',
-    'required_formats', 'brand_vibe', 'brand_words', 'brand_avoid_words', 'core_values'
+    'required_formats', 'brand_vibe', 'brand_words', 'brand_avoid_words', 'core_values',
+    // New JSON fields for product details
+    'product_type'
   ];
 
   const cleanedData = {};
@@ -80,7 +88,8 @@ const validateAndCleanQuestionnaireData = (stepData) => {
   console.log('🔍 File fields in cleaned data:', {
     brand_logo: cleanedData.brand_logo,
     reference_materials: cleanedData.reference_materials,
-    web_page_upload: cleanedData.web_page_upload
+    web_page_upload: cleanedData.web_page_upload,
+    collaboration_references: cleanedData.collaboration_references
   });
 
   return cleanedData;
@@ -94,6 +103,11 @@ const validateAndCleanQuestionnaireData = (stepData) => {
 const saveFormData = async (req, res) => {
   try {
     console.log('📥 Received BrandKit Questionnaire request body:', req.body);
+    console.log('🔍 Collaboration fields in request:', {
+      main_contact: req.body.main_contact,
+      additional_info: req.body.additional_info,
+      collaboration_references: req.body.collaboration_references
+    });
     let { userId, stepData, currentStep } = req.body;
 
     // Parse stepData if it's a string (from FormData)
@@ -132,8 +146,8 @@ const saveFormData = async (req, res) => {
       console.log('📁 stepData keys:', Object.keys(stepData));
       let processedStepData = { ...stepData };
 
-      // Handle file uploads for brand_logo, reference_materials, and web_page_upload
-      const fileFields = ['brand_logo', 'reference_materials', 'web_page_upload'];
+      // Handle file uploads for brand_logo, reference_materials, web_page_upload, collaboration_references, and product_materials
+      const fileFields = ['brand_logo', 'reference_materials', 'web_page_upload', 'collaboration_references', 'product_materials'];
       
       for (const fieldName of fileFields) {
         console.log(`📁 Checking for ${fieldName} files...`);
@@ -159,6 +173,11 @@ const saveFormData = async (req, res) => {
              // Clean and validate the form data
        const cleanedStepData = validateAndCleanQuestionnaireData(processedStepData);
        console.log('📝 Cleaned step data:', cleanedStepData);
+       console.log('🔍 Collaboration fields in cleaned data:', {
+         main_contact: cleanedStepData.main_contact,
+         additional_info: cleanedStepData.additional_info,
+         collaboration_references: cleanedStepData.collaboration_references
+       });
        console.log('🔍 Number of fields to save:', Object.keys(cleanedStepData).length);
        console.log('🔍 Fields to save:', Object.keys(cleanedStepData));
 
@@ -328,7 +347,12 @@ const getFormData = async (req, res) => {
      }
 
      const data = formData[0];
-     console.log('✅ Data found in MySQL');
+     console.log('✅ Data found in MySQL:', data);
+     console.log('🔍 Collaboration fields check:', {
+       main_contact: data.main_contact,
+       additional_info: data.additional_info,
+       collaboration_references: data.collaboration_references
+     });
 
      logger.info(`Successfully fetched BrandKit Questionnaire form data for user ${userId} from MySQL`);
 

@@ -25,7 +25,7 @@ const validateAndCleanFormData = (stepData) => {
     'primary_goal', 'short_term_goals', 'mid_term_goals', 'long_term_goal',
     'big_picture_vision', 'success_metrics', 'business_description', 'inspiration',
     'target_interests', 'current_interests', 'special_notes', 'timeline', 'approver',
-    'reference_materials', 'spending_type', 'secondary_audience', 'emotional_goal',
+    'main_contact', 'reference_materials', 'spending_type', 'secondary_audience', 'emotional_goal',
     'culture_description', 'business_stage', 'purchase_motivators', 
     'has_social_media', 'social_media_platforms', 'facebook_url', 'instagram_url', 'twitter_url', 'linkedin_url',
     'tiktok_url', 'youtube_url', 'pinterest_url', 'snapchat_username', 'other_social_media_urls',
@@ -91,6 +91,9 @@ const validateAndCleanFormData = (stepData) => {
 
   console.log('🔍 Cleaned data before return:', cleanedData);
   console.log('🔍 Number of fields in cleaned data:', Object.keys(cleanedData).length);
+  console.log('🔍 Main contact field check:', {
+    main_contact: cleanedData.main_contact
+  });
 
   return cleanedData;
 };
