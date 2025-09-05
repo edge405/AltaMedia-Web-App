@@ -25,6 +25,8 @@ import BrandKitSection from '@/components/dashboard/BrandKitSection';
 import AnalyticsSection from '@/components/dashboard/AnalyticsSection';
 import SupportSection from '@/components/dashboard/SupportSection';
 import ProfileSection from '@/components/dashboard/ProfileSection';
+import ContentCalendarSection from '@/components/dashboard/ContentCalendarSection';
+
 
 export default function ClientPortal() {
   const navigate = useNavigate();
@@ -608,6 +610,17 @@ export default function ClientPortal() {
             onFormTypeChange={handleFormTypeChange}
             onRefreshStatuses={refreshFormStatuses}
           />
+        );
+      case "content-calendar":
+        return (
+          <ContentCalendarSection />
+        );
+      case "social-media-settings":
+        return (
+          <div className="p-6 text-center">
+            <h2 className="text-xl font-semibold mb-4">Social Media Settings</h2>
+            <p className="text-gray-600">Social media functionality is not available in this version.</p>
+          </div>
         );
       // case "analytics":
       //   return (

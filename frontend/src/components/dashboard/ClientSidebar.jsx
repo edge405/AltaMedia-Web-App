@@ -11,7 +11,9 @@ import {
   User,
   LogOut,
   X,
-  ChevronRight
+  ChevronRight,
+  Calendar,
+  Settings
 } from "lucide-react";
 import AltamediaLogo from "@/components/AltamediaLogo";
 
@@ -36,7 +38,7 @@ export default function ClientSidebar({
     { id: "package", label: "Package Details", icon: Package },
     { id: "deliverables", label: "Deliverables", icon: Download },
     { id: "brandkit", label: "BrandKit", icon: Palette },
-    // { id: "analytics", label: "Analytics", icon: BarChart3 },
+    { id: "content-calendar", label: "Content Calendar", icon: Calendar },
     { id: "support", label: "Support", icon: MessageSquare },
   ];
 

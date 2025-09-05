@@ -18,6 +18,9 @@ import {
 } from 'lucide-react';
 import apiService from '@/utils/api';
 import formExportUtils from '@/utils/formExportUtils';
+import FormDetailsView from '../FormDetailsView';
+
+
 
 export default function AdminAllForms({
     brandKits,
@@ -39,8 +42,6 @@ export default function AdminAllForms({
     const [organizationForms, setOrganizationForms] = useState([]);
     const [loadingQuestionnaires, setLoadingQuestionnaires] = useState(false);
     const [loadingOrganizations, setLoadingOrganizations] = useState(false);
-
-
 
     // Fetch all form types
     const fetchAllFormTypes = async () => {
@@ -88,6 +89,34 @@ export default function AdminAllForms({
             setLoadingOrganizations(false);
             setLoadingAllForms(false);
         }
+    };
+
+    const formatArray = (value) => {
+        if (!value) return 'Not specified';
+
+        // If it's already an array, process it
+        if (Array.isArray(value)) {
+            if (value.length === 0) return 'Not specified';
+            if (value.length === 1) return value[0];
+            return value.join(', ');
+        }
+
+        // If it's a string that looks like an array, parse it
+        if (typeof value === 'string' && value.startsWith('[') && value.endsWith(']')) {
+            try {
+                const parsed = JSON.parse(value);
+                if (Array.isArray(parsed)) {
+                    if (parsed.length === 0) return 'Not specified';
+                    if (parsed.length === 1) return parsed[0];
+                    return parsed.join(', ');
+                }
+            } catch (e) {
+                // If parsing fails, treat as regular string
+                return value;
+            }
+        }
+
+        return value;
     };
 
     // Use the brandKits data passed from parent and combine with other form types
@@ -203,9 +232,8 @@ export default function AdminAllForms({
     const getFormIcon = (formType) => {
         switch (formType) {
             case 'brandkit': return Palette;
-            case 'brandkit-questionnaire': return ClipboardList;
+            case 'brandkit-questionnaire': return Package;
             case 'organization': return Building;
-            case 'productservice': return Package;
             default: return FileText;
         }
     };
@@ -213,9 +241,8 @@ export default function AdminAllForms({
     const getFormColor = (formType) => {
         switch (formType) {
             case 'brandkit': return 'bg-blue-500';
-            case 'brandkit-questionnaire': return 'bg-purple-500';
+            case 'brandkit-questionnaire': return 'bg-orange-500';
             case 'organization': return 'bg-green-500';
-            case 'productservice': return 'bg-orange-500';
             default: return 'bg-gray-500';
         }
     };
@@ -391,7 +418,7 @@ export default function AdminAllForms({
                                                     <div className="mb-2">
                                                         <p className="text-xs text-blue-600 mb-1">Industry</p>
                                                         <p className="text-sm font-medium text-blue-900">
-                                                            {Array.isArray(form.industry) ? form.industry.join(', ') : form.industry}
+                                                            {formatArray(form.industry)}
                                                         </p>
                                                     </div>
                                                 )}
@@ -555,146 +582,12 @@ export default function AdminAllForms({
 
             {/* Form Details Modal */}
             {showFormDetails && selectedForm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="p-8">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-2xl font-bold text-gray-900">
-                                    {selectedForm.form_name} Details
-                                </h2>
-                                <Button
-                                    onClick={() => setShowFormDetails(false)}
-                                    variant="outline"
-                                    className="border-2 border-gray-300 text-gray-600 hover:bg-gray-100 rounded-xl"
-                                >
-                                    ✕
-                                </Button>
-                            </div>
-
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-sm text-gray-500 mb-1">User Email</p>
-                                        <p className="text-gray-900 font-medium">{selectedForm.user_email || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500 mb-1">Form Type</p>
-                                        <p className="text-gray-900 font-medium">{selectedForm.form_name}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500 mb-1">Progress</p>
-                                        <p className="text-gray-900 font-medium">
-                                            {selectedForm.is_completed ? 'Completed' : (selectedForm.progress_percentage || 0) > 0 ? 'In Progress' : 'Not Started'}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500 mb-1">Status</p>
-                                        <p className="text-gray-900 font-medium">
-                                            {selectedForm.is_completed ? 'Completed' : 'In Progress'}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Client Information Section */}
-                                <div className="border-t pt-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                        <Users className="w-5 h-5 mr-2 text-blue-600" />
-                                        Client Information
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50 rounded-2xl p-4">
-                                        <div>
-                                            <p className="text-sm text-blue-600 mb-1">Client Name</p>
-                                            <p className="text-gray-900 font-medium">{selectedForm.user_fullname || 'Unknown User'}</p>
-                                        </div>
-                                        {selectedForm.business_name && (
-                                            <div>
-                                                <p className="text-sm text-blue-600 mb-1">
-                                                    {selectedForm.form_type === 'organization' ? 'Organization Name' :
-                                                        selectedForm.form_type === 'brandkit-questionnaire' ? 'Brand Name' : 'Business Name'}
-                                                </p>
-                                                <p className="text-gray-900 font-medium">{selectedForm.business_name}</p>
-                                            </div>
-                                        )}
-                                        {selectedForm.contact_number && (
-                                            <div>
-                                                <p className="text-sm text-blue-600 mb-1">Contact Number</p>
-                                                <p className="text-gray-900 font-medium">{selectedForm.contact_number}</p>
-                                            </div>
-                                        )}
-                                        {selectedForm.primary_location && (
-                                            <div>
-                                                <p className="text-sm text-blue-600 mb-1">Location</p>
-                                                <p className="text-gray-900 font-medium">{selectedForm.primary_location}</p>
-                                            </div>
-                                        )}
-                                        {selectedForm.industry && (
-                                            <div>
-                                                <p className="text-sm text-blue-600 mb-1">Industry</p>
-                                                <p className="text-gray-900 font-medium">
-                                                    {Array.isArray(selectedForm.industry) ? selectedForm.industry.join(', ') : selectedForm.industry}
-                                                </p>
-                                            </div>
-                                        )}
-                                        {selectedForm.product_name && (
-                                            <div>
-                                                <p className="text-sm text-blue-600 mb-1">Product/Service</p>
-                                                <p className="text-gray-900 font-medium">{selectedForm.product_name}</p>
-                                            </div>
-                                        )}
-                                        {selectedForm.organization_name && (
-                                            <div>
-                                                <p className="text-sm text-blue-600 mb-1">Organization</p>
-                                                <p className="text-gray-900 font-medium">{selectedForm.organization_name}</p>
-                                            </div>
-                                        )}
-                                        <div>
-                                            <p className="text-sm text-blue-600 mb-1">User ID</p>
-                                            <p className="text-gray-900 font-medium">{selectedForm.user_id}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="border-t pt-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Form Data</h3>
-                                    <div className="bg-gray-50 rounded-2xl p-4 max-h-96 overflow-y-auto">
-                                        <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                                            {JSON.stringify(selectedForm, null, 2)}
-                                        </pre>
-                                    </div>
-                                </div>
-
-                                <div className="flex space-x-3 pt-6 border-t">
-                                    <Button
-                                        onClick={() => handleExportForm(selectedForm, 'pdf')}
-                                        disabled={exporting}
-                                        className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-2xl font-semibold"
-                                    >
-                                        <Download className="w-4 h-4 mr-2" />
-                                        Export PDF
-                                    </Button>
-                                    <Button
-                                        onClick={() => handleExportForm(selectedForm, 'json')}
-                                        disabled={exporting}
-                                        variant="outline"
-                                        className="border-2 border-black text-black hover:bg-black hover:text-white px-6 py-3 rounded-2xl font-semibold"
-                                    >
-                                        <FileText className="w-4 h-4 mr-2" />
-                                        Export JSON
-                                    </Button>
-                                    <Button
-                                        onClick={() => handleExportForm(selectedForm, 'csv')}
-                                        disabled={exporting}
-                                        variant="outline"
-                                        className="border-2 border-gray-300 text-gray-600 hover:bg-gray-100 px-6 py-3 rounded-2xl font-semibold"
-                                    >
-                                        <FileDown className="w-4 h-4 mr-2" />
-                                        Export CSV
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <FormDetailsView
+                    form={selectedForm}
+                    onClose={() => setShowFormDetails(false)}
+                    onExport={handleExportForm}
+                    exporting={exporting}
+                />
             )}
         </div>
     );

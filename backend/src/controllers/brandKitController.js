@@ -41,8 +41,7 @@ const validateAndCleanFormData = (stepData) => {
     'logo_action', 'preferred_colors', 'colors_to_avoid', 'font_styles',
     'design_style', 'logo_type', 'imagery_style', 'brand_kit_use', 
     'brand_elements', 'file_formats', 'success_metrics', 'target_interests',
-    'current_interests', 'social_media_platforms', 'desired_social_media_platforms',
-    'primary_location'
+    'current_interests', 'social_media_platforms', 'desired_social_media_platforms'
   ];
 
   const cleanedData = {};

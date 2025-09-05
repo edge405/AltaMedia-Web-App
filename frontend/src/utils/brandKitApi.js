@@ -206,13 +206,7 @@ export const transformToDatabaseFormat = (frontendData) => {
     
     if (value !== undefined && value !== null) {
       // Handle special cases
-      if (dbKey === 'primary_location' && typeof value === 'string') {
-        try {
-          transformed[dbKey] = JSON.parse(value);
-        } catch (e) {
-          transformed[dbKey] = value;
-        }
-      } else if (dbKey === 'year_started' && typeof value === 'string') {
+      if (dbKey === 'year_started' && typeof value === 'string') {
         transformed[dbKey] = parseInt(value) || null;
       } else if (Array.isArray(value) && value.length === 0) {
         transformed[dbKey] = null;
@@ -332,22 +326,7 @@ export const transformToFrontendFormat = (dbData) => {
     
     if (value !== undefined && value !== null) {
       // Handle special cases
-      if (dbKey === 'primary_location') {
-        if (typeof value === 'string') {
-          try {
-            const parsed = JSON.parse(value);
-            // For MapPicker, we want to display the address as a string
-            transformed[frontendKey] = parsed.address || parsed.placeName || parsed.fullAddress || value;
-          } catch (e) {
-            transformed[frontendKey] = value;
-          }
-        } else if (typeof value === 'object') {
-          // If it's already an object, extract the address
-          transformed[frontendKey] = value.address || value.placeName || value.fullAddress || JSON.stringify(value);
-        } else {
-          transformed[frontendKey] = value;
-        }
-      } else if (dbKey === 'year_started') {
+      if (dbKey === 'year_started') {
         // Convert number to string for Select component
         transformed[frontendKey] = value ? value.toString() : '';
       } else if (typeof value === 'string' && (value.startsWith('[') && value.endsWith(']'))) {
