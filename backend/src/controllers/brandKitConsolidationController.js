@@ -26,7 +26,7 @@ const consolidateFormData = async (req, res) => {
     );
 
     const productServiceData = await executeQuery(
-      'SELECT * FROM product_service_forms WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+      'SELECT * FROM brandkit_questionnaire_forms WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
       [userId]
     );
 
@@ -60,29 +60,29 @@ const consolidateFormData = async (req, res) => {
 
     // Consolidate all data into the required structure
     const consolidatedData = {
-      user_info: userData.length > 0 ? userData[0] : null,
-      forms_completion_status: {
-        brand_kit: brandKitData.length > 0 ? {
-          completed: brandKitData[0].is_completed || false,
-          current_step: brandKitData[0].current_step || 0,
-          progress_percentage: brandKitData[0].progress_percentage || 0,
-          last_updated: brandKitData[0].updated_at || brandKitData[0].created_at
-        } : { completed: false, current_step: 0, progress_percentage: 0 },
+      // user_info: userData.length > 0 ? userData[0] : null,
+      // forms_completion_status: {
+      //   brand_kit: brandKitData.length > 0 ? {
+      //     completed: brandKitData[0].is_completed || false,
+      //     current_step: brandKitData[0].current_step || 0,
+      //     progress_percentage: brandKitData[0].progress_percentage || 0,
+      //     last_updated: brandKitData[0].updated_at || brandKitData[0].created_at
+      //   } : { completed: false, current_step: 0, progress_percentage: 0 },
         
-        product_service: productServiceData.length > 0 ? {
-          completed: productServiceData[0].is_completed || false,
-          current_step: productServiceData[0].current_step || 0,
-          progress_percentage: productServiceData[0].progress_percentage || 0,
-          last_updated: productServiceData[0].updated_at || productServiceData[0].created_at
-        } : { completed: false, current_step: 0, progress_percentage: 0 },
+      //   product_service: productServiceData.length > 0 ? {
+      //     completed: productServiceData[0].is_completed || false,
+      //     current_step: productServiceData[0].current_step || 0,
+      //     progress_percentage: productServiceData[0].progress_percentage || 0,
+      //     last_updated: productServiceData[0].updated_at || productServiceData[0].created_at
+      //   } : { completed: false, current_step: 0, progress_percentage: 0 },
         
-        organization: organizationData.length > 0 ? {
-          completed: organizationData[0].is_completed || false,
-          current_step: organizationData[0].current_step || 0,
-          progress_percentage: organizationData[0].progress_percentage || 0,
-          last_updated: organizationData[0].updated_at || organizationData[0].created_at
-        } : { completed: false, current_step: 0, progress_percentage: 0 }
-      },
+      //   organization: organizationData.length > 0 ? {
+      //     completed: organizationData[0].is_completed || false,
+      //     current_step: organizationData[0].current_step || 0,
+      //     progress_percentage: organizationData[0].progress_percentage || 0,
+      //     last_updated: organizationData[0].updated_at || organizationData[0].created_at
+      //   } : { completed: false, current_step: 0, progress_percentage: 0 }
+      // },
       brand_kit_data: {
         business_company: brandKitData.length > 0 ? [parseJsonFields(brandKitData, [
           'industry', 'current_customers', 'target_professions', 'reach_locations', 
@@ -103,20 +103,22 @@ const consolidateFormData = async (req, res) => {
           'target_platforms', 'content_types', 'deliverables', 'reference_materials'
         ])] : []
       },
-      consolidation_timestamp: new Date().toISOString(),
-      all_forms_completed: (
-        (brandKitData.length > 0 && brandKitData[0].is_completed) &&
-        (productServiceData.length > 0 && productServiceData[0].is_completed) &&
-        (organizationData.length > 0 && organizationData[0].is_completed)
-      )
+      // consolidation_timestamp: new Date().toISOString(),
+      // all_forms_completed: (
+      //   (brandKitData.length > 0 && brandKitData[0].is_completed) &&
+      //   (productServiceData.length > 0 && productServiceData[0].is_completed) &&
+      //   (organizationData.length > 0 && organizationData[0].is_completed)
+      // )
     };
 
     logger.info(`Successfully consolidated BrandKit form data for user ${userId}`);
 
     res.json({
-      success: true,
-      message: 'BrandKit form data consolidated successfully',
-      data: consolidatedData
+      // success: true,
+      // message: 'BrandKit form data consolidated successfully',
+      brand_company_data: consolidatedData.brand_kit_data.business_company,
+      product_service_data: consolidatedData.brand_kit_data.product_service,
+      organization_data: consolidatedData.brand_kit_data.organization
     });
 
   } catch (error) {
@@ -163,7 +165,7 @@ const triggerWebhook = async (req, res) => {
     );
 
     const productServiceData = await executeQuery(
-      'SELECT * FROM product_service_forms WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+      'SELECT * FROM brandkit_questionnaire_forms WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
       [userId]
     );
 
@@ -248,15 +250,10 @@ const triggerWebhook = async (req, res) => {
     logger.info(`Webhook triggered successfully for user ${userId}. Response: ${webhookResponse.status}`);
 
     res.json({
-      webhookPayload
-      // success: true,
-      // message: 'Webhook triggered successfully',
-      // data: {
-      //   webhook_url,
-      //   webhook_status: webhookResponse.status,
-      //   webhook_response: webhookResponseData,
-      //   payload_sent: webhookPayload
-      // }
+      brand_company_data: webhookPayload.brand_kit_data.business_company,
+      product_service_data: webhookPayload.brand_kit_data.product_service,
+      organization_data: webhookPayload.brand_kit_data.organization
+
     });
 
   } catch (error) {

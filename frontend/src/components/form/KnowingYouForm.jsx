@@ -1668,6 +1668,15 @@ const KnowingYouForm = ({ onFormTypeChange = () => { }, initialFormType = null, 
           className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
       </FormField>
+
+      <FormField label="Who will be our main point of contact?" type="Short Text">
+        <Input
+          value={formData.mainContact || ''}
+          onChange={(e) => updateFormData('mainContact', e.target.value)}
+          placeholder="Enter main point of contact name"
+          className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+        />
+      </FormField>
     </div>
   );
 

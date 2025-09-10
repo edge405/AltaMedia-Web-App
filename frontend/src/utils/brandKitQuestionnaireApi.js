@@ -17,17 +17,23 @@ export const brandKitQuestionnaireApi = {
       const hasBrandLogo = Array.isArray(stepData.brandLogo) && stepData.brandLogo.length > 0;
       const hasReferenceFiles = Array.isArray(stepData.referenceMaterials) && stepData.referenceMaterials.length > 0;
       const hasWebPageFiles = Array.isArray(stepData.webPageUpload) && stepData.webPageUpload.length > 0;
-      const hasFiles = hasBrandLogo || hasReferenceFiles || hasWebPageFiles;
+      const hasCollaborationFiles = Array.isArray(stepData.collaborationReferences) && stepData.collaborationReferences.length > 0;
+      const hasProductMaterials = Array.isArray(stepData.productMaterials) && stepData.productMaterials.length > 0;
+      const hasFiles = hasBrandLogo || hasReferenceFiles || hasWebPageFiles || hasCollaborationFiles || hasProductMaterials;
 
-      console.log('📁 File upload check:', {
-        hasBrandLogo,
-        hasReferenceFiles,
-        hasWebPageFiles,
-        hasFiles,
-        brandLogo: stepData.brandLogo,
-        referenceMaterials: stepData.referenceMaterials,
-        webPageUpload: stepData.webPageUpload
-      });
+              console.log('📁 File upload check:', {
+          hasBrandLogo,
+          hasReferenceFiles,
+          hasWebPageFiles,
+          hasCollaborationFiles,
+          hasProductMaterials,
+          hasFiles,
+          brandLogo: stepData.brandLogo,
+          referenceMaterials: stepData.referenceMaterials,
+          webPageUpload: stepData.webPageUpload,
+          collaborationReferences: stepData.collaborationReferences,
+          productMaterials: stepData.productMaterials
+        });
 
       if (hasFiles) {
         // Use FormData for file uploads
@@ -43,6 +49,8 @@ export const brandKitQuestionnaireApi = {
         delete nonFileData.brand_logo;
         delete nonFileData.reference_materials;
         delete nonFileData.web_page_upload;
+        delete nonFileData.collaboration_references;
+        delete nonFileData.product_materials;
         formData.append('stepData', JSON.stringify(nonFileData));
         
         // Add files (use original stepData, not transformed)
@@ -64,13 +72,27 @@ export const brandKitQuestionnaireApi = {
           });
         }
         
+        if (hasCollaborationFiles) {
+          stepData.collaborationReferences.forEach(file => {
+            formData.append('collaboration_references', file);
+          });
+        }
+        
+        if (hasProductMaterials) {
+          stepData.productMaterials.forEach(file => {
+            formData.append('product_materials', file);
+          });
+        }
+        
         console.log('📁 Sending FormData with files:', {
           userId,
           currentStep,
           nonFileDataKeys: Object.keys(nonFileData),
           brandLogoFiles: hasBrandLogo ? stepData.brandLogo.length : 0,
           referenceFiles: hasReferenceFiles ? stepData.referenceMaterials.length : 0,
-          webPageFiles: hasWebPageFiles ? stepData.webPageUpload.length : 0
+          webPageFiles: hasWebPageFiles ? stepData.webPageUpload.length : 0,
+          collaborationFiles: hasCollaborationFiles ? stepData.collaborationReferences.length : 0,
+          productMaterialFiles: hasProductMaterials ? stepData.productMaterials.length : 0
         });
         
         const response = await apiService.putFormData('/brandkit-questionnaire/save', formData);
@@ -108,9 +130,13 @@ export const brandKitQuestionnaireApi = {
      try {
        const response = await apiService.get(`/brandkit-questionnaire/data/${userId}`);
        
+       console.log('🔍 Raw API response:', response);
+       
        // Transform database data to frontend format if data exists
        if (response.success && response.data?.formData) {
+         console.log('🔍 Before transformation:', response.data.formData);
          response.data.formData = transformToFrontendFormat(response.data.formData);
+         console.log('🔍 After transformation:', response.data.formData);
        }
        
        return response;
@@ -164,9 +190,17 @@ export const transformToDatabaseFormat = (frontendData) => {
   
   // Map frontend field names to database field names
   const fieldMappings = {
-    // Step 1: Brand Identity
+    // Step 1: Brand Identity & Product Details
+    offeringType: 'offering_type',
     brandName: 'brand_name',
     brandDescription: 'brand_description',
+    productIndustry: 'product_industry',
+    productIndustryOther: 'product_industry_other',
+    productType: 'product_type',
+    productFeatures: 'product_features',
+    productPricing: 'product_pricing',
+    productStage: 'product_stage',
+    productMaterials: 'product_materials',
     
     // Step 2: Target Audience & Positioning
     primaryCustomers: 'primary_customers',
@@ -215,6 +249,21 @@ export const transformToDatabaseFormat = (frontendData) => {
     inspirationBrands: 'inspiration_brands',
     brandVibe: 'brand_vibe',
     
+    // Social Media
+    hasSocialMedia: 'has_social_media',
+    socialMediaPlatforms: 'social_media_platforms',
+    facebookUrl: 'facebook_url',
+    instagramUrl: 'instagram_url',
+    twitterUrl: 'twitter_url',
+    linkedinUrl: 'linkedin_url',
+    tiktokUrl: 'tiktok_url',
+    youtubeUrl: 'youtube_url',
+    pinterestUrl: 'pinterest_url',
+    snapchatUsername: 'snapchat_username',
+    otherSocialMediaUrls: 'other_social_media_urls',
+    wantToCreateSocialMedia: 'want_to_create_social_media',
+    desiredSocialMediaPlatforms: 'desired_social_media_platforms',
+    
     // Step 9: Closing Information
     brandWords: 'brand_words',
     brandAvoidWords: 'brand_avoid_words',
@@ -224,7 +273,12 @@ export const transformToDatabaseFormat = (frontendData) => {
     coreValues: 'core_values',
     hasWebPage: 'has_web_page',
     webPageUpload: 'web_page_upload',
-    wantWebPage: 'want_web_page'
+    wantWebPage: 'want_web_page',
+    
+    // Collaboration & Wrap-Up
+    mainContact: 'main_contact',
+    additionalInfo: 'additional_info',
+    collaborationReferences: 'collaboration_references'
   };
 
   // List of metadata fields to exclude from transformation
@@ -260,13 +314,22 @@ export const transformToDatabaseFormat = (frontendData) => {
  * @returns {Object} Frontend format data (camelCase)
  */
 export const transformToFrontendFormat = (dbData) => {
+  console.log('🔄 Transforming database data to frontend format:', dbData);
   const transformed = {};
   
   // Map database field names to frontend field names
   const fieldMappings = {
-    // Step 1: Brand Identity
+    // Step 1: Brand Identity & Product Details
+    offering_type: 'offeringType',
     brand_name: 'brandName',
     brand_description: 'brandDescription',
+    product_industry: 'productIndustry',
+    product_industry_other: 'productIndustryOther',
+    product_type: 'productType',
+    product_features: 'productFeatures',
+    product_pricing: 'productPricing',
+    product_stage: 'productStage',
+    product_materials: 'productMaterials',
     
     // Step 2: Target Audience & Positioning
     primary_customers: 'primaryCustomers',
@@ -315,6 +378,21 @@ export const transformToFrontendFormat = (dbData) => {
     inspiration_brands: 'inspirationBrands',
     brand_vibe: 'brandVibe',
     
+    // Social Media
+    has_social_media: 'hasSocialMedia',
+    social_media_platforms: 'socialMediaPlatforms',
+    facebook_url: 'facebookUrl',
+    instagram_url: 'instagramUrl',
+    twitter_url: 'twitterUrl',
+    linkedin_url: 'linkedinUrl',
+    tiktok_url: 'tiktokUrl',
+    youtube_url: 'youtubeUrl',
+    pinterest_url: 'pinterestUrl',
+    snapchat_username: 'snapchatUsername',
+    other_social_media_urls: 'otherSocialMediaUrls',
+    want_to_create_social_media: 'wantToCreateSocialMedia',
+    desired_social_media_platforms: 'desiredSocialMediaPlatforms',
+    
     // Step 9: Closing Information
     brand_words: 'brandWords',
     brand_avoid_words: 'brandAvoidWords',
@@ -324,7 +402,12 @@ export const transformToFrontendFormat = (dbData) => {
     core_values: 'coreValues',
     has_web_page: 'hasWebPage',
     web_page_upload: 'webPageUpload',
-    want_web_page: 'wantWebPage'
+    want_web_page: 'wantWebPage',
+    
+    // Collaboration & Wrap-Up
+    main_contact: 'mainContact',
+    additional_info: 'additionalInfo',
+    collaboration_references: 'collaborationReferences'
   };
 
   // List of metadata fields to exclude from transformation
@@ -363,5 +446,6 @@ export const transformToFrontendFormat = (dbData) => {
     }
   }
 
+  console.log('🔄 Transformation result:', transformed);
   return transformed;
 };
